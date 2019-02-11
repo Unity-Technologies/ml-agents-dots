@@ -29,6 +29,7 @@ Press `A`, `S`, `D` to spawn 1, 100 and 1000 new Entities in the scene.
 There are 3 random neural networks used to update the acceleration of the spheres based on their position. You can replace the Decision type on one of the system from Neural Network to Heuristic by pressing `U` and `I`
 
 ### SpaceWars
-This does not use a Neural Network but a Heuristic that orient the ships and make them shoot towards the large spherical target.
+
+Press `A`, `S`, `D` to spawn 1, 100 and 1000 new Entities in the scene. This scene does not use a Neural Network but a Heuristic that orient the ships and make them shoot towards the large spherical target.
      
 
