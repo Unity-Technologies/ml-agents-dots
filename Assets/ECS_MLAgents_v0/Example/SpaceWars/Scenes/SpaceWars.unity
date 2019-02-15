@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657838, g: 0.49641234, b: 0.57481676, a: 1}
+  m_IndirectSpecularColor: {r: 0.37311918, g: 0.38073993, b: 0.35872698, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -161,7 +161,7 @@ MonoBehaviour:
   target: {fileID: 1467329703}
   camera: {fileID: 2051651924}
   prefab: {fileID: 801768939125754296, guid: 8148120c9f3864369b2ed2b21f9a01aa, type: 3}
-  model: {fileID: 11400002, guid: 5bfd22ab3fbf74284acbd4ec6f22b27a, type: 3}
+  model: {fileID: 11400000, guid: 5bfd22ab3fbf74284acbd4ec6f22b27a, type: 3}
 --- !u!114 &260019832
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -222,7 +222,7 @@ Light:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 969391138}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 8
   m_Type: 1
   m_Color: {r: 1, g: 0.95686275, b: 0.8392157, a: 1}
@@ -302,7 +302,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10302, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: d6eaea581dd90489bb9090c0c83057d7, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -354,7 +354,6 @@ GameObject:
   m_Component:
   - component: {fileID: 2051651927}
   - component: {fileID: 2051651926}
-  - component: {fileID: 2051651925}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -362,14 +361,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!81 &2051651925
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2051651924}
-  m_Enabled: 0
 --- !u!20 &2051651926
 Camera:
   m_ObjectHideFlags: 0

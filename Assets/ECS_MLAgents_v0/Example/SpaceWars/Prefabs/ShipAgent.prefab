@@ -100,8 +100,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_SerializedData:
-    mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
-    material: {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+    mesh: {fileID: 4300002, guid: 7fea2db65062cc645a42de560c2e6d8c, type: 3}
+    material: {fileID: 2100000, guid: cd91a3587814b4dbfa106cdbbf44cd0c, type: 2}
     subMesh: 0
     castShadows: 0
     receiveShadows: 0
@@ -136,7 +136,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_SerializedData:
     YAxis: 0
-    ZAxis: 0
+    XAxis: 0
     Shoot: 0
 --- !u!114 &8807437141133750185
 MonoBehaviour:
@@ -170,6 +170,11 @@ MonoBehaviour:
   m_SerializedData:
     ReloadTime: 0
     Fire: 0
+    TargetOffset:
+      x: 0
+      y: 0
+      z: 0
+    MaxReloadTime: 0
 --- !u!114 &2450615790375797412
 MonoBehaviour:
   m_ObjectHideFlags: 0

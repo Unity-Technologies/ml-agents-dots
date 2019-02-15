@@ -2,7 +2,7 @@ fileFormatVersion: 2
 guid: 5bfd22ab3fbf74284acbd4ec6f22b27a
 ScriptedImporter:
   fileIDToRecycleName:
-    11400002: Assets/SpaceWars.nn
+    11400000: Assets/ECS_MLAgents_v0/Example/SpaceWars/TFModels/SpaceWars.nn
   externalObjects: {}
   userData: 
   assetBundleName: 

@@ -23,9 +23,9 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
         public const float PROJECTILE_SCALE_Y = 0.1f;
         public const float PROJECTILE_SCALE_Z = 1f;
         
-        public const float SHIP_SCALE_X = 0.2f;
-        public const float SHIP_SCALE_Y = 0.4f;
-        public const float SHIP_SCALE_Z = 1f;
+        public const float SHIP_SCALE_X = 0.1f;//0.2f;
+        public const float SHIP_SCALE_Y = 0.1f;//0.4f;
+        public const float SHIP_SCALE_Z = 0.1f;//1f;
 
         
         [SerializeField] private MeshInstanceRenderer Projectile;
