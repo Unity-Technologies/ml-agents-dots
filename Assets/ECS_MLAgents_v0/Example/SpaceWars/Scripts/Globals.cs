@@ -17,6 +17,7 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
         public const float PROJECTILE_SPEED = 200f;
         public const float BOUNDARIES = 1000000f;
         public static MeshInstanceRenderer ProjectileRenderer;
+        public static MeshInstanceRenderer ExplosionRenderer;
         
         public const float PROJECTILE_SCALE_X = 0.15f;
         public const float PROJECTILE_SCALE_Y = 0.1f;
@@ -28,10 +29,12 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
 
         
         [SerializeField] private MeshInstanceRenderer Projectile;
+        [SerializeField] private MeshInstanceRenderer Explosion;
 
         private void Awake()
         {
             ProjectileRenderer = Projectile;
+            ExplosionRenderer = Explosion;
         }
     }
 }

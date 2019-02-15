@@ -1,8 +1,8 @@
 fileFormatVersion: 2
-guid: 8533bf952c61d430e8765c2c16cde480
+guid: 5bfd22ab3fbf74284acbd4ec6f22b27a
 ScriptedImporter:
   fileIDToRecycleName:
-    11400002: Assets/ECS_MLAgents_v0/Example/SpaceMagic/TFModels/test3.nn
+    11400002: Assets/SpaceWars.nn
   externalObjects: {}
   userData: 
   assetBundleName: 

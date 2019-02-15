@@ -10,6 +10,7 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
         public float ReloadTime;
         public int Fire;
         public float3 TargetOffset;
+        public float MaxReloadTime;
     }
     
     public class ShipComponent : ComponentDataWrapper<Ship> {}

@@ -30,7 +30,12 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
                 ref ShipSensor sens,
                 ref Ship ship)
             {
-                sens.Position = (pos.Value - center + ship.TargetOffset);
+                var tmpPos = pos.Value - center + ship.TargetOffset;
+                if (tmpPos.x * tmpPos.x < 0.00001f)
+                {
+                    tmpPos = new float3(0,0,1);
+                }
+                sens.Position = math.normalize(tmpPos);
                 sens.Rotation = rot.Value;
             }
         }
@@ -38,27 +43,5 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
         protected override JobHandle OnUpdate(JobHandle inputDeps){
            return new SensorJob{center = Center}.Schedule(this, inputDeps);
         }
-
-//        private ComponentGroup _shipComponentGroup;
-//        private ComponentGroup _targetComponentGroup;
-//        
-//        protected override void OnCreateManager()
-//        {
-//            _targetComponentGroup = GetComponentGroup(
-//                ComponentType.ReadOnly(typeof(Position)),
-//                ComponentType.ReadOnly(typeof(TargetShip))
-//            );
-//            _shipComponentGroup = GetComponentGroup(
-//                ComponentType.ReadOnly(typeof(Position)), 
-//                typeof(ShipSensor),
-//                ComponentType.ReadOnly(typeof(Ship)));
-//
-//        }
-        
-
-
     }
-
-
-
 }

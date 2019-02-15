@@ -17,19 +17,19 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
             JobHandle handle)
         {
             var input = new float3();
-            if (Input.GetKey(KeyCode.Q))
+            if (Input.GetKey(KeyCode.LeftArrow))
             {
                 input.x = -1;
             }
-            if (Input.GetKey(KeyCode.W))
+            if (Input.GetKey(KeyCode.RightArrow))
             {
                 input.x = 1;
             }
-            if (Input.GetKey(KeyCode.O))
+            if (Input.GetKey(KeyCode.UpArrow))
             {
                 input.y = -1;
             }
-            if (Input.GetKey(KeyCode.P))
+            if (Input.GetKey(KeyCode.DownArrow))
             {
                 input.y = 1;
             }

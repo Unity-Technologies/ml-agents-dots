@@ -8,11 +8,13 @@ using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-public class DeleteRogueBarrier : BarrierSystem{}
-public class ShootBarrier : BarrierSystem{}
+
 
 namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
 {
+    public class DeleteRogueBarrier : BarrierSystem{}
+    public class ShootBarrier : BarrierSystem{}
+    
     public class ShipPhysics : JobComponentSystem
     {
         [Inject] private DeleteRogueBarrier rogueBarrier;
@@ -86,7 +88,7 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
 
                 if (ship.ReloadTime < 0)
                 {
-                    ship.ReloadTime = Globals.RELOAD_TIME;
+                    ship.ReloadTime = ship.MaxReloadTime;
                 }
 
                 ship.ReloadTime -= deltaTime;
