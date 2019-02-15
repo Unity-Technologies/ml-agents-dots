@@ -23,7 +23,8 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
             style.normal.textColor = new Color (1.0f, 1.0f, 0.5f, 1.0f);
             float msec = deltaTime * 1000.0f;
             float fps = 1.0f / deltaTime;
-            string text = string.Format("{0:0.0} ms ({1:0.} fps)", msec, fps);
+            string text = string.Format(" {0:0.0} ms ({1:0.} fps)\n" +
+                                        " # Ships : {2}", msec, fps, Globals.NumberShips);
             GUI.Label(rect, text, style);
         }
     }

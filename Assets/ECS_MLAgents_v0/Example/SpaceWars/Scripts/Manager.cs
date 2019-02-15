@@ -88,7 +88,7 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
 
             var camPosition = manager.GetComponentData<Position>(_playerEntity).Value;
             var camRotation = manager.GetComponentData<Rotation>(_playerEntity).Value;
-            camPosition += math.mul(camRotation, new float3(-2, 0, 5));
+            camPosition += math.mul(camRotation, new float3(0, 0, 5));
             Camera.transform.position = Vector3.Lerp(Camera.transform.position,camPosition,0.1f);
             Camera.transform.rotation = Quaternion.Lerp(Camera.transform.rotation,camRotation,0.1f);
 
@@ -96,6 +96,7 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
 
         void Spawn(int amount)
         {
+            Globals.NumberShips += amount;
             NativeArray<Entity> entities = new NativeArray<Entity>(amount, Allocator.Temp);
             manager.Instantiate(prefab, entities);
             for (int i = 0; i < amount; i++)

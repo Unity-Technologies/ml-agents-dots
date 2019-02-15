@@ -8,6 +8,8 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
 {
     public class Globals : MonoBehaviour
     {
+        public static int NumberShips;
+        
         public static float SHIP_SPEED = 2f;
         public static float SHIP_ROTATION_SPEED = 1f;
         
