@@ -17,8 +17,10 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
     
     public class ShipPhysics : JobComponentSystem
     {
+#pragma warning disable 0649
         [Inject] private DeleteRogueBarrier rogueBarrier;
         [Inject] private ShootBarrier shootBarrier;
+#pragma warning restore 0649
         private ComponentGroup _positionComponentGroup;
         private ComponentGroup _shipComponentGroup;
         

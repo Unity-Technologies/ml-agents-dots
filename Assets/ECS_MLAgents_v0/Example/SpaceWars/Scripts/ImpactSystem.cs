@@ -19,8 +19,10 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
         public float3 Center;
         public float Radius;
         
+#pragma warning disable 0649
         [Inject] private ImpactBarrier impactBarrier;
         [Inject] private LateExplosionBarrier lateExplosionBarrier;
+#pragma warning restore 0649
         private ComponentGroup _positionComponentGroup;
         private ComponentGroup _explosionComponentGroup;
         

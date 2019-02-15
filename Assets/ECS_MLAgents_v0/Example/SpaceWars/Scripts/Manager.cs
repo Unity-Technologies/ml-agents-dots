@@ -19,7 +19,7 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
     {
         public float TargetAngle;
         public GameObject target;
-        public GameObject camera;
+        public GameObject Camera;
 
         private EntityManager manager;
         public GameObject prefab;
@@ -89,8 +89,8 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
             var camPosition = manager.GetComponentData<Position>(_playerEntity).Value;
             var camRotation = manager.GetComponentData<Rotation>(_playerEntity).Value;
             camPosition += math.mul(camRotation, new float3(-2, 0, 5));
-            camera.transform.position = Vector3.Lerp(camera.transform.position,camPosition,0.1f);
-            camera.transform.rotation = Quaternion.Lerp(camera.transform.rotation,camRotation,0.1f);
+            Camera.transform.position = Vector3.Lerp(Camera.transform.position,camPosition,0.1f);
+            Camera.transform.rotation = Quaternion.Lerp(Camera.transform.rotation,camRotation,0.1f);
 
         }
 

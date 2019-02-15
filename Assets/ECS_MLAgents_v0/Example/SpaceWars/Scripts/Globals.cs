@@ -27,9 +27,10 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
         public const float SHIP_SCALE_Y = 0.1f;//0.4f;
         public const float SHIP_SCALE_Z = 0.1f;//1f;
 
-        
+#pragma warning disable 0649
         [SerializeField] private MeshInstanceRenderer Projectile;
         [SerializeField] private MeshInstanceRenderer Explosion;
+#pragma warning restore 0649
 
         private void Awake()
         {
