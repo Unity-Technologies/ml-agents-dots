@@ -37,7 +37,7 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
 
         void Start()
         {
-            Time.captureFramerate = 60;
+//            Time.captureFramerate = 60;
             manager = World.Active.GetOrCreateManager<EntityManager>();
 
             _sensorSystem = World.Active.GetOrCreateManager<SensorPopulate>();
@@ -45,7 +45,8 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
             _impactSystem.Radius = 20;
 
             _shipSystemA = World.Active.GetExistingManager<SmartShipSystem>();
-            _shipSystemA.Decision = new NNDecision(model);
+//            _shipSystemA.Decision = new NNDecision(model);
+            _shipSystemA.Decision = new ExternalDecision();
             _playerSystem = World.Active.GetExistingManager<PlayerShipSystem>();
             _playerSystem.Decision = new HumanDecision();
             _playerSystem.SetNewComponentGroup(typeof(PlayerFlag));
@@ -60,6 +61,8 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
                 ReloadTime = 1f,
                 MaxReloadTime = 1f
             });
+            
+            Spawn(100);
         }
 
 
