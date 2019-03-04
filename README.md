@@ -31,5 +31,24 @@ There are 3 random neural networks used to update the acceleration of the sphere
 ### SpaceWars
 
 Press `A`, `S`, `D` to spawn 1, 100 and 1000 new Entities in the scene. This scene does not use a Neural Network but a Heuristic that orient the ships and make them shoot towards the large spherical target.
+
+## Future Work
+
+A basic implementation of Python communication using shared memory has been added (OSX only). Communication will need to be made more flexible and ideally will be able to support non-RL use cases.
+
+In future work, we will explore C# refection so the definition of the sensor and actuator can be more flexible. We could create a map of the sensor/actuator struct memory structure and communicate it to python so it can put it into appropriate struct objects. We could also use refection to define which numbers in the sensor correspond to Reward and done signals. 
+
+```csharp
+    [Serializable]
+    public struct ShipSensor : IComponentData
+    {
+    	[RewardAttribute]
+		public float Reward;
+		[FloatSensorAttribute(name="Absolute Ship Position")
+		public float3 Position;
+        
+		public quaternion Rotation;
+    }
+```
      
 
