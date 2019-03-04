@@ -3,6 +3,7 @@ import struct
 import numpy as np
 import time
 
+
 class UnityCommunication:
     FILE_CAPACITY = 200000
     NUMBER_AGENTS_POSITION = 0
@@ -49,13 +50,19 @@ class UnityCommunication:
         if actuator.dtype != np.float32:
             actuator = actuator.astype(np.float32)
 
-        assert(actuator.shape == (number_agents, actuator_size))
+        try:
+            assert(actuator.shape == (number_agents, actuator_size))
+        except:
+            print("_________")
+            print(actuator.shape)
+            print((number_agents, actuator_size))
 
         self.accessor[self.ACTUATOR_DATA_POSITION: self.ACTUATOR_DATA_POSITION + 4*actuator_size*number_agents] = \
             actuator.tobytes()
 
-    def set_ready(self, flag : bool):
-        self.accessor[self.PYTHON_READY_POSITION: self.PYTHON_READY_POSITION+1] = bytearray(struct.pack("b", flag))
+    def set_ready(self):
+        self.accessor[self.UNITY_READY_POSITION: self.UNITY_READY_POSITION+1] = bytearray(struct.pack("b", False))
+        self.accessor[self.PYTHON_READY_POSITION: self.PYTHON_READY_POSITION+1] = bytearray(struct.pack("b", True))
 
     def unity_ready(self) -> bool:
         return self.accessor[self.UNITY_READY_POSITION]
@@ -76,11 +83,12 @@ if __name__ == "__main__":
         steps += 1
         s = comm.read_sensor()
         nag, nse, nac = comm.get_parameters()
-        time.sleep(0.1)
+        # print(s.shape)
+        # time.sleep(0.1)
         comm.write_actuator(
             np.random.normal(size=(nag, nac))
         )
-        comm.set_ready(True)
+        comm.set_ready()
 
 
 
