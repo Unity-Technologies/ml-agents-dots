@@ -39,16 +39,16 @@ A basic implementation of Python communication using shared memory has been adde
 In future work, we will explore C# refection so the definition of the sensor and actuator can be more flexible. We could create a map of the sensor/actuator struct memory structure and communicate it to python so it can put it into appropriate struct objects. We could also use refection to define which numbers in the sensor correspond to Reward and done signals. 
 
 ```csharp
-    [Serializable]
-    public struct ShipSensor : IComponentData
-    {
-    	[RewardAttribute]
-		public float Reward;
-		[FloatSensorAttribute(name="Absolute Ship Position")
-		public float3 Position;
+[Serializable]
+public struct ShipSensor : IComponentData
+{
+	[RewardAttribute]
+	public float Reward;
+	[FloatSensorAttribute(name="Absolute Ship Position")
+	public float3 Position;
         
-		public quaternion Rotation;
-    }
+	public quaternion Rotation;
+}
 ```
      
 
