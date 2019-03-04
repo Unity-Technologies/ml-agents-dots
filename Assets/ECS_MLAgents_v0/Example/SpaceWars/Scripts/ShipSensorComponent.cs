@@ -1,4 +1,5 @@
 using System;
+using ECS_MLAgents_v0.Core;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
@@ -9,6 +10,7 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
     [Serializable]
     public struct ShipSensor : IComponentData
     {
+        [Reward]
 //        public float Reward;
         public float3 Position;
         public quaternion Rotation;

@@ -1,14 +1,19 @@
-﻿using UnityEngine;
+﻿using System.Diagnostics.Tracing;
+using UnityEngine;
 
 namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
 {
     public class FPSDisplay : MonoBehaviour
     {
         float deltaTime = 0.0f;
+        private float realTimeRatio = 1;
+        int counter = 0;
  
         void Update()
         {
             deltaTime += (Time.unscaledDeltaTime - deltaTime) * 0.1f;
+            realTimeRatio += (Time.deltaTime / Time.unscaledDeltaTime - realTimeRatio) * 0.1f;
+            counter++;
         }
  
         void OnGUI()
@@ -24,7 +29,13 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
             float msec = deltaTime * 1000.0f;
             float fps = 1.0f / deltaTime;
             string text = string.Format(" {0:0.0} ms ({1:0.} fps)\n" +
-                                        " # Ships : {2}", msec, fps, Globals.NumberShips);
+                                        " # Ships : {2}\n" +
+                                        " deltaTime {3}\n" +
+                                        " unscaled deltaTime {4}\n" +
+                                        " Time Speed {5}\n", 
+                msec, fps, Globals.NumberShips, Time.deltaTime, Time.unscaledDeltaTime, realTimeRatio);
+//            if (counter %100 == 0)
+//                Debug.Log(text);
             GUI.Label(rect, text, style);
         }
     }

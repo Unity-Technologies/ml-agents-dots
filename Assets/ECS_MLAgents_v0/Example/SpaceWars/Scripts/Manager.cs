@@ -1,4 +1,5 @@
-﻿using ECS_MLAgents_v0.Core;
+﻿using System;
+using ECS_MLAgents_v0.Core;
 using ECS_MLAgents_v0.Core.Inference;
 using Unity.Collections;
 using Unity.Entities;
@@ -39,7 +40,9 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
         void Start()
         {
 
-
+            Time.captureFramerate = 60;
+            QualitySettings.vSyncCount = 0;
+            Application.targetFrameRate = -1;
             
 
             
@@ -69,11 +72,15 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
 
             
             Spawn(1000);
+            
+//            Debug.Log(typeof(ShipSensor).GetCustomAttributes(typeof(SerializableAttribute), true)[0]);
+AttributeUtility.GetSensorMetaData(typeof(ShipSensor));
         }
 
 
         void Update()
         {
+//            Debug.Log(Application.targetFrameRate);
             float3 targetPos = 100 * new float3(math.cos(TargetAngle), 0, math.sin(TargetAngle));
             _sensorSystem.Center = targetPos;
             _impactSystem.Center = targetPos;
