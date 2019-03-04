@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -44,7 +45,7 @@ namespace ECS_MLAgents_v0.Core
         private int _sensorMemorySize = INITIAL_MEMORY_SIZE;
         private int _actuatorMemorySize = INITIAL_MEMORY_SIZE;
         
-        public int DecisionInterval { get; set; }
+        public IDecisionRequester DecisionRequester { get; set; }
         private int _phase;
         
         public IAgentDecision Decision { get; set; }
@@ -63,6 +64,11 @@ namespace ECS_MLAgents_v0.Core
 
         protected override void OnCreateManager()
         {
+            if (DecisionRequester == null)
+            {
+                DecisionRequester = new FixedCountRequester();
+            }
+
             _logger = new Logger(GetType().Name);
             _logger.Log("OnCreateManager");
             SetNewComponentGroup();
@@ -108,12 +114,13 @@ namespace ECS_MLAgents_v0.Core
         {
             _logger.Log("OnUpdate");
 
-            if (_phase > 0)
+            DecisionRequester.Update();
+            if (!DecisionRequester.Ready)
             {
-                _phase--;
                 return inputDeps;
             }
-            _phase = DecisionInterval;
+            DecisionRequester.Reset();
+            
 
             var nAgents = _componentGroup.CalculateLength();
             

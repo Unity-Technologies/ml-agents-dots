@@ -9,6 +9,7 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
     [Serializable]
     public struct ShipSensor : IComponentData
     {
+//        public float Reward;
         public float3 Position;
         public quaternion Rotation;
     }
@@ -37,11 +38,19 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
                 }
                 sens.Position = math.normalize(tmpPos);
                 sens.Rotation = rot.Value;
+//                sens.Reward = GenerateReward(sens.Position, sens.Rotation, ship.Fire);
             }
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps){
            return new SensorJob{center = Center}.Schedule(this, inputDeps);
+        }
+
+        private static float GenerateReward(float3 pos, quaternion rot, int fire)
+        {
+            var forwardRelativeRef = math.mul(rot, new float3(0, 0, 1));
+
+            return -math.dot(forwardRelativeRef, pos);//+ fire;
         }
     }
 }
