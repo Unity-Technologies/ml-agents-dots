@@ -89,8 +89,8 @@ namespace ECS_MLAgents_v0.Core{
             {
                 loopIter++;
                 readyToContinue = accessor.ReadBoolean(PYTHON_READY_POSITION);
-                readyToContinue = readyToContinue || loopIter > 200000;
-                if (loopIter > 200000)
+                readyToContinue = readyToContinue || loopIter > 20000000;
+                if (loopIter > 20000000)
                 {
                     Debug.Log("Missed Communication");
                 }

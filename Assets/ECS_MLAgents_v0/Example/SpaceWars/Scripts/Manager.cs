@@ -4,7 +4,6 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
-//using UnityEditorInternal;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -17,6 +16,8 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
 
     public class Manager : MonoBehaviour
     {
+        
+        
         public float TargetAngle;
         public GameObject target;
         public GameObject Camera;
@@ -37,7 +38,11 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
 
         void Start()
         {
-//            Time.captureFramerate = 60;
+
+
+            
+
+            
             manager = World.Active.GetOrCreateManager<EntityManager>();
 
             _sensorSystem = World.Active.GetOrCreateManager<SensorPopulate>();
@@ -45,12 +50,12 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
             _impactSystem.Radius = 20;
 
             _shipSystemA = World.Active.GetExistingManager<SmartShipSystem>();
-//            _shipSystemA.Decision = new NNDecision(model);
-            _shipSystemA.Decision = new ExternalDecision();
+            _shipSystemA.Decision = new NNDecision(model);
+//            _shipSystemA.Decision = new ExternalDecision();
             _playerSystem = World.Active.GetExistingManager<PlayerShipSystem>();
             _playerSystem.Decision = new HumanDecision();
             _playerSystem.SetNewComponentGroup(typeof(PlayerFlag));
-            _shipSystemA.DecisionInterval = 10;
+            _shipSystemA.DecisionRequester = new FixedTimeRequester(0.1f);
 
             _playerEntity  = manager.Instantiate(prefab);
             MakeSpaceShip(_playerEntity);
@@ -61,8 +66,9 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
                 ReloadTime = 1f,
                 MaxReloadTime = 1f
             });
+
             
-            Spawn(100);
+            Spawn(1000);
         }
 
 

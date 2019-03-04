@@ -46,6 +46,6 @@ namespace ECS_MLAgents_v0.Core
         /// </summary>
         void ResetFilter();
         
-        int DecisionInterval { get; set; }
+        IDecisionRequester DecisionRequester { get; set; }
     }
 }
