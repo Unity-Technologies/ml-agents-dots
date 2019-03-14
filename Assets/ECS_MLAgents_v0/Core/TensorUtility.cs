@@ -67,7 +67,7 @@ namespace ECS_MLAgents_v0.Core
         /// <param name="t"> The Type that will be checked</param>
         /// <exception cref="NotSupportedException"> NotSupportedException will be raised if the
         /// Type t is not valid for use by the library.</exception>
-        private static void DebugCheckStructure(Type t)
+        public static void DebugCheckStructure(Type t)
         {
             SeenTypes.Add(t);
             if (t.GetFields(BindingFlags.Public | BindingFlags.Instance)

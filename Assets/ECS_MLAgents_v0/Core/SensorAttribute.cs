@@ -1,6 +1,8 @@
 using System;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace ECS_MLAgents_v0.Core
 {
@@ -36,5 +38,21 @@ namespace ECS_MLAgents_v0.Core
                 }
             }
         }
+
+        public static int GetRewardIndex(Type t)
+        {
+            TensorUtility.DebugCheckStructure(t);
+            var fields = t.GetFields(BindingFlags.Public | BindingFlags.Instance);
+            var index = 0;
+            foreach (var field in fields)
+            {
+                if (field.GetCustomAttributes<RewardAttribute>().Any())
+                {
+                    return index;
+                }
+            }
+            return -1;
+        }
+        
     }
 }
