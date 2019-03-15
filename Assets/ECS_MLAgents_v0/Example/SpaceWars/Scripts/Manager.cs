@@ -78,8 +78,18 @@ AttributeUtility.GetSensorMetaData(typeof(ShipSensor));
         }
 
 
+        void FixedUpdate(){
+            
+        }
+
         void Update()
         {
+foreach(var behavior in World.Active.BehaviourManagers)
+            {
+                behavior.Update();
+                behavior.Update();
+                behavior.Update();
+            }
 //            Debug.Log(Application.targetFrameRate);
             float3 targetPos = 100 * new float3(math.cos(TargetAngle), 0, math.sin(TargetAngle));
             _sensorSystem.Center = targetPos;
