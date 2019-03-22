@@ -51,4 +51,20 @@ public struct ShipSensor : IComponentData
 }
 ```
      
+# Alternaltive Approaches
 
+Another form of API that we could use would be the following : Instead of creating a System with generic types, one would create a `Decision` object with generic types. Instead of declaring a system, we could expose the decision is this manner :
+
+```csharp
+Decision = new NNDecision(model);
+
+//...
+
+Entities.ForEach((ref MySensor sensor, ref MyActuator actuator) =>
+   {
+      Decision.AddToBatch(sensor, actuator);
+   }
+   Decision.ProcessBatch();
+```
+
+This is still compatible with the refection approach to decorate training signals and would simplify greatly the Request Decision mechanism and the filtering of entities since full freedom is given to the developer. On the other hand, this relies on the reference data not changing and the user calling `Decision.ProcessBtch` appropriately. It would also make it harder to keep track of done flags for instance. Would make it a lot easier to have multiple sensors/actuators/cameras.
