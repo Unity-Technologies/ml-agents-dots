@@ -43,7 +43,7 @@ namespace ECS_MLAgents_v0.Example.ZeroK.Scripts
         public float maxDistance;
         private EntityManager manager;
 
-        private IAgentSystem sA;
+        private ZKSystem sA;
 
         
         /// <summary>
@@ -57,6 +57,7 @@ namespace ECS_MLAgents_v0.Example.ZeroK.Scripts
         
         void Start()
         {
+            Time.captureFramerate = 60;
             manager = World.Active.GetOrCreateManager<EntityManager>();
             
 
@@ -76,7 +77,7 @@ namespace ECS_MLAgents_v0.Example.ZeroK.Scripts
 //            sB.SetFilter<SphereGroup>(new SphereGroup{Group = 1});
 //            sC.SetFilter<SphereGroup>(new SphereGroup{Group = 2});
 
-            sA.Decision = new ExternalDecision();
+            sA.Decision = new ExternalDecision<Sensor, Speed>();
 //            sA.Decision = new SpaceMagic.Scripts.HeuristicSpace(new float3(0,0,0), 1f);
 //            sA.Decision = new NNDecision(modelA)();
 //            sB.Decision = new NNDecision(modelB);

@@ -7,38 +7,24 @@ using UnityEngine;
 
 namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
 {
-    public class WarsHeuristic : IAgentDecision
+    public class WarsHeuristic : IAgentDecision<ShipSensor, Steering>
     {
-        public JobHandle DecideBatch(ref NativeArray<float> sensor,
-            ref NativeArray<float> actuator,
-            int sensorSize,
-            int actuatorSize,
-            int nAgents,
-            JobHandle handle)
+        public void BatchProcess(ref NativeArray<ShipSensor> sensors, ref NativeArray<Steering> actuators )
         {
-            for (int i = 0; i < nAgents; i++)
+            for (int i = 0; i < sensors.Length; i++)
             {
-                var pos = new float3(
-                    sensor[i * sensorSize + 0],
-                    sensor[i * sensorSize + 1],
-                    sensor[i * sensorSize + 2]
-                    );
-                var rot = new quaternion(
-                    sensor[i * sensorSize + 3],
-                    sensor[i * sensorSize + 4],
-                    sensor[i * sensorSize + 5],
-                    sensor[i * sensorSize + 6]
-                    );
+                var pos = sensors[i].Position;
+                var rot = sensors[i].Rotation;
 
                 var tmp = Attack(ref pos, ref rot, 1);
 
-                actuator[i * actuatorSize + 0] = tmp.YAxis;
-                actuator[i * actuatorSize + 1] = tmp.XAxis;
-                actuator[i * actuatorSize + 2] = tmp.Shoot;
+                actuators[i] = new Steering{
+                    XAxis = tmp.XAxis,
+                    YAxis = tmp.YAxis,
+                    Shoot = tmp.Shoot
+                };
                 
             }
-
-            return handle;
         }
 
         private Steering Attack(ref float3 position, ref quaternion rot, int attack)

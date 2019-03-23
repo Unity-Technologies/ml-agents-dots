@@ -2,6 +2,8 @@ using ECS_MLAgents_v0.Core;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
+using Unity.Entities;
+using Unity.Transforms;
 
 namespace ECS_MLAgents_v0.Example.SpaceMagic.Scripts
 {
@@ -10,7 +12,7 @@ namespace ECS_MLAgents_v0.Example.SpaceMagic.Scripts
     /// resulting motion for sphere assigned to this decision is a fast oscillation around the
     /// center point.
     /// </summary>
-    public class HeuristicSpace : IAgentDecision
+    public class HeuristicSpace : IAgentDecision<Position, Acceleration>
     {
         private float3 _center;
         private float _strength;
@@ -26,28 +28,22 @@ namespace ECS_MLAgents_v0.Example.SpaceMagic.Scripts
             _strength = strength;
         }
         
-        public JobHandle DecideBatch(ref NativeArray<float> sensor,
-            ref NativeArray<float> actuator,
-            int sensorSize,
-            int actuatorSize, 
-            int nAgents,
-            JobHandle handle)
+        public void BatchProcess(ref NativeArray<Position> sensors, ref NativeArray<Acceleration> actuators )
         {
-            var pos = new float3();
+            var nAgents = sensors.Length;
+            float3 pos = new float3();
             for (int n = 0; n < nAgents; n++)
             {
-                pos.x =sensor[n * 3 + 0] - _center.x;
-                pos.y =sensor[n * 3 + 1] - _center.y;
-                pos.z =sensor[n * 3 + 2] - _center.z;
-                var d = (pos.x * pos.x + pos.y * pos.y + pos.z * pos.z);
+                pos = sensors[n].Value;
+                
+                var d = (pos.x * pos.x+ pos.y * pos.y + pos.z * pos.z);
 
                 pos = -_strength * pos;
 
-                actuator[n * 3 + 0] = -100f*pos.z/d +pos.x;
-                actuator[n * 3 + 1] = 0 + pos.y;
-                actuator[n * 3 + 2] = 50f*pos.x/d + pos.z;
+                actuators[n] = new Acceleration{
+                    Value = new float3(-100f*pos.z/d +pos.x, 0 + pos.y, 50f*pos.x/d + pos.z)
+                };
             }
-            return handle;
         }
     }
 }

@@ -1,31 +1,39 @@
-﻿using Barracuda;
-using ECS_MLAgents_v0.Core.Inference;
+﻿using Unity.Entities;
+using Barracuda;
 using Unity.Collections;
-using Unity.Jobs;
+using ECS_MLAgents_v0.Core.Inference;
+using ECS_MLAgents_v0.Core;
+using System;
+using System.Linq;
+using System.Collections.Generic;
+using Unity.Collections.LowLevel.Unsafe;
+using UnityEngine;
 
-namespace ECS_MLAgents_v0.Core
-{
-    /// <summary>
-    /// This class uses a pretrained Neural Network model to take the decisions for a batch of
-    /// agents. As such, it implements a IAgentDecision interface and requires a Barracuda Neural
-    /// Network model as input during construction.
-    /// </summary>
-    public class NNDecision : IAgentDecision
+
+namespace ECS_MLAgents_v0.Core {
+    public class NNDecision<TS, TA> : IAgentDecision<TS, TA> 
+        where TS : struct, IComponentData
+        where TA : struct, IComponentData 
     {
+
+        private const int INITIAL_MEMORY_SIZE = 1024;
+
+        private const int SIZE_OF_FLOAT_IN_MEMORY = 4;
         private NNModel _model; 
         public InferenceDevice inferenceDevice = InferenceDevice.CPU;
         private Model _barracudaModel;
         private IWorker _engine;
         private const bool _verbose = false;
 
-        private float[] sensorData = new float[0];
-        /// <summary>
-        /// Generates a new NNDecision object that uses the model input to take a decision for
-        /// the agents present in the batches.
-        /// </summary>
-        /// <param name="model"> The Barracuda NNModel that will be use for the decision</param>
-        public NNDecision(NNModel model)
-        {
+        System.Type _sensorType;
+        System.Type _actuatorType;
+
+        private int _sensorSize;
+        private int _actuatorSize;
+
+
+        private float[] sensorData = new float[0]; // Hopefully soon a NativeArray
+        public NNDecision(NNModel model){
             _model = model;
             D.logEnabled = _verbose;
             _engine?.Dispose();
@@ -37,39 +45,100 @@ namespace ECS_MLAgents_v0.Core
                                        
             _engine = BarracudaWorkerFactory.CreateWorker(
                 executionDevice, _barracudaModel, _verbose);
-            
+
         }
-        
-        public JobHandle DecideBatch(ref NativeArray<float> sensor,
-            ref NativeArray<float> actuator,
-            int sensorSize,
-            int actuatorSize, 
-            int nAgents,
-            JobHandle handle)
+
+        public void BatchProcess(ref NativeArray<TS> sensors, ref NativeArray<TA> actuators )
         {
-            if (sensorData.Length < sensor.Length)
-            {
-                sensorData = new float[sensor.Length];
-            }
+            VerifySensor();
+            VerifyActuator();
             
-            sensor.CopyTo(sensorData);
-            // TODO : This is additional allocation here... need to go FASTER !
-            var sensorT = new Tensor(
-                new TensorShape(nAgents, sensorSize),
+            int batch = sensors.Length;
+            if (batch != actuators.Length)
+            {
+                throw new Exception("Error in the length of the sensors and actuators");
+            }
+
+
+
+
+
+
+            // unsafe{
+            //     fixed (float* s = &sensorData[0]) { 
+            //         UnsafeUtility.MemCpy(s , sensors.GetUnsafePtr(), batch * _sensorSize);
+            //     }
+            // }
+
+            var tmpS = new NativeArray<float>(batch * _sensorSize / SIZE_OF_FLOAT_IN_MEMORY, Allocator.Persistent);
+
+            for(var i = 0; i< batch; i++){
+                var ss = sensors[i];
+                TensorUtility.CopyToNativeArray(ss, tmpS,  i * _sensorSize );
+
+            //      unsafe
+            // {
+            //     UnsafeUtility.CopyStructureToPtr(ref ss, (byte*) (tmpS.GetUnsafePtr()) + i * _sensorSize);
+            // }
+            }
+
+
+            sensorData = tmpS.ToArray();
+
+            var _sensorT = new Tensor(
+                new TensorShape(batch, _sensorSize/ SIZE_OF_FLOAT_IN_MEMORY),
                 sensorData,
                 "sensor");
-            
-            _engine.Execute(sensorT);
-            sensorT.Dispose();
+
+            _engine.Execute(_sensorT);
+            _sensorT.Dispose();
             var actuatorT = _engine.Fetch("actuator");
 
-            actuator.Slice(
-                0, actuatorSize*nAgents).CopyFrom(actuatorT.data.Download(actuator.Length));
-            actuatorT.Dispose();
-            sensorT.Dispose();
+            // actuators.Slice(
+            //     0, _actuatorSize*batch).CopyFrom(actuatorT.data.Download(actuators.Length));
+            // unsafe{
+            //     fixed (float*  a = & (actuatorT.data.Download(batch)[0])) { 
+            //         UnsafeUtility.MemCpy(actuators.GetUnsafePtr(), a, batch * _actuatorSize);
+            //     }
+            // }
+
             
-            return handle;
+
+            var tmpA = new NativeArray<float>(batch * _actuatorSize / SIZE_OF_FLOAT_IN_MEMORY, Allocator.Persistent);
+
+
+
+            tmpA.CopyFrom(actuatorT.data.Download(tmpA.Length));
+
+
+            for(var i = 0; i< batch; i++){
+                var act = new TA();
+                TensorUtility.CopyFromNativeArray(tmpA, out act, i * _actuatorSize );
+                actuators[i] = act;
+            }
+
+
+            tmpS.Dispose();
+            tmpA.Dispose();
+            
         }
+
+
+        private void VerifySensor(){
+            if (! typeof(TS).Equals(_sensorType)){
+                TensorUtility.DebugCheckStructure(typeof(TS));
+                _sensorSize = UnsafeUtility.SizeOf<TS>();
+                _sensorType = typeof(TS);
+            }
+        }
+        private void VerifyActuator(){
+            if (! typeof(TA).Equals(_actuatorType)){
+                TensorUtility.DebugCheckStructure(typeof(TA));
+                _actuatorSize = UnsafeUtility.SizeOf<TA>();
+                _actuatorType = typeof(TA);
+            }
+        }
+
 
     }
 }

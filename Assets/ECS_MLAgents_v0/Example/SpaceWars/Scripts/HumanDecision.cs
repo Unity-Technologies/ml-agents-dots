@@ -3,18 +3,15 @@ using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
+using Unity.Entities;
 
 namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
 {
-    public class HumanDecision : IAgentDecision
+    public class HumanDecision<TS> : IAgentDecision<TS, Steering> 
+        where TS : struct, IComponentData
     {
         
-        public JobHandle DecideBatch(ref NativeArray<float> sensor,
-            ref NativeArray<float> actuator,
-            int sensorSize,
-            int actuatorSize, 
-            int nAgents,
-            JobHandle handle)
+        public void BatchProcess(ref NativeArray<TS> sensors, ref NativeArray<Steering> actuators )
         {
             var input = new float3();
             if (Input.GetKey(KeyCode.LeftArrow))
@@ -39,13 +36,14 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
                 input.z = 1;
             }
             
-            for (int n = 0; n < nAgents; n++)
+            for (int n = 0; n < actuators.Length; n++)
             {
-                actuator[n * 3 + 0] = input.x;
-                actuator[n * 3 + 1] = input.y;
-                actuator[n * 3 + 2] = input.z;
+                actuators[n] = new Steering{
+                    XAxis = input.x,
+                    YAxis = input.y,
+                    Shoot = input.z
+                };
             }
-            return handle;
         }
     }
 }

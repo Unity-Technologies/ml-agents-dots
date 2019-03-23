@@ -6,10 +6,13 @@ using System.IO;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.Profiling;
+using Unity.Entities;
 
 
 namespace ECS_MLAgents_v0.Core{
-    public class ExternalDecision : IAgentDecision
+    public class ExternalDecision<TS, TA> : IAgentDecision<TS, TA> 
+        where TS : struct, IComponentData
+        where TA : struct, IComponentData 
     {
 
         // [ Unity Ready (1) , nAgents (4) , sensorSize (4) , actuatorSize (4) , Data
@@ -27,6 +30,14 @@ namespace ECS_MLAgents_v0.Core{
         
         
         private float[] actuatorData = new float[0];
+
+
+
+        System.Type _sensorType;
+        System.Type _actuatorType;
+
+        private int _sensorSize;
+        private int _actuatorSize;
         
         // This is a temporary test file
         // TODO : Replace with a file creation system
@@ -47,36 +58,35 @@ namespace ECS_MLAgents_v0.Core{
             Debug.Log("Is Ready to Communicate");
         }
         
-        public JobHandle DecideBatch(
-            ref NativeArray<float> sensor, 
-            ref NativeArray<float> actuator, 
-            int sensorSize,
-            int actuatorSize, 
-            int nAgents, 
-            JobHandle handle)
+         public void BatchProcess(ref NativeArray<TS> sensors, ref NativeArray<TA> actuators )
         {
             Profiler.BeginSample("Communicating");
-            if (sensor.Length > 4 * 50000)
+
+            VerifySensor(typeof(TS));
+            VerifyActuator(typeof(TA));
+
+            int batch = sensors.Length;
+            if (batch != actuators.Length)
+            {
+                throw new Exception("Error in the length of the sensors and actuators");
+            }
+
+            if (batch > 50000)
             {
                 throw new Exception("TOO much data to send");
             }
             
-            if (actuator.Length > 4 * 50000)
+            if (actuatorData.Length < _actuatorSize* batch)
             {
-                throw new Exception("TOO much data to send");
-            }
-            
-            if (actuatorData.Length < actuator.Length)
-            {
-                actuatorData = new float[actuator.Length];
+                actuatorData = new float[_actuatorSize * batch];
             }
             
             
-            accessor.Write(NUMBER_AGENTS_POSITION, nAgents);
-            accessor.Write(SENSOR_SIZE_POSITION, sensorSize);
-            accessor.Write(ACTUATOR_SIZE_POSITION, actuatorSize);
+            accessor.Write(NUMBER_AGENTS_POSITION, batch);
+            accessor.Write(SENSOR_SIZE_POSITION, _sensorSize);
+            accessor.Write(ACTUATOR_SIZE_POSITION, _actuatorSize);
             
-            accessor.WriteArray(SENSOR_DATA_POSITION, sensor.ToArray(), 0, sensor.Length);
+            accessor.WriteArray(SENSOR_DATA_POSITION, sensors.ToArray(), 0, batch);
             
             accessor.Write(PYTHON_READY_POSITION, false);
             
@@ -96,11 +106,36 @@ namespace ECS_MLAgents_v0.Core{
                 }
             }
 
-            accessor.ReadArray(ACTUATOR_DATA_POSITION, actuatorData, 0, actuator.Length);
-            actuator.CopyFrom(actuatorData);
+            accessor.ReadArray(ACTUATOR_DATA_POSITION, actuatorData, 0, batch * _actuatorSize);
+
+            // actuator.CopyFrom(actuatorData);
+
+            var tmpA = new NativeArray<float>(batch * _actuatorSize, Allocator.Persistent);
+            tmpA.CopyFrom(actuatorData);
+            for(var i = 0; i< batch; i++){
+                var act = new TA();
+                TensorUtility.CopyFromNativeArray(tmpA, out act, i * _sensorSize * 4);
+                actuators[i] = act;
+            }
+            tmpA.Dispose();
+
 
             Profiler.BeginSample("Communicating");
-            return handle;
+        }
+
+        private void VerifySensor(System.Type t){
+            if (! t.Equals(_sensorType)){
+                TensorUtility.DebugCheckStructure(t);
+                _sensorSize = System.Runtime.InteropServices.Marshal.SizeOf(t) / 4;
+                _sensorType = t;
+            }
+        }
+        private void VerifyActuator(System.Type t){
+            if (! t.Equals(_actuatorType)){
+                TensorUtility.DebugCheckStructure(t);
+                _actuatorSize = System.Runtime.InteropServices.Marshal.SizeOf(t) / 4;
+                _actuatorType = t;
+            }
         }
     }
 }
