@@ -4,6 +4,7 @@ import numpy as np
 import time
 
 
+
 class UnityCommunication:
     FILE_CAPACITY = 200000
     NUMBER_AGENTS_POSITION = 0
@@ -14,7 +15,7 @@ class UnityCommunication:
 
     PYTHON_READY_POSITION = 100000
     ACTUATOR_DATA_POSITION = 100001
-
+    # FILE_NAME = "../../../ml-agents-ecs/Assets/shared_communication_file.txt"
     FILE_NAME = "shared_communication_file.txt"
 
     def __init__(self):
