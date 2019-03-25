@@ -2,7 +2,9 @@ using Unity.Entities;
 
 namespace ECS_MLAgents_v0.Core
 {
-    public interface IAgentSystem
+    public interface IAgentSystem<TS, TA>
+        where TS : struct , IComponentData
+        where TA:struct, IComponentData
     {
         /// <summary>
         /// If true, the AgentSystem will perform on the agents
@@ -12,7 +14,7 @@ namespace ECS_MLAgents_v0.Core
         /// <summary>
         /// The IAgentDecision that will be used to update the Actuators of compatible Entities.
         /// </summary>
-        IAgentDecision Decision { get; set; }
+        IAgentDecision<TS, TA> Decision { get; set; } 
         
         /// <summary>
         /// This method defines what are the required ComponentType that are needed on an Entity

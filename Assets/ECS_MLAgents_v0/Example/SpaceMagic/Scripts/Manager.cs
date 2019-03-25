@@ -42,9 +42,9 @@ namespace ECS_MLAgents_v0.Example.SpaceMagic.Scripts
         public float maxDistance;
         private EntityManager manager;
 
-        private IAgentSystem sA;
-        private IAgentSystem sB;
-        private IAgentSystem sC;
+        private SpaceSystemA sA;
+        private SpaceSystemB sB;
+        private SpaceSystemC sC;
         
         /// <summary>
         /// The sphere prefab
@@ -80,9 +80,9 @@ namespace ECS_MLAgents_v0.Example.SpaceMagic.Scripts
             sB.SetFilter<SphereGroup>(new SphereGroup{Group = 1});
             sC.SetFilter<SphereGroup>(new SphereGroup{Group = 2});
 
-            sA.Decision = new NNDecision(modelA);
-            sB.Decision = new NNDecision(modelB);
-            sC.Decision = new NNDecision(modelC);
+            sA.Decision = new NNDecision<Position, Acceleration>(modelA);
+            sB.Decision = new NNDecision<Position, Acceleration>(modelB);
+            sC.Decision = new NNDecision<Position, Acceleration>(modelC);
             
             
             Spawn(1);
@@ -112,7 +112,7 @@ namespace ECS_MLAgents_v0.Example.SpaceMagic.Scripts
             }
             if (Input.GetKeyDown((KeyCode.I)))
             {
-                sA.Decision = new NNDecision(modelA);
+                sA.Decision = new NNDecision<Position, Acceleration>(modelA);
             }
             if (Input.GetKeyDown((KeyCode.J)))
             {
@@ -120,7 +120,7 @@ namespace ECS_MLAgents_v0.Example.SpaceMagic.Scripts
             }
             if (Input.GetKeyDown((KeyCode.K)))
             {
-                sB.Decision = new NNDecision(modelB);
+                sB.Decision = new NNDecision<Position, Acceleration>(modelB);
             }
             if (Input.GetKeyDown((KeyCode.N)))
             {
@@ -128,7 +128,7 @@ namespace ECS_MLAgents_v0.Example.SpaceMagic.Scripts
             }
             if (Input.GetKeyDown((KeyCode.M)))
             {
-                sC.Decision = new NNDecision(modelC);
+                sC.Decision = new NNDecision<Position, Acceleration>(modelC);
             }
 
         }

@@ -143,9 +143,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxDistance: 2
   prefab: {fileID: 8480657802093770681, guid: 9002bbfd4ae214a8fb609aeacaa0de4d, type: 3}
-  modelA: {fileID: 11400002, guid: c16aa6693b8834a58855a5592bb4f5f8, type: 3}
-  modelB: {fileID: 11400002, guid: a3e419de75dc44356b527bf0b06e3b81, type: 3}
-  modelC: {fileID: 11400002, guid: 8533bf952c61d430e8765c2c16cde480, type: 3}
+  modelA: {fileID: 11400000, guid: c16aa6693b8834a58855a5592bb4f5f8, type: 3}
+  modelB: {fileID: 11400000, guid: a3e419de75dc44356b527bf0b06e3b81, type: 3}
+  modelC: {fileID: 11400000, guid: 8533bf952c61d430e8765c2c16cde480, type: 3}
 --- !u!4 &883511626
 Transform:
   m_ObjectHideFlags: 0

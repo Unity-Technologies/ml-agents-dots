@@ -6,10 +6,13 @@ using System.IO;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.Profiling;
+using Unity.Entities;
 
 
 namespace ECS_MLAgents_v0.Core{
-    public class ExternalDecision : IAgentDecision
+    public class ExternalDecision<TS, TA> : IAgentDecision<TS, TA> 
+        where TS : struct, IComponentData
+        where TA : struct, IComponentData 
     {
 
         // [ Unity Ready (1) , nAgents (4) , sensorSize (4) , actuatorSize (4) , Data
@@ -26,7 +29,15 @@ namespace ECS_MLAgents_v0.Core{
         private const int ACTUATOR_DATA_POSITION = 100001;
         
         
-        private float[] actuatorData = new float[0];
+        private TA[] actuatorData = new TA[0];
+
+
+
+        System.Type _sensorType;
+        System.Type _actuatorType;
+
+        private int _sensorSize;
+        private int _actuatorSize;
         
         // This is a temporary test file
         // TODO : Replace with a file creation system
@@ -47,42 +58,49 @@ namespace ECS_MLAgents_v0.Core{
             Debug.Log("Is Ready to Communicate");
         }
         
-        public JobHandle DecideBatch(
-            ref NativeArray<float> sensor, 
-            ref NativeArray<float> actuator, 
-            int sensorSize,
-            int actuatorSize, 
-            int nAgents, 
-            JobHandle handle)
+         public void BatchProcess(ref NativeArray<TS> sensors, ref NativeArray<TA> actuators, int offset = 0, int size = -1)
         {
-            Profiler.BeginSample("Communicating");
-            if (sensor.Length > 4 * 50000)
+            Profiler.BeginSample("__Communicating");
+
+            Profiler.BeginSample("__TypeCheck");
+            VerifySensor(typeof(TS));
+            VerifyActuator(typeof(TA));
+            if (size ==-1){
+                size = sensors.Length - offset;
+            }
+            Profiler.EndSample();
+
+            Profiler.BeginSample("__VerifyLength");
+            int batch = size;
+            if (sensors.Length != actuators.Length)
+            {
+                throw new Exception("Error in the length of the sensors and actuators");
+            }
+
+            if (batch > 50000)
             {
                 throw new Exception("TOO much data to send");
             }
             
-            if (actuator.Length > 4 * 50000)
+            if (actuatorData.Length < _actuatorSize* batch)
             {
-                throw new Exception("TOO much data to send");
+                actuatorData = new TA[batch];
             }
+            Profiler.EndSample();
             
-            if (actuatorData.Length < actuator.Length)
-            {
-                actuatorData = new float[actuator.Length];
-            }
+            Profiler.BeginSample("__Write");
+            accessor.Write(NUMBER_AGENTS_POSITION, batch);
+            accessor.Write(SENSOR_SIZE_POSITION, _sensorSize);
+            accessor.Write(ACTUATOR_SIZE_POSITION, _actuatorSize);
             
-            
-            accessor.Write(NUMBER_AGENTS_POSITION, nAgents);
-            accessor.Write(SENSOR_SIZE_POSITION, sensorSize);
-            accessor.Write(ACTUATOR_SIZE_POSITION, actuatorSize);
-            
-            accessor.WriteArray(SENSOR_DATA_POSITION, sensor.ToArray(), 0, sensor.Length);
+            accessor.WriteArray(SENSOR_DATA_POSITION, sensors.Slice(offset, batch).ToArray(), 0, batch);
             
             accessor.Write(PYTHON_READY_POSITION, false);
             
             accessor.Write(UNITY_READY_POSITION, true);
+            Profiler.EndSample();
             
-            
+            Profiler.BeginSample("__Wait");
             var readyToContinue = false;
             int loopIter = 0;
             while (!readyToContinue)
@@ -95,12 +113,35 @@ namespace ECS_MLAgents_v0.Core{
                     Debug.Log("Missed Communication");
                 }
             }
+            Profiler.EndSample();
 
-            accessor.ReadArray(ACTUATOR_DATA_POSITION, actuatorData, 0, actuator.Length);
-            actuator.CopyFrom(actuatorData);
+Profiler.BeginSample("__Read");
+            accessor.ReadArray(ACTUATOR_DATA_POSITION, actuatorData, 0, batch);
 
-            Profiler.BeginSample("Communicating");
-            return handle;
+            actuators.Slice(offset, batch).CopyFrom(actuatorData);
+
+            // for(var i = 0; i< batch; i++){
+            //     actuators[i] = actuatorData[i];
+            // }
+
+ Profiler.EndSample();
+            Profiler.EndSample();
+
+        }
+
+        private void VerifySensor(System.Type t){
+            if (! t.Equals(_sensorType)){
+                TensorUtility.DebugCheckStructure(t);
+                _sensorSize = System.Runtime.InteropServices.Marshal.SizeOf(t) / 4;
+                _sensorType = t;
+            }
+        }
+        private void VerifyActuator(System.Type t){
+            if (! t.Equals(_actuatorType)){
+                TensorUtility.DebugCheckStructure(t);
+                _actuatorSize = System.Runtime.InteropServices.Marshal.SizeOf(t) / 4;
+                _actuatorType = t;
+            }
         }
     }
 }

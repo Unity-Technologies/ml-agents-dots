@@ -5,6 +5,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 using UnityEngine;
+using Unity.Burst;
 
 namespace ECS_MLAgents_v0.Core
 {
@@ -35,29 +36,27 @@ namespace ECS_MLAgents_v0.Core
      * data in batch and generate a new NativeArray<float> that will be used to populate the
      * Actuator data of all compatible Entities.
      */
-    public abstract class AgentSystem<TS, TA> : JobComponentSystem, IAgentSystem
+    public abstract class AgentSystem<TS, TA> : JobComponentSystem, IAgentSystem<TS, TA>
         where TS : struct, IComponentData
         where TA : struct, IComponentData
     {   
         private const int INITIAL_MEMORY_SIZE = 1024;
-        private const int SIZE_OF_FLOAT_IN_MEMORY = 4;
         
-        private int _sensorMemorySize = INITIAL_MEMORY_SIZE;
-        private int _actuatorMemorySize = INITIAL_MEMORY_SIZE;
+        private int _currentNAgents = INITIAL_MEMORY_SIZE;
         
         public IDecisionRequester DecisionRequester { get; set; }
         private int _phase;
         
-        public IAgentDecision Decision { get; set; }
+        public IAgentDecision<TS, TA> Decision { get; set; }
         
         private ComponentGroup _componentGroup;
         private int _sensorSize;
         private int _actuatorSize;
         // TODO : Make sure there is not extra cost for memory allocation here and when copying
-        private NativeArray<float> _sensorTensor =
-            new NativeArray<float>(INITIAL_MEMORY_SIZE, Allocator.Persistent);
-        private NativeArray<float> _actuatorTensor =
-            new NativeArray<float>(INITIAL_MEMORY_SIZE, Allocator.Persistent);
+        private NativeArray<TS> _sensorTensor =
+            new NativeArray<TS>(INITIAL_MEMORY_SIZE, Allocator.Persistent);
+        private NativeArray<TA> _actuatorTensor =
+            new NativeArray<TA>(INITIAL_MEMORY_SIZE, Allocator.Persistent);
 
         // TODO : Decide if we want to keep at all
         private Logger _logger;
@@ -138,17 +137,13 @@ namespace ECS_MLAgents_v0.Core
              * If there was more agents than allowed by the memory allocation of the sensor or
              * actuator, then the size is updated to the required size.
              */
-            if (nAgents * _sensorSize / SIZE_OF_FLOAT_IN_MEMORY > _sensorMemorySize)
+            if (nAgents > _currentNAgents)
             {
-                _sensorMemorySize = nAgents * _sensorSize / SIZE_OF_FLOAT_IN_MEMORY;
+                _currentNAgents = nAgents;
                 _sensorTensor.Dispose();
-                _sensorTensor = new NativeArray<float>(_sensorMemorySize, Allocator.Persistent);
-            }
-            if (nAgents * _actuatorSize / SIZE_OF_FLOAT_IN_MEMORY > _actuatorMemorySize)
-            {
-                _actuatorMemorySize = nAgents * _actuatorSize / SIZE_OF_FLOAT_IN_MEMORY;
                 _actuatorTensor.Dispose();
-                _actuatorTensor = new NativeArray<float>(_actuatorMemorySize, Allocator.Persistent);
+                _sensorTensor = new NativeArray<TS>(_currentNAgents, Allocator.Persistent);
+                _actuatorTensor = new NativeArray<TA>(_currentNAgents, Allocator.Persistent);
             }
             
             /*
@@ -167,68 +162,54 @@ namespace ECS_MLAgents_v0.Core
             {
                 Sensors = sensors,
                 SensorTensor = _sensorTensor,
-                SensorSize = _sensorSize
             };
             handle = copySensorsJob.Schedule(nAgents, 64, handle);
-            
+
             handle.Complete();
-            
-            /*
-             * The Decision is called here to populate the NativeArray<float> of Actuators.
-             */
-            handle = Decision.DecideBatch(ref _sensorTensor, 
-                ref _actuatorTensor, 
-                _sensorSize / SIZE_OF_FLOAT_IN_MEMORY, 
-                _actuatorSize / SIZE_OF_FLOAT_IN_MEMORY, 
-                nAgents,
-                handle);
-            
-            /*
+
+            Decision.BatchProcess(ref _sensorTensor, ref _actuatorTensor, 0, nAgents);
+
+                        /*
              * Copy the data from the actuator NativeArray<float> to the actuators of each entity.
              */
             var copyActuatorsJob = new CopyActuatorsJob
             {
                 ActuatorTensor = _actuatorTensor,
                 Actuators = actuators,
-                ActuatorSize = _actuatorSize
+
             }; 
 
             return copyActuatorsJob.Schedule(nAgents, 64, handle);
+
         }
 
         /*
          * This IJobParallelFor copied the Sensor data into a NativeArray<float>
          */
-//        [BurstCompile]
+       [BurstCompile]
         private struct CopySensorsJob : IJobParallelFor
         {
             [ReadOnly] public ComponentDataArray<TS> Sensors;
-            public NativeArray<float> SensorTensor;
-            [ReadOnly] public int SensorSize;
+            public NativeArray<TS> SensorTensor;
             
             public void Execute(int i)
             {
-                TensorUtility.CopyToNativeArray(Sensors[i], SensorTensor, i * SensorSize);
+                SensorTensor[i] = Sensors[i];
             }
         }
         
         /*
          * This IJobParallelFor copies the Actuator data to the appropriate IComponentData
          */
-//        [BurstCompile]
+       [BurstCompile]
         private struct CopyActuatorsJob : IJobParallelFor
         {
-
             public ComponentDataArray<TA> Actuators;
-            public NativeArray<float> ActuatorTensor;
-            [ReadOnly] public int ActuatorSize;
+            public NativeArray<TA> ActuatorTensor;
             
             public void Execute(int i)
             {
-                var tmp = Actuators[i];
-                // TODO : Make sure there is no extra cost here
-                TensorUtility.CopyFromNativeArray(ActuatorTensor, out tmp, i * ActuatorSize);
-                Actuators[i] = tmp;
+                Actuators[i] = ActuatorTensor[i];
             }
         }
     }

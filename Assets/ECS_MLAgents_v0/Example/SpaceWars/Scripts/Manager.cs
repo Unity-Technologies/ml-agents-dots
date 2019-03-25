@@ -27,8 +27,8 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
         public GameObject prefab;
         
         
-        private IAgentSystem _shipSystemA;
-        private IAgentSystem _playerSystem;
+        private SmartShipSystem _shipSystemA;
+        private PlayerShipSystem _playerSystem;
 
         private SensorPopulate _sensorSystem;
         private ImpactSystem _impactSystem;
@@ -39,6 +39,19 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
 
         void Start()
         {
+
+
+
+
+
+
+
+
+
+
+
+
+
 
             Time.captureFramerate = 60;
             QualitySettings.vSyncCount = 0;
@@ -53,10 +66,12 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
             _impactSystem.Radius = 20;
 
             _shipSystemA = World.Active.GetExistingManager<SmartShipSystem>();
-            _shipSystemA.Decision = new NNDecision(model);
+            // _shipSystemA.Decision = new NNDecision<ShipSensor, Steering>(model);
+             _shipSystemA.Decision =new NNDecision<ShipSensor, Steering>(model);
 //            _shipSystemA.Decision = new ExternalDecision();
             _playerSystem = World.Active.GetExistingManager<PlayerShipSystem>();
-            _playerSystem.Decision = new HumanDecision();
+            // _playerSystem.Decision = new NNDecision<ShipSensor, Steering>(model);
+            _playerSystem.Decision = new HumanDecision<ShipSensor>();
             _playerSystem.SetNewComponentGroup(typeof(PlayerFlag));
             _shipSystemA.DecisionRequester = new FixedTimeRequester(0.1f);
 
@@ -71,7 +86,7 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
             });
 
             
-            Spawn(1000);
+            Spawn(10);
             
 //            Debug.Log(typeof(ShipSensor).GetCustomAttributes(typeof(SerializableAttribute), true)[0]);
 AttributeUtility.GetSensorMetaData(typeof(ShipSensor));
@@ -84,6 +99,9 @@ AttributeUtility.GetSensorMetaData(typeof(ShipSensor));
 
         void Update()
         {
+
+            
+
             // for (var i = 0; i < 10; i++){
             //     foreach(var behavior in World.Active.BehaviourManagers)
             //     {
