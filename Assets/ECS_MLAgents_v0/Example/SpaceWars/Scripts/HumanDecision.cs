@@ -11,7 +11,7 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
         where TS : struct, IComponentData
     {
         
-        public void BatchProcess(ref NativeArray<TS> sensors, ref NativeArray<Steering> actuators )
+        public void BatchProcess(ref NativeArray<TS> sensors, ref NativeArray<Steering> actuators, int offset = 0, int size = -1)
         {
             var input = new float3();
             if (Input.GetKey(KeyCode.LeftArrow))
@@ -35,12 +35,14 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
             {
                 input.z = 1;
             }
-            
+            if (size ==-1){
+                size = sensors.Length - offset;
+            }
             for (int n = 0; n < actuators.Length; n++)
             {
                 actuators[n] = new Steering{
-                    XAxis = input.x,
-                    YAxis = input.y,
+                    YAxis = input.x,
+                    XAxis = input.y,
                     Shoot = input.z
                 };
             }

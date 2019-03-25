@@ -72,6 +72,7 @@ namespace ECS_MLAgents_v0.Example.ZeroK.Scripts
             {
                 sensor.Position = pos.Value / 50;
                 sensor.Timer += 0.001f;
+                // sensor.Timer += 0.01f;
                 if (sensor.Timer > 1f)
                 {
                     sensor.Done = 1f;
@@ -89,6 +90,7 @@ namespace ECS_MLAgents_v0.Example.ZeroK.Scripts
             public void Execute(ref Position position, ref Sensor sensor)
             {
                 if (sensor.Timer > 1.0015f)
+                // if (sensor.Timer > 1.02f)
                 {
                     sensor.Done = 0;
                     sensor.Timer = 0;

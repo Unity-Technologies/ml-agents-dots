@@ -9,7 +9,7 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
 {
     public class WarsHeuristic : IAgentDecision<ShipSensor, Steering>
     {
-        public void BatchProcess(ref NativeArray<ShipSensor> sensors, ref NativeArray<Steering> actuators )
+        public void BatchProcess(ref NativeArray<ShipSensor> sensors, ref NativeArray<Steering> actuators, int offset = 0, int size = -1)
         {
             for (int i = 0; i < sensors.Length; i++)
             {

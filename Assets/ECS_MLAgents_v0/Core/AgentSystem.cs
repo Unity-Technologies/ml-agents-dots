@@ -167,7 +167,7 @@ namespace ECS_MLAgents_v0.Core
 
             handle.Complete();
 
-            Decision.BatchProcess(ref _sensorTensor, ref _actuatorTensor);
+            Decision.BatchProcess(ref _sensorTensor, ref _actuatorTensor, 0, nAgents);
 
                         /*
              * Copy the data from the actuator NativeArray<float> to the actuators of each entity.
@@ -201,7 +201,7 @@ namespace ECS_MLAgents_v0.Core
         /*
          * This IJobParallelFor copies the Actuator data to the appropriate IComponentData
          */
-//        [BurstCompile]
+       [BurstCompile]
         private struct CopyActuatorsJob : IJobParallelFor
         {
             public ComponentDataArray<TA> Actuators;

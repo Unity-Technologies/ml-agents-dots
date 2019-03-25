@@ -29,7 +29,7 @@ namespace ECS_MLAgents_v0.Core{
         private const int ACTUATOR_DATA_POSITION = 100001;
         
         
-        private float[] actuatorData = new float[0];
+        private TA[] actuatorData = new TA[0];
 
 
 
@@ -58,15 +58,21 @@ namespace ECS_MLAgents_v0.Core{
             Debug.Log("Is Ready to Communicate");
         }
         
-         public void BatchProcess(ref NativeArray<TS> sensors, ref NativeArray<TA> actuators )
+         public void BatchProcess(ref NativeArray<TS> sensors, ref NativeArray<TA> actuators, int offset = 0, int size = -1)
         {
-            Profiler.BeginSample("Communicating");
+            Profiler.BeginSample("__Communicating");
 
+            Profiler.BeginSample("__TypeCheck");
             VerifySensor(typeof(TS));
             VerifyActuator(typeof(TA));
+            if (size ==-1){
+                size = sensors.Length - offset;
+            }
+            Profiler.EndSample();
 
-            int batch = sensors.Length;
-            if (batch != actuators.Length)
+            Profiler.BeginSample("__VerifyLength");
+            int batch = size;
+            if (sensors.Length != actuators.Length)
             {
                 throw new Exception("Error in the length of the sensors and actuators");
             }
@@ -78,21 +84,23 @@ namespace ECS_MLAgents_v0.Core{
             
             if (actuatorData.Length < _actuatorSize* batch)
             {
-                actuatorData = new float[_actuatorSize * batch];
+                actuatorData = new TA[batch];
             }
+            Profiler.EndSample();
             
-            
+            Profiler.BeginSample("__Write");
             accessor.Write(NUMBER_AGENTS_POSITION, batch);
             accessor.Write(SENSOR_SIZE_POSITION, _sensorSize);
             accessor.Write(ACTUATOR_SIZE_POSITION, _actuatorSize);
             
-            accessor.WriteArray(SENSOR_DATA_POSITION, sensors.ToArray(), 0, batch);
+            accessor.WriteArray(SENSOR_DATA_POSITION, sensors.Slice(offset, batch).ToArray(), 0, batch);
             
             accessor.Write(PYTHON_READY_POSITION, false);
             
             accessor.Write(UNITY_READY_POSITION, true);
+            Profiler.EndSample();
             
-            
+            Profiler.BeginSample("__Wait");
             var readyToContinue = false;
             int loopIter = 0;
             while (!readyToContinue)
@@ -105,22 +113,20 @@ namespace ECS_MLAgents_v0.Core{
                     Debug.Log("Missed Communication");
                 }
             }
+            Profiler.EndSample();
 
-            accessor.ReadArray(ACTUATOR_DATA_POSITION, actuatorData, 0, batch * _actuatorSize);
+Profiler.BeginSample("__Read");
+            accessor.ReadArray(ACTUATOR_DATA_POSITION, actuatorData, 0, batch);
 
-            // actuator.CopyFrom(actuatorData);
+            actuators.Slice(offset, batch).CopyFrom(actuatorData);
 
-            var tmpA = new NativeArray<float>(batch * _actuatorSize, Allocator.Persistent);
-            tmpA.CopyFrom(actuatorData);
-            for(var i = 0; i< batch; i++){
-                var act = new TA();
-                TensorUtility.CopyFromNativeArray(tmpA, out act, i * _sensorSize * 4);
-                actuators[i] = act;
-            }
-            tmpA.Dispose();
+            // for(var i = 0; i< batch; i++){
+            //     actuators[i] = actuatorData[i];
+            // }
 
+ Profiler.EndSample();
+            Profiler.EndSample();
 
-            Profiler.BeginSample("Communicating");
         }
 
         private void VerifySensor(System.Type t){

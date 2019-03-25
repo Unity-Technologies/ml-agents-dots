@@ -48,7 +48,7 @@ namespace ECS_MLAgents_v0.Core {
 
         }
 
-        public void BatchProcess(ref NativeArray<TS> sensors, ref NativeArray<TA> actuators )
+        public void BatchProcess(ref NativeArray<TS> sensors, ref NativeArray<TA> actuators , int offset = 0, int size = -1)
         {
             VerifySensor();
             VerifyActuator();

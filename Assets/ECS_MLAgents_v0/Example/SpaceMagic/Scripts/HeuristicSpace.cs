@@ -28,11 +28,15 @@ namespace ECS_MLAgents_v0.Example.SpaceMagic.Scripts
             _strength = strength;
         }
         
-        public void BatchProcess(ref NativeArray<Position> sensors, ref NativeArray<Acceleration> actuators )
+        public void BatchProcess(ref NativeArray<Position> sensors, ref NativeArray<Acceleration> actuators, int offset = 0, int size = -1)
         {
+
             var nAgents = sensors.Length;
+            if (size ==-1){
+                size = sensors.Length - offset;
+            }
             float3 pos = new float3();
-            for (int n = 0; n < nAgents; n++)
+            for (int n = offset; n < size + offset; n++)
             {
                 pos = sensors[n].Value;
                 

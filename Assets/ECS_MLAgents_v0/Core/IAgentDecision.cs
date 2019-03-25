@@ -8,8 +8,8 @@ namespace ECS_MLAgents_v0.Core
      * based on the information present in the sensor.
      */
     public interface IAgentDecision<TS, TA> 
-        where TS : struct, IComponentData
-        where TA : struct, IComponentData 
+        where TS : struct
+        where TA : struct
     {
         /// <summary>
         /// DecideBatch updates the actuators of the agents present in the batch from
@@ -19,8 +19,9 @@ namespace ECS_MLAgents_v0.Core
         /// batch. T.</param>
         /// <param name="actuators">The aggregated data for the actuator information present in the
         /// batch. </param>
-        void BatchProcess(ref NativeArray<TS> sensors, ref NativeArray<TA> actuators);
+        void BatchProcess(ref NativeArray<TS> sensors, ref NativeArray<TA> actuators, int offset = 0, int size = -1);
 
+        // TODO : It is debatable wether or not we want to enforce the type here
     }
 
 }

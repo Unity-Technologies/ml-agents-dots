@@ -70,7 +70,8 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
              _shipSystemA.Decision =new NNDecision<ShipSensor, Steering>(model);
 //            _shipSystemA.Decision = new ExternalDecision();
             _playerSystem = World.Active.GetExistingManager<PlayerShipSystem>();
-            _playerSystem.Decision = new NNDecision<ShipSensor, Steering>(model);
+            // _playerSystem.Decision = new NNDecision<ShipSensor, Steering>(model);
+            _playerSystem.Decision = new HumanDecision<ShipSensor>();
             _playerSystem.SetNewComponentGroup(typeof(PlayerFlag));
             _shipSystemA.DecisionRequester = new FixedTimeRequester(0.1f);
 
@@ -99,19 +100,7 @@ AttributeUtility.GetSensorMetaData(typeof(ShipSensor));
         void Update()
         {
 
-            var decision = new NNDecision<ShipSensor, Steering>(model);
-
-            var ss = new NativeArray<ShipSensor>(2, Allocator.Temp);
-            ss[0] = new ShipSensor();
-            ss[1] = new ShipSensor();
-
-            var aa = new NativeArray<Steering>(2, Allocator.Temp);
-            aa[0] = new Steering();
-            aa[1] = new Steering();
-
-            decision.BatchProcess(ref ss, ref aa);
-
-            Debug.Log(aa[0].XAxis+"  "+ aa[1].XAxis);
+            
 
             // for (var i = 0; i < 10; i++){
             //     foreach(var behavior in World.Active.BehaviourManagers)

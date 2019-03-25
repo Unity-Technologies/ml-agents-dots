@@ -84,7 +84,7 @@ namespace ECS_MLAgents_v0.Example.ZeroK.Scripts
 //            sC.Decision = new NNDecision(modelC);
              sA.DecisionRequester = new FixedCountRequester(1);
 
-             Time.captureFramerate = 60;
+            //  Time.captureFramerate = 60;
              
             Spawn(100);
         }
