@@ -1,9 +1,6 @@
 import mmap
 import struct
 import numpy as np
-import time
-
-
 
 class UnityCommunication:
     FILE_CAPACITY = 200000
@@ -31,7 +28,8 @@ class UnityCommunication:
         number_agents = self.get_int(self.NUMBER_AGENTS_POSITION)
 
         sensor = np.frombuffer(
-            buffer=self.accessor[self.SENSOR_DATA_POSITION: self.SENSOR_DATA_POSITION + 4*sensor_size*number_agents],
+            buffer=self.accessor[self.SENSOR_DATA_POSITION: self.SENSOR_DATA_POSITION
+                                 + 4*sensor_size*number_agents],
             dtype=np.float32,
             count=sensor_size * number_agents,
             offset=0
@@ -84,6 +82,7 @@ if __name__ == "__main__":
         steps += 1
         s = comm.read_sensor()
         nag, nse, nac = comm.get_parameters()
+        print('Number of agents is {}'.format(nag))
         # print(s.shape)
         # time.sleep(0.1)
         comm.write_actuator(
