@@ -12,7 +12,7 @@ namespace ECS_MLAgents_v0.Example.SpaceMagic.Scripts
     public class SpaceSystemA : AgentSystem<Position, Acceleration>{ }
     public class SpaceSystemB : AgentSystem<Position, Acceleration>{ }
     public class SpaceSystemC : AgentSystem<Position, Acceleration>{ }
-    
+
     /// <summary>
     /// Manager is responsible for instantiation the spheres and the IAgentSystem that will make
     /// them move.
@@ -32,20 +32,21 @@ namespace ECS_MLAgents_v0.Example.SpaceMagic.Scripts
     ///
     ///     N : Give a Heuristic to the third IAgentSystem
     ///     M : Give a NNModel to the third IAgentSystem
-    /// 
+    ///
     /// </summary>
     public class Manager : MonoBehaviour
     {
         /// <summary>
-        /// The distance at which the spheres are instantiated from the center 
+        /// The distance at which the spheres are instantiated from the center
         /// </summary>
         public float maxDistance;
+        
         private EntityManager manager;
 
         private SpaceSystemA sA;
         private SpaceSystemB sB;
         private SpaceSystemC sC;
-        
+
         /// <summary>
         /// The sphere prefab
         /// </summary>
@@ -57,17 +58,17 @@ namespace ECS_MLAgents_v0.Example.SpaceMagic.Scripts
         public NNModel modelA;
         public NNModel modelB;
         public NNModel modelC;
-        
-        
+
+
         void Start()
         {
             manager = World.Active.GetOrCreateManager<EntityManager>();
-            
 
-            sA=  World.Active.GetExistingManager<SpaceSystemA>(); 
+
+            sA=  World.Active.GetExistingManager<SpaceSystemA>();
             sB=  World.Active.GetExistingManager<SpaceSystemB>();
             sC=  World.Active.GetExistingManager<SpaceSystemC>();
-            
+
 //            sA.Enabled = false;
 //            sB.Enabled = false;
 //            sC.Enabled = false;
@@ -75,7 +76,7 @@ namespace ECS_MLAgents_v0.Example.SpaceMagic.Scripts
             sA.SetNewComponentGroup(typeof(SphereGroup));
             sB.SetNewComponentGroup(typeof(SphereGroup));
             sC.SetNewComponentGroup(typeof(SphereGroup));
-            
+
             sA.SetFilter<SphereGroup>(new SphereGroup{Group = 0});
             sB.SetFilter<SphereGroup>(new SphereGroup{Group = 1});
             sC.SetFilter<SphereGroup>(new SphereGroup{Group = 2});
@@ -83,8 +84,8 @@ namespace ECS_MLAgents_v0.Example.SpaceMagic.Scripts
             sA.Decision = new NNDecision<Position, Acceleration>(modelA);
             sB.Decision = new NNDecision<Position, Acceleration>(modelB);
             sC.Decision = new NNDecision<Position, Acceleration>(modelC);
-            
-            
+
+
             Spawn(1);
         }
 
