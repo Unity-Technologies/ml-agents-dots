@@ -59,6 +59,7 @@ namespace ECS_MLAgents_v0.Example.SpaceMagic.Scripts
         public NNModel modelB;
         public NNModel modelC;
 
+        System.Func<Position, Acceleration> heuristic;
 
         void Start()
         {
@@ -85,6 +86,14 @@ namespace ECS_MLAgents_v0.Example.SpaceMagic.Scripts
             sB.Decision = new NNDecision<Position, Acceleration>(modelB);
             sC.Decision = new NNDecision<Position, Acceleration>(modelC);
 
+            heuristic = pos => {
+                    float3 val = pos.Value;
+                    var d = (val.x * val.x+ val.y * val.y + val.z * val.z);
+                    val = - 3f * val;
+                    return new Acceleration{
+                        Value = new float3(-100f*val.z/d +val.x, 0 + val.y, 50f*val.x/d + val.z)
+                    };
+                };
 
             Spawn(1);
         }
@@ -109,7 +118,8 @@ namespace ECS_MLAgents_v0.Example.SpaceMagic.Scripts
 
             if (Input.GetKeyDown((KeyCode.U)))
             {
-                sA.Decision = new HeuristicSpace(new float3(20,0,0), 3);
+                // sA.Decision = new HeuristicSpace(new float3(20,0,0), 3);
+                sA.Decision = new HeuristicDecision<Position, Acceleration>( heuristic);
             }
             if (Input.GetKeyDown((KeyCode.I)))
             {
@@ -117,7 +127,7 @@ namespace ECS_MLAgents_v0.Example.SpaceMagic.Scripts
             }
             if (Input.GetKeyDown((KeyCode.J)))
             {
-                sB.Decision = new HeuristicSpace(new float3(20,0,0), 3);
+                sB.Decision = new HeuristicDecision<Position, Acceleration>( heuristic);
             }
             if (Input.GetKeyDown((KeyCode.K)))
             {
@@ -125,7 +135,7 @@ namespace ECS_MLAgents_v0.Example.SpaceMagic.Scripts
             }
             if (Input.GetKeyDown((KeyCode.N)))
             {
-                sC.Decision = new HeuristicSpace(new float3(20,0,0), 3);
+                sC.Decision = new HeuristicDecision<Position, Acceleration>( heuristic);
             }
             if (Input.GetKeyDown((KeyCode.M)))
             {
