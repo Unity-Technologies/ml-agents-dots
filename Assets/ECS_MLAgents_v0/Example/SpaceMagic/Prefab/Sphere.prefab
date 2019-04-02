@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 7329952648618696081}
   - component: {fileID: 7175794993082824140}
   - component: {fileID: 4931620525958682511}
-  - component: {fileID: 6329899614523502008}
   - component: {fileID: 9208578237387885132}
   - component: {fileID: 3511010848622024065}
   m_Layer: 0
@@ -80,23 +79,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_SerializedData:
     Value:
-      x: 0
-      y: 0
-      z: 0
---- !u!114 &6329899614523502008
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8480657802093770681}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f2a8abc5e5549439b29a0f9cbb7776b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_SerializedData:
-    Reward:
       x: 0
       y: 0
       z: 0

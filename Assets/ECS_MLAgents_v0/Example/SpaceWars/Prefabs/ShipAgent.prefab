@@ -15,7 +15,6 @@ GameObject:
   - component: {fileID: 8721470876629579887}
   - component: {fileID: 2923791308240225941}
   - component: {fileID: 8934060468449308990}
-  - component: {fileID: 8807437141133750185}
   - component: {fileID: 7137524798252401196}
   - component: {fileID: 2450615790375797412}
   m_Layer: 0
@@ -138,23 +137,6 @@ MonoBehaviour:
     YAxis: 0
     XAxis: 0
     Shoot: 0
---- !u!114 &8807437141133750185
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 801768939125754296}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f2a8abc5e5549439b29a0f9cbb7776b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_SerializedData:
-    Reward:
-      x: 0
-      y: 0
-      z: 0
 --- !u!114 &7137524798252401196
 MonoBehaviour:
   m_ObjectHideFlags: 0

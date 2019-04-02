@@ -88,7 +88,6 @@ namespace ECS_MLAgents_v0.Core
             var componentTypes = t.ToList();
             componentTypes.Add(ComponentType.ReadOnly(typeof(TS)));
             componentTypes.Add(typeof(TA));
-            componentTypes.Add(typeof(Agent));
             _componentGroup = GetComponentGroup(componentTypes.ToArray());
         }
 
@@ -152,7 +151,6 @@ namespace ECS_MLAgents_v0.Core
             _logger.Log("On update with "+_componentGroup.CalculateLength()+" entities");
             var sensors = _componentGroup.GetComponentDataArray<TS>();
             var actuators = _componentGroup.GetComponentDataArray<TA>();
-            var agents = _componentGroup.GetComponentDataArray<Agent>();
             var handle = inputDeps;
             
             /*

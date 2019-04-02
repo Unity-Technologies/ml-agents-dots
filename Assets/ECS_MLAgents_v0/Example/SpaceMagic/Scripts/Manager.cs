@@ -148,7 +148,6 @@ namespace ECS_MLAgents_v0.Example.SpaceMagic.Scripts
                 float speedY = Random.Range(-1f, 1f);
                 float speedZ = Random.Range(-1f, 1f);
                 manager.AddSharedComponentData(entities[i], new SphereGroup{Group = i%3});
-                manager.SetComponentData(entities[i], new Agent());
                 manager.SetComponentData(entities[i], new Acceleration());
                 manager.SetComponentData(entities[i],
                     new Position

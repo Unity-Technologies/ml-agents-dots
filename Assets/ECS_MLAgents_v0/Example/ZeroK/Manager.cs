@@ -109,7 +109,6 @@ namespace ECS_MLAgents_v0.Example.ZeroK.Scripts
                 float speedX = Random.Range(-1f, 1f);
                 float speedY = Random.Range(-1f, 1f);
                 float speedZ = Random.Range(-1f, 1f);
-                manager.SetComponentData(entities[i], new Agent());
                 manager.AddComponentData(entities[i], new Sensor());
                 manager.AddComponentData(entities[i],
                     new Position
