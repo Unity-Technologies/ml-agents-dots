@@ -10,7 +10,7 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
     [Serializable]
     public struct ShipSensor : IComponentData
     {
-        [Reward]
+        // [Reward]
 //        public float Reward;
         public float3 Position;
         public quaternion Rotation;
