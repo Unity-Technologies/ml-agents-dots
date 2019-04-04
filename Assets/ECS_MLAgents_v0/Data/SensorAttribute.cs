@@ -8,7 +8,7 @@ using Unity.Mathematics;
 
 namespace ECS_MLAgents_v0.Data
 {
-    public enum SensorDataType{
+    public enum SensorDataType : int {
         FLOAT,
         // INT,
         // BOOL,
@@ -17,7 +17,7 @@ namespace ECS_MLAgents_v0.Data
 
     } 
 
-    public enum SensorType{
+    public enum SensorType : int {
         DATA,
         REWARD,
         DONE,
@@ -42,7 +42,7 @@ namespace ECS_MLAgents_v0.Data
         // Note : This is non blittable
         public struct SensorMetadata
         {
-            public char32 Name;
+            public char64 Name;
             public char256 Description;
             // public int4 Dimension;
             // public int Offset;
@@ -52,7 +52,8 @@ namespace ECS_MLAgents_v0.Data
         
         public static SensorMetadata[] GetSensorMetaData(Type t)
         {
-            var fields = t.GetFields(BindingFlags.Public | BindingFlags.Instance);
+            var fields = t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            // var fields = t.GetFields();
             var result = new SensorMetadata[fields.Length];
             for(var i =0; i<fields.Length; i++)
             {
@@ -72,9 +73,9 @@ namespace ECS_MLAgents_v0.Data
             }
 
             return new SensorMetadata{
-                Name = char32.FromString(field.Name),
+                Name = new char64(field.Name),
                 SensorType = attribute.SensorType,
-                Description = char256.FromString(attribute.Description),
+                Description = new char256(attribute.Description),
             };
         }
 

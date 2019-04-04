@@ -43,8 +43,10 @@ namespace ECS_MLAgents_v0.Core{
         // TODO : Replace with a file creation system
         // TODO : Implement the communication in a separate class
         // TODO : Have separate files for sensor and actuators
-        private string filenameWrite = "Assets/shared_communication_file.txt";
-        
+        // private string filenameWrite = "Assets/shared_communication_file.txt";
+        private string filenameWrite = "shared_communication_file.txt";
+
+
         private MemoryMappedViewAccessor accessor;
         
         public ExternalDecision()
@@ -115,7 +117,7 @@ namespace ECS_MLAgents_v0.Core{
             }
             Profiler.EndSample();
 
-Profiler.BeginSample("__Read");
+            Profiler.BeginSample("__Read");
             accessor.ReadArray(ACTUATOR_DATA_POSITION, actuatorData, 0, batch);
 
             actuators.Slice(offset, batch).CopyFrom(actuatorData);
@@ -124,7 +126,7 @@ Profiler.BeginSample("__Read");
             //     actuators[i] = actuatorData[i];
             // }
 
- Profiler.EndSample();
+            Profiler.EndSample();
             Profiler.EndSample();
 
         }
