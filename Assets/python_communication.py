@@ -2,6 +2,7 @@ import mmap
 import struct
 import numpy as np
 
+
 class UnityCommunication:
     FILE_CAPACITY = 200000
     NUMBER_AGENTS_POSITION = 0
@@ -20,26 +21,30 @@ class UnityCommunication:
             # memory-map the file, size 0 means whole file
             self.accessor = mmap.mmap(f.fileno(), 0)
 
-    def get_int(self, position : int) -> int:
-        return struct.unpack("i", self.accessor[position:position + 4])[0]
+    def get_int(self, position: int) -> int:
+        return struct.unpack("i", self.accessor[position : position + 4])[0]
 
     def read_sensor(self) -> np.ndarray:
         sensor_size = self.get_int(self.SENSOR_SIZE_POSITION)
         number_agents = self.get_int(self.NUMBER_AGENTS_POSITION)
 
         sensor = np.frombuffer(
-            buffer=self.accessor[self.SENSOR_DATA_POSITION: self.SENSOR_DATA_POSITION
-                                 + 4*sensor_size*number_agents],
+            buffer=self.accessor[
+                self.SENSOR_DATA_POSITION : self.SENSOR_DATA_POSITION
+                + 4 * sensor_size * number_agents
+            ],
             dtype=np.float32,
             count=sensor_size * number_agents,
-            offset=0
+            offset=0,
         )
         return np.reshape(sensor, (number_agents, sensor_size))
 
     def get_parameters(self) -> (int, int, int):
-        return self.get_int(self.NUMBER_AGENTS_POSITION), \
-               self.get_int(self.SENSOR_SIZE_POSITION), \
-               self.get_int(self.ACTUATOR_SIZE_POSITION)
+        return (
+            self.get_int(self.NUMBER_AGENTS_POSITION),
+            self.get_int(self.SENSOR_SIZE_POSITION),
+            self.get_int(self.ACTUATOR_SIZE_POSITION),
+        )
 
     def write_actuator(self, actuator: np.ndarray):
         actuator_size = self.get_int(self.ACTUATOR_SIZE_POSITION)
@@ -50,18 +55,24 @@ class UnityCommunication:
             actuator = actuator.astype(np.float32)
 
         try:
-            assert(actuator.shape == (number_agents, actuator_size))
+            assert actuator.shape == (number_agents, actuator_size)
         except:
             print("_________")
             print(actuator.shape)
             print((number_agents, actuator_size))
 
-        self.accessor[self.ACTUATOR_DATA_POSITION: self.ACTUATOR_DATA_POSITION + 4*actuator_size*number_agents] = \
-            actuator.tobytes()
+        self.accessor[
+            self.ACTUATOR_DATA_POSITION : self.ACTUATOR_DATA_POSITION
+            + 4 * actuator_size * number_agents
+        ] = actuator.tobytes()
 
     def set_ready(self):
-        self.accessor[self.UNITY_READY_POSITION: self.UNITY_READY_POSITION+1] = bytearray(struct.pack("b", False))
-        self.accessor[self.PYTHON_READY_POSITION: self.PYTHON_READY_POSITION+1] = bytearray(struct.pack("b", True))
+        self.accessor[
+            self.UNITY_READY_POSITION : self.UNITY_READY_POSITION + 1
+        ] = bytearray(struct.pack("b", False))
+        self.accessor[
+            self.PYTHON_READY_POSITION : self.PYTHON_READY_POSITION + 1
+        ] = bytearray(struct.pack("b", True))
 
     def unity_ready(self) -> bool:
         return self.accessor[self.UNITY_READY_POSITION]
@@ -71,30 +82,19 @@ class UnityCommunication:
 
 
 if __name__ == "__main__":
-    comm = UnityCommunication()
-
+    COMMS = UnityCommunication()
     steps = 0
     while True:
 
         u_ready = False
         while not u_ready:
-            u_ready = comm.unity_ready()
+            u_ready = COMMS.unity_ready()
         steps += 1
-        s = comm.read_sensor()
-        nag, nse, nac = comm.get_parameters()
-        print('Number of agents is {}'.format(nag))
+        s = COMMS.read_sensor()
+        nag, nse, nac = COMMS.get_parameters()
+        print("Number of agents is {}".format(nag))
         # print(s.shape)
         # time.sleep(0.1)
-        comm.write_actuator(
-            np.random.normal(size=(nag, nac))
-        )
-        comm.set_ready()
-
-
-
-
-
-
-
-
+        COMMS.write_actuator(np.random.normal(size=(nag, nac)))
+        COMMS.set_ready()
 
