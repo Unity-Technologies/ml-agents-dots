@@ -5,6 +5,7 @@ import numpy as np
 from python_communication import UnityCommunication
 from .brain import BrainInfo, BrainParameters
 
+
 class ECSEnvironment(object):
     VEC_SIZE = 8
     ACT_SIZE = 3
@@ -37,18 +38,23 @@ class ECSEnvironment(object):
 
     def make_brain_info(self, sensor):
         # This assumes the order is consistent
-        self.step_count+=1
+        self.step_count += 1
         done = False
         if self.step_count % 50 == 0:
             done = True
-        return {"ECSBrain" : BrainInfo([], sensor, [" "] * sensor.shape[0],
-                         reward=sensor[:,0],
-                         agents=list(range(sensor.shape[0])),
-                         local_done=[done] * sensor.shape[0],
-                         max_reached=[done] * sensor.shape[0],
-                         vector_action=sensor,
-                         text_action = [" "] * sensor.shape[0])}
-
+        return {
+            "ECSBrain": BrainInfo(
+                [],
+                sensor,
+                [" "] * sensor.shape[0],
+                reward=sensor[:, 0],
+                agents=list(range(sensor.shape[0])),
+                local_done=[done] * sensor.shape[0],
+                max_reached=[done] * sensor.shape[0],
+                vector_action=sensor,
+                text_action=[" "] * sensor.shape[0],
+            )
+        }
 
     @property
     def curriculum(self):
@@ -60,9 +66,17 @@ class ECSEnvironment(object):
 
     @property
     def brains(self):
-        return {"ECSBrain": BrainParameters("ECSBrain", self.VEC_SIZE, 1,
-                 [], [self.ACT_SIZE],
-                 [" "]*self.ACT_SIZE, 1)} # 1 for continuopus
+        return {
+            "ECSBrain": BrainParameters(
+                "ECSBrain",
+                self.VEC_SIZE,
+                1,
+                [],
+                [self.ACT_SIZE],
+                [" "] * self.ACT_SIZE,
+                1,
+            )
+        }  # 1 for continuopus
 
     @property
     def global_done(self):
@@ -89,7 +103,6 @@ class ECSEnvironment(object):
         return ["ECSBrain"]
 
 
-
 # if __name__ == "__main__":
 #     comm = UnityCommunication()
 #
@@ -109,5 +122,4 @@ class ECSEnvironment(object):
 #         )
 #         comm.set_ready()
 #
-
 
