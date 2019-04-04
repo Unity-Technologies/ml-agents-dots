@@ -15,13 +15,14 @@ namespace ECS_MLAgents_v0.Data
         private byte[] bytes;
 
         public char<N>(string s){
-            var buffer = System.Text.Encoding.ASCII.GetBytes(s);
-            this.size = buffer.Length;
             this.bytes=new byte[<N>];
-            if (size> <N>){
-                size = <N>;
+            this.size = s.Length;
+            if (this.size > <N>){
+                throw new NotSupportedException(
+                    "Cannot create a char<N> object with more than <N> characters"
+                    );
             }
-            Array.Copy(buffer, 0, bytes, 0, size);
+            System.Text.Encoding.ASCII.GetBytes(s, 0, this.size, this.bytes, 0);
         }
 
         public string GetString(){
@@ -40,13 +41,14 @@ namespace ECS_MLAgents_v0.Data
         private byte[] bytes;
 
         public char64(string s){
-            var buffer = System.Text.Encoding.ASCII.GetBytes(s);
-            this.size = buffer.Length;
             this.bytes=new byte[64];
-            if (size> 64){
-                size = 64;
+            this.size = s.Length;
+            if (this.size > 64){
+                throw new NotSupportedException(
+                    "Cannot create a char64 object with more than 64 characters"
+                    );
             }
-            Array.Copy(buffer, 0, bytes, 0, size);
+            System.Text.Encoding.ASCII.GetBytes(s, 0, this.size, this.bytes, 0);
         }
 
         public string GetString(){
@@ -62,13 +64,14 @@ namespace ECS_MLAgents_v0.Data
         private byte[] bytes;
 
         public char256(string s){
-            var buffer = System.Text.Encoding.ASCII.GetBytes(s);
-            this.size = buffer.Length;
             this.bytes=new byte[256];
-            if (size> 256){
-                size = 256;
+            this.size = s.Length;
+            if (this.size > 256){
+                throw new NotSupportedException(
+                    "Cannot create a char256 object with more than 256 characters"
+                    );
             }
-            Array.Copy(buffer, 0, bytes, 0, size);
+            System.Text.Encoding.ASCII.GetBytes(s, 0, this.size, this.bytes, 0);
         }
 
         public string GetString(){

@@ -3,6 +3,7 @@ using ECS_MLAgents_v0;
 using ECS_MLAgents_v0.Data;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using System;
 
 namespace ECS_MLAgents_v0.Editor.Tests{
     public class char64Test{
@@ -18,9 +19,9 @@ namespace ECS_MLAgents_v0.Editor.Tests{
 
         [Test]
         public void TestLongStringChar64(){
-            var tooLong = new char64("0000000001000000000200000000030000000004000000000500000000060000XXXXX");
-            Assert.AreEqual("0000000001000000000200000000030000000004000000000500000000060000",tooLong.GetString()); 
-        }
+            Assert.That(() =>  new char64("0000000001000000000200000000030000000004000000000500000000060000XXXXX"), 
+                Throws.TypeOf<NotSupportedException>());
+            }
     }
 
     public class char256Test{
