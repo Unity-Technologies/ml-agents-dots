@@ -57,6 +57,14 @@ namespace ECS_MLAgents_v0.Example.ZeroK.Scripts
         
         void Start()
         {
+
+            Screen.SetResolution(1280, 720, false);
+            QualitySettings.SetQualityLevel(0, true);
+            Time.timeScale = 100;
+            Time.captureFramerate = 60;
+            Application.targetFrameRate = -1;
+
+
             Time.captureFramerate = 60;
             manager = World.Active.GetOrCreateManager<EntityManager>();
             
@@ -86,7 +94,7 @@ namespace ECS_MLAgents_v0.Example.ZeroK.Scripts
 
             //  Time.captureFramerate = 60;
              
-            Spawn(100);
+            Spawn(10000);
         }
 
         void Update()

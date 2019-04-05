@@ -6,6 +6,7 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 using Random = UnityEngine.Random;
+using System.Runtime.InteropServices;
 
 namespace ECS_MLAgents_v0.Example.SpaceMagic.Scripts
 {

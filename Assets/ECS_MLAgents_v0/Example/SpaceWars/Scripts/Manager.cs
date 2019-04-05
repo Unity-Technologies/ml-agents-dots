@@ -84,7 +84,7 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
             Spawn(10);
 
             //            Debug.Log(typeof(ShipSensor).GetCustomAttributes(typeof(SerializableAttribute), true)[0]);
-            AttributeUtility.GetSensorMetaData(typeof(ShipSensor));
+            // AttributeUtility.GetSensorMetaData(typeof(ShipSensor));
         }
 
 
