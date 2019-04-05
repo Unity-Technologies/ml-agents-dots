@@ -9,7 +9,7 @@ using Unity.Mathematics;
 namespace ECS_MLAgents_v0.Editor.Tests{
     public class GenerateMetadata{
 
-        const int SENSOR_METADATA_SIZE = 332;
+        const int SENSOR_METADATA_SIZE = 352;
 
         public struct TestSensor{
             float3 data0;

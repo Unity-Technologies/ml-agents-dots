@@ -8,11 +8,11 @@ using Unity.Mathematics;
 
 namespace ECS_MLAgents_v0.Data
 {
-    public enum SensorDataType : int {
+    public enum DataType : int {
         FLOAT,
         // INT,
         // BOOL,
-        // ENUM,
+        ENUM,
         // TEXTURE,
 
     } 
@@ -34,21 +34,21 @@ namespace ECS_MLAgents_v0.Data
         }
 
     }
-    
 
+    public struct SensorMetadata 
+    {
+        public char64 Name;
+        public char256 Description;
+        public int4 Dimension;
+        // public int Offset;
+        public DataType DataType;
+        public SensorType SensorType;
+    }
 
     public class AttributeUtility
     {
         // Note : This is non blittable
-        public struct SensorMetadata
-        {
-            public char64 Name;
-            public char256 Description;
-            // public int4 Dimension;
-            // public int Offset;
-            // public SensorDataType DataType;
-            public SensorType SensorType;
-        }
+ 
         
         public static SensorMetadata[] GetSensorMetaData(Type t)
         {
@@ -72,10 +72,22 @@ namespace ECS_MLAgents_v0.Data
                 attribute = new SensorAttribute(SensorType.DATA);
             }
 
+            DataType type = DataType.FLOAT;
+            int dim = UnsafeUtility.SizeOf(field.FieldType) / 4;
+            if (field.GetType().IsEnum){
+                type = DataType.ENUM; 
+                dim = Enum.GetValues(field.GetType()).Length;
+            }
+
+
+
             return new SensorMetadata{
                 Name = new char64(field.Name),
                 SensorType = attribute.SensorType,
                 Description = new char256(attribute.Description),
+                DataType = type,
+                Dimension = dim,
+
             };
         }
 
