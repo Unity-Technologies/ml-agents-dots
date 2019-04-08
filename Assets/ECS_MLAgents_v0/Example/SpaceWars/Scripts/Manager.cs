@@ -25,6 +25,8 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
         public DecisionSelector shipDecisionSelector;
         public DecisionSelector playerDecisionSelector;
 
+        public int NumberShips;
+
         private EntityManager manager;
         public GameObject prefab;
 
@@ -79,9 +81,9 @@ namespace ECS_MLAgents_v0.Example.SpaceWars.Scripts
                 ReloadTime = 1f,
                 MaxReloadTime = 1f
             });
+            Spawn(NumberShips);
 
-
-            Spawn(10);
+            // Spawn(10);
 
             //            Debug.Log(typeof(ShipSensor).GetCustomAttributes(typeof(SerializableAttribute), true)[0]);
             // AttributeUtility.GetSensorMetaData(typeof(ShipSensor));

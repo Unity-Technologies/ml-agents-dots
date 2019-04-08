@@ -101,25 +101,3 @@ class ECSEnvironment(object):
     @property
     def external_brain_names(self):
         return ["ECSBrain"]
-
-
-# if __name__ == "__main__":
-#     comm = UnityCommunication()
-#
-#     steps = 0
-#     while True:
-#
-#         u_ready = False
-#         while not u_ready:
-#             u_ready = comm.unity_ready()
-#         steps += 1
-#         s = comm.read_sensor()
-#         nag, nse, nac = comm.get_parameters()
-#         # print(s.shape)
-#         # time.sleep(0.1)
-#         comm.write_actuator(
-#             np.random.normal(size=(nag, nac))
-#         )
-#         comm.set_ready()
-#
-
