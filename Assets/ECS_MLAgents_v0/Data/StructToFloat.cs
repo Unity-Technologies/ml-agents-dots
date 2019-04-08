@@ -5,15 +5,15 @@ using UnityEngine;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Collections;
 using Unity.Mathematics;
-using ECS_MLAgents_v0.Editor.Tests;
+
 
 namespace ECS_MLAgents_v0.Data
 {
     // This is dangerous because if the metadata is wrong, you can get out of memory
     public unsafe static class SensorToFloatUtility {
         public static void StructToFloatArray<T>(ref T src,
-        NativeArray<float> dst, 
-        //IMetaData[]/*NativeArray ? Stateful ?*/ metaData, 
+        NativeArray<float> dst,
+        //IMetaData[]/*NativeArray ? Stateful ?*/ metaData,
         int offset)
         where T:struct {
 
@@ -63,7 +63,7 @@ for (var i = 0; i< 8; i++){
         }
 
         public static void FloatArrayToActuator<T>(NativeArray<float> src, T dst, int offset){
-            
+
         }
     }
 
