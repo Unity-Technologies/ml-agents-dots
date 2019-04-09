@@ -74,9 +74,9 @@ namespace ECS_MLAgents_v0.Data
 
             DataType type = DataType.FLOAT;
             int dim = UnsafeUtility.SizeOf(field.FieldType) / 4;
-            if (field.GetType().IsEnum){
+            if (field.FieldType.IsEnum){
                 type = DataType.ENUM; 
-                dim = Enum.GetValues(field.GetType()).Length;
+                dim = Enum.GetValues(field.FieldType).Length;
             }
 
 

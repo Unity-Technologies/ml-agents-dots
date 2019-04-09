@@ -7,6 +7,8 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Collections;
 
+
+
 namespace ECS_MLAgents_v0.Editor.Tests{
     public class StructToFloatTest{
 
@@ -48,13 +50,8 @@ namespace ECS_MLAgents_v0.Editor.Tests{
                 data0 = new float3(1,2,3),
             };
             tmp.setData1(new float4(4,5,6,7));
-            var arr = new NativeArray<float>(8, Allocator.Persistent);
+            var arr = new NativeArray<float>(8, Allocator.Temp);
             SensorToFloatUtility.StructToFloatArray(ref tmp, arr, 0);
-
-            for (var i = 0; i< 8; i++){
-                Debug.Log(arr[i]);
-            }
-            Debug.Log(tmp.data0);
 
             Assert.AreEqual(1f,     arr[0]);
             Assert.AreEqual(2f,     arr[1]);
@@ -71,13 +68,63 @@ namespace ECS_MLAgents_v0.Editor.Tests{
 
         [Test]
         public void TestEnumToFloat(){
+            var tmp = new TestEnumSensor{
+                data0 = Enumerator1.Value1,
+                data1 = Enumerator2.Value2,
+            };
 
+
+
+            var arr = new NativeArray<float>(7, Allocator.Temp);
+            SensorToFloatUtility.StructToFloatArray(ref tmp, arr, 0);
+            Assert.AreEqual(1f,     arr[0]);
+            Assert.AreEqual(0f,     arr[1]);
+            Assert.AreEqual(0f,     arr[2]);
+            Assert.AreEqual(0f,     arr[3]);
+            Assert.AreEqual(1f,     arr[4]);
+            Assert.AreEqual(0f,     arr[5]);
+            Assert.AreEqual(0f,     arr[6]);
+
+            arr.Dispose();
 
         }
 
         [Test]
         public void TestEnumAndFloatToFloat(){
+            var tmp = new TestEnumAndFloatSensor{
+                data0 = Enumerator1.Value2,
+                data1 = new float3(3,2,1),
+                data2 = Enumerator2.Value4,
+                data3 = new float4(9,8,7,6)
+            };
 
+
+
+            var arr = new NativeArray<float>(28, Allocator.Temp);
+            SensorToFloatUtility.StructToFloatArray(ref tmp, arr, 7);
+            for (var i = 0; i<7 ; i++){
+                Assert.AreEqual(0f,     arr[i]);
+            }
+            Assert.AreEqual(0f,     arr[7]);
+            Assert.AreEqual(1f,     arr[8]);
+            Assert.AreEqual(0f,     arr[9]);
+            Assert.AreEqual(3f,     arr[10]);
+            Assert.AreEqual(2f,     arr[11]);
+            Assert.AreEqual(1f,     arr[12]);
+            Assert.AreEqual(0f,     arr[13]);
+            Assert.AreEqual(0f,     arr[14]);
+            Assert.AreEqual(0f,     arr[15]);
+            Assert.AreEqual(1f,     arr[16]);
+            Assert.AreEqual(9f,     arr[17]);
+            Assert.AreEqual(8f,     arr[18]);
+            Assert.AreEqual(7f,     arr[19]);
+            Assert.AreEqual(6f,     arr[20]);
+            for (var i = 21; i<28 ; i++){
+                Assert.AreEqual(0f,     arr[i]);
+            }
+
+
+            arr.Dispose();
 
         }
 
