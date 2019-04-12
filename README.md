@@ -1,4 +1,4 @@
-# ml-agents-ecs
+# ml-agents-dots
 
 This is a proof of concept for DOTS
 based ML-Agents
