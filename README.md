@@ -1,6 +1,7 @@
 # ml-agents-ecs
 
-This is a proof of concept for ECS based ML-Agents
+This is a proof of concept for DOTS
+based ML-Agents
 
 ## The core code is inside of `ECS_MLAgents_v0.Core`
 
