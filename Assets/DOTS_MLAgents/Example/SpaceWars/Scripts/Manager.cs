@@ -21,7 +21,7 @@ namespace DOTS_MLAgents.Example.SpaceWars.Scripts
         public GameObject target;
         public GameObject Camera;
 
-        public enum DecisionSelector { NeuralNetwork, ExternalDecision };
+        public enum DecisionSelector { NeuralNetwork, ExternalDecision, PlayerDecision };
         public DecisionSelector shipDecisionSelector;
         public DecisionSelector playerDecisionSelector;
 
@@ -56,18 +56,24 @@ namespace DOTS_MLAgents.Example.SpaceWars.Scripts
             {
                 _shipSystemA.Decision = new ExternalDecision<ShipSensor, Steering>();
             }
-            else
+            else if (shipDecisionSelector == DecisionSelector.NeuralNetwork)
             {
                 _shipSystemA.Decision = new NNDecision<ShipSensor, Steering>(model);
             }
-            _playerSystem = World.Active.GetOrCreateSystem<PlayerShipSystem>();
-            if (playerDecisionSelector == DecisionSelector.ExternalDecision)
-            {
-                _playerSystem.Decision = new HumanDecision<ShipSensor>();
+            else{
+                _shipSystemA.Decision = new HumanDecision<ShipSensor>();
             }
-            else
+            _playerSystem = World.Active.GetOrCreateSystem<PlayerShipSystem>();
+            if (shipDecisionSelector == DecisionSelector.ExternalDecision)
+            {
+                _playerSystem.Decision = new ExternalDecision<ShipSensor, Steering>();
+            }
+            else if (shipDecisionSelector == DecisionSelector.NeuralNetwork)
             {
                 _playerSystem.Decision = new NNDecision<ShipSensor, Steering>(model);
+            }
+            else{
+                _playerSystem.Decision = new HumanDecision<ShipSensor>();
             }
             _playerSystem.SetNewComponentGroup(typeof(PlayerFlag));
             _shipSystemA.DecisionRequester = new FixedTimeRequester(0.1f);

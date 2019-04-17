@@ -169,7 +169,7 @@ MonoBehaviour:
   target: {fileID: 1467329703}
   Camera: {fileID: 2051651924}
   shipDecisionSelector: 0
-  playerDecisionSelector: 0
+  playerDecisionSelector: 2
   NumberShips: 0
   prefab: {fileID: 801768939125754296, guid: 8148120c9f3864369b2ed2b21f9a01aa, type: 3}
   model: {fileID: 3024503084527622360, guid: 5bfd22ab3fbf74284acbd4ec6f22b27a, type: 3}

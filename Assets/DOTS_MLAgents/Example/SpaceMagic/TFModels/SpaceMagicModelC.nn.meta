@@ -1,9 +1,9 @@
 fileFormatVersion: 2
 guid: 8533bf952c61d430e8765c2c16cde480
 ScriptedImporter:
-  fileIDToRecycleName:
-    11400000: Assets/ECS_MLAgents_v0/Example/SpaceMagic/TFModels/SpaceMagicModelC.nn
+  internalIDToNameTable: []
   externalObjects: {}
+  serializedVersion: 2
   userData: 
   assetBundleName: 
   assetBundleVariant: 

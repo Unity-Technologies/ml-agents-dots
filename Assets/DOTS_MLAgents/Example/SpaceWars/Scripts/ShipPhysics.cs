@@ -12,76 +12,51 @@ using UnityEngine.Rendering;
 
 namespace DOTS_MLAgents.Example.SpaceWars.Scripts
 {
-    public class DeleteRogueBarrier : EntityCommandBufferSystem{}
-    public class ShootBarrier : EntityCommandBufferSystem{}
-    
     public class ShipPhysics : JobComponentSystem
     {
-#pragma warning disable 0649
-        private DeleteRogueBarrier rogueBarrier;
-        private ShootBarrier shootBarrier;
-#pragma warning restore 0649
-        private EntityQuery _positionComponentGroup;
-        private EntityQuery _shipComponentGroup;
+        private BeginInitializationEntityCommandBufferSystem _entityCommandBufferSystem;
         
-        protected override void OnCreateManager()
+        protected override void OnCreate()
         {
-            rogueBarrier = World.GetOrCreateSystem<DeleteRogueBarrier>();
-            shootBarrier = World.GetOrCreateSystem<ShootBarrier>();
-
-            _positionComponentGroup = GetEntityQuery(
-                ComponentType.ReadOnly(typeof(Translation)),
-                ComponentType.ReadOnly(typeof(Projectile))
-                );
-            _shipComponentGroup = GetEntityQuery(
-                typeof(Translation), 
-                typeof(Rotation), 
-                ComponentType.ReadOnly(typeof(Steering)),
-                typeof(Ship));
-
+            _entityCommandBufferSystem = World.GetOrCreateSystem<BeginInitializationEntityCommandBufferSystem>();
         }
         
-        private struct MovementJob : IJobParallelFor
+        private struct MovementJob : IJobForEachWithEntity<Translation, Rotation, Ship, Steering>
         {
+     
             public float deltaTime;
-            public NativeArray<Translation> positions;
-            public NativeArray<Rotation> rotations;
-            public NativeArray<Ship> ships;
-            [DeallocateOnJobCompletion]
-            [ReadOnly] public NativeArray<Steering> steerings;
+            
             [ReadOnly] public EntityCommandBuffer.Concurrent buffer;
     
-            public void Execute(int i)
+            public void Execute(Entity entity, int i, ref Translation position, ref Rotation rotation, ref Ship ship, ref Steering steering)
             {
-                var r = rotations[i];
-                var s = steerings[i];
-                var p = positions[i];
-                var ship = ships[i];
-                r.Value = math.mul(
-                    r.Value,
-                    quaternion.AxisAngle(math.up(), Globals.SHIP_ROTATION_SPEED * s.YAxis * deltaTime));
-                r.Value = math.mul(
-                    r.Value,
-                    quaternion.AxisAngle(new float3(1, 0, 0), Globals.SHIP_ROTATION_SPEED  * s.XAxis * deltaTime));
-                p.Value += deltaTime * Globals.SHIP_SPEED *
-                           math.mul(r.Value, new float3(0, 0, 1));
+                var r = rotation;
+                var s = steering;
+                var p = position;
+                
+                rotation.Value = math.mul(
+                    rotation.Value,
+                    quaternion.AxisAngle(math.up(), Globals.SHIP_ROTATION_SPEED * steering.YAxis * deltaTime));
+                rotation.Value = math.mul(
+                    rotation.Value,
+                    quaternion.AxisAngle(new float3(1, 0, 0), Globals.SHIP_ROTATION_SPEED  * steering.XAxis * deltaTime));
+                position.Value += deltaTime * Globals.SHIP_SPEED *
+                           math.mul(rotation.Value, new float3(0, 0, 1));
 
-                if (steerings[i].Shoot > 0.5f)
+                if (steering.Shoot > 0.5f)
                 {
                     ship.Fire = 1;
                 }
                 if (ship.Fire == 1 && ship.ReloadTime < 0)
                 {
                     ship.Fire = 0;
-                    var ent = buffer.CreateEntity(i);
-                    buffer.AddSharedComponent(i, ent, Globals.ProjectileRenderer);
-                    buffer.AddComponent(i, ent, positions[i]);
-                    buffer.AddComponent(i, ent, rotations[i]);
-                    buffer.AddComponent(i, ent, new Scale
-                    {
-                        Value = Globals.PROJECTILE_SCALE
-                    });
-                    buffer.AddComponent(i, ent, new Projectile());
+                    var newEntity = buffer.CreateEntity(i);
+                    buffer.AddSharedComponent<RenderMesh>(i, newEntity, Globals.ProjectileRenderer);
+                    buffer.AddComponent(i, newEntity, position);
+                    buffer.AddComponent(i, newEntity, rotation);
+                    buffer.AddComponent(i, newEntity, new Scale { Value = Globals.PROJECTILE_SCALE });
+                    buffer.AddComponent(i, newEntity, new Projectile());
+                    buffer.AddComponent(i, newEntity, new LocalToWorld());
                 }
 
                 if (ship.ReloadTime < 0)
@@ -90,38 +65,32 @@ namespace DOTS_MLAgents.Example.SpaceWars.Scripts
                 }
 
                 ship.ReloadTime -= deltaTime;
-                rotations[i] = r;
-                positions[i] = p;
-                ships[i] = ship;
             }
         }
         
-        private struct DestroyRogue : IJobParallelFor
+        private struct DestroyRogue : IJobForEachWithEntity<Translation>
         {
-            [ReadOnly] public EntityCommandBuffer.Concurrent buffer;
-            [ReadOnly] public NativeArray<Translation> positions;
-            [DeallocateOnJobCompletion]
-            [ReadOnly] public NativeArray<Entity> entities;
-            public void Execute(int i)
+            public EntityCommandBuffer.Concurrent buffer;
+            
+            public void Execute(Entity entity, int i, [ReadOnly] ref Translation position)
             {
-                if (positions[i].Value.x * positions[i].Value.x +
-                    positions[i].Value.y * positions[i].Value.y +
-                    positions[i].Value.z * positions[i].Value.z > Globals.BOUNDARIES)
+                if (position.Value.x * position.Value.x +
+                    position.Value.y * position.Value.y +
+                    position.Value.z * position.Value.z > Globals.BOUNDARIES)
                 {
-                    buffer.DestroyEntity(i, entities[i]);
+                    buffer.DestroyEntity(i, entity);
                 }
                 
             }
         }
 
-        private struct ProjectileMovement : IJobForEach<
-            Translation, Rotation, Projectile>
+        private struct ProjectileMovement : IJobForEach<Translation, Rotation, Projectile>
         {
             public float deltaTime;
-            public void Execute(ref Translation pos, ref Rotation rot, ref Projectile proj)
+            public void Execute(ref Translation position, ref Rotation rotation, ref Projectile projectile)
             {
-                pos.Value += deltaTime * Globals.PROJECTILE_SPEED * 
-                           math.mul(rot.Value, new float3(0, 0, 1));
+                position.Value += deltaTime * Globals.PROJECTILE_SPEED * 
+                           math.mul(rotation.Value, new float3(0, 0, 1));
             }
         }
         
@@ -132,35 +101,21 @@ namespace DOTS_MLAgents.Example.SpaceWars.Scripts
             var moveJob = new MovementJob
             {
                 deltaTime = Time.deltaTime,
-                buffer = shootBarrier.CreateCommandBuffer().ToConcurrent(),
-                positions = _shipComponentGroup.ToComponentDataArray<Translation>(Allocator.TempJob),
-                rotations = _shipComponentGroup.ToComponentDataArray<Rotation>(Allocator.TempJob),
-                steerings =  _shipComponentGroup.ToComponentDataArray<Steering>(Allocator.TempJob),
-                ships = _shipComponentGroup.ToComponentDataArray<Ship>(Allocator.TempJob)
+                buffer = _entityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
             };
             
             var destroyjob = new DestroyRogue
             {
-                buffer = rogueBarrier.CreateCommandBuffer().ToConcurrent(),
-                positions = moveJob.positions,//_positionComponentGroup.ToComponentDataArray<Translation>(Allocator.TempJob),
-                entities = _positionComponentGroup.ToEntityArray(Allocator.TempJob)
+                buffer = _entityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
             };
             var projectileJob = new ProjectileMovement
             {
                 deltaTime = Time.deltaTime,
             };
-            var handle = moveJob.Schedule(_shipComponentGroup.CalculateLength(), 64, inputDeps);
-            shootBarrier.AddJobHandleForProducer(handle);
-            handle = destroyjob.Schedule(_positionComponentGroup.CalculateLength(), 64, handle);
-            rogueBarrier.AddJobHandleForProducer(handle);
+            
+            var handle = moveJob.Schedule(this, inputDeps);
+            handle = destroyjob.Schedule(this, handle);
             handle = projectileJob.Schedule(this, handle);
-            _shipComponentGroup.CopyFromComponentDataArray<Translation>(destroyjob.positions);
-            _shipComponentGroup.CopyFromComponentDataArray<Rotation>(moveJob.rotations);
-            _shipComponentGroup.CopyFromComponentDataArray<Ship>(moveJob.ships);
-            destroyjob.positions.Dispose();
-            moveJob.rotations.Dispose();
-            moveJob.ships.Dispose();
-            // TODO : There has to be a simpler way to do this.
             return handle;
         }
     }

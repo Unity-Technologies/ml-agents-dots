@@ -11,111 +11,84 @@ using UnityEngine.Rendering;
 
 namespace DOTS_MLAgents.Example.SpaceWars.Scripts
 {
-    public class ImpactBarrier : EntityCommandBufferSystem{}
-    public class LateExplosionBarrier : EntityCommandBufferSystem{}
-    
     public class ImpactSystem : JobComponentSystem
     {
         public float3 Center;
         public float Radius;
+
+        private BeginInitializationEntityCommandBufferSystem _entityCommandBufferSystem;
         
-#pragma warning disable 0649
-        private ImpactBarrier impactBarrier;
-        private LateExplosionBarrier lateExplosionBarrier;
-#pragma warning restore 0649
-        private EntityQuery _positionComponentGroup;
-        private EntityQuery _explosionComponentGroup;
-        
-        private struct ImpactJob : IJobParallelFor
+        private struct ImpactJob : IJobForEachWithEntity<Translation, Scale>
         {
-            [ReadOnly] public EntityCommandBuffer.Concurrent buffer;
-            [ReadOnly] public NativeArray<Translation> positions;
-            [ReadOnly] public NativeArray<Entity> entities;
+            public EntityCommandBuffer.Concurrent buffer;
+           
             public float3 Center;
             public float Radius;
-            public void Execute(int i)
+            public void Execute(Entity entity, int i, [ReadOnly] ref Translation position, ref Scale scale)
             {
-                var distSquared = math.dot(positions[i].Value - Center, positions[i].Value - Center);
+                var distSquared = math.dot(position.Value - Center, position.Value - Center);
                 if (distSquared < Radius * Radius)
                 {
-                    buffer.DestroyEntity(i, entities[i]);
-                    buffer.CreateEntity(i);
-                    buffer.AddSharedComponent(i, entities[i], Globals.ExplosionRenderer);
-                    buffer.AddComponent(i, entities[i],positions[i]);
-                    buffer.AddComponent(i, entities[i], new Scale{Value = 1f});
-                    buffer.AddComponent(i, entities[i], new Explosion
+                    buffer.DestroyEntity(i, entity);
+                    var newEntity = buffer.CreateEntity(i);
+                    buffer.AddSharedComponent<RenderMesh>(i, newEntity, Globals.ExplosionRenderer);
+                    buffer.AddComponent<Translation>(i, newEntity, position);
+                    buffer.AddComponent<Scale>(i, newEntity, new Scale{Value = 1.0f});
+                    buffer.AddComponent<Explosion>(i, newEntity, new Explosion
                     {
                         TimeSinceBirth = 0f,
                         DeathTime = 0.5f,
                         GrowthRate = 10f
                     });
+                    buffer.AddComponent(i, newEntity, new LocalToWorld());
 
                 }
                 
             }
         }
         
-        private struct LateExplosionJob : IJobParallelFor
+        private struct LateExplosionJob : IJobForEachWithEntity<Scale, Explosion>
         {
-            [ReadOnly] public EntityCommandBuffer.Concurrent buffer;
-            public NativeArray<Explosion> explosions;
-            public NativeArray<Scale> scales;
-            [ReadOnly] public NativeArray<Entity> entities;
+            public EntityCommandBuffer.Concurrent buffer;
             public float deltaTime;
-            public void Execute(int i)
+            public void Execute(Entity entity, int i, ref Scale scale, ref Explosion explosion)
             {
-                var explo = explosions[i];
-                explo.TimeSinceBirth = explo.TimeSinceBirth + deltaTime;
-                var scale = scales[i];
-                scale.Value = explo.TimeSinceBirth * explo.GrowthRate + 1;
-                scales[i] = scale;
-                explosions[i] = explo;
-                if (explo.TimeSinceBirth > explo.DeathTime)
+                explosion.TimeSinceBirth = explosion.TimeSinceBirth + deltaTime;
+                scale.Value = explosion.TimeSinceBirth * explosion.GrowthRate + 1;
+                if (explosion.TimeSinceBirth > explosion.DeathTime)
                 {
-                    buffer.DestroyEntity(i, entities[i]);
+                    buffer.DestroyEntity(i, entity);
                 }
             }
         }
         
         
-        protected override void OnCreateManager()
+        protected override void OnCreate()
         {
-            impactBarrier = World.GetOrCreateSystem<ImpactBarrier>();
-            lateExplosionBarrier = World.GetOrCreateSystem<LateExplosionBarrier>();
-            _positionComponentGroup = GetEntityQuery(
-                ComponentType.ReadOnly(typeof(Translation)),
-                ComponentType.ReadOnly(typeof(Projectile))
-            );
-            _explosionComponentGroup = GetEntityQuery(
-                typeof(Explosion),
-                typeof(Scale)
-            );
+            _entityCommandBufferSystem = World.GetOrCreateSystem<BeginInitializationEntityCommandBufferSystem>();
         }
         
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
             
-            var destroyjob = new ImpactJob
+            var destroyJob = new ImpactJob
             {
-                buffer = impactBarrier.CreateCommandBuffer().ToConcurrent(),
-                positions = _positionComponentGroup.ToComponentDataArray<Translation>(Allocator.TempJob),
-                entities = _positionComponentGroup.ToEntityArray(Allocator.TempJob),
+                buffer = _entityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
                 Center = Center,
                 Radius = Radius
             };
 
             var exploJob = new LateExplosionJob
             {
-                buffer = lateExplosionBarrier.CreateCommandBuffer().ToConcurrent(),
-                explosions = _explosionComponentGroup.ToComponentDataArray<Explosion>(Allocator.TempJob),
-                scales = _explosionComponentGroup.ToComponentDataArray<Scale>(Allocator.TempJob),
-                entities = _explosionComponentGroup.ToEntityArray(Allocator.TempJob),
+                buffer = _entityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
                 deltaTime = Time.deltaTime
             };
 
-            var handle = inputDeps;
-            handle = destroyjob.Schedule(_positionComponentGroup.CalculateLength(), 64, handle);
-            handle = exploJob.Schedule(_explosionComponentGroup.CalculateLength(), 64, handle);
+            var handle = destroyJob.Schedule(this, inputDeps);
+            _entityCommandBufferSystem.AddJobHandleForProducer(handle);
+            handle.Complete();
+            handle = exploJob.Schedule(this, handle);
+            _entityCommandBufferSystem.AddJobHandleForProducer(handle);
             return handle;
         }
     }
