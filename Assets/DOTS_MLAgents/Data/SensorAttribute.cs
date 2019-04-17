@@ -14,7 +14,6 @@ namespace DOTS_MLAgents.Data
         // BOOL,
         ENUM,
         // TEXTURE,
-
     } 
 
     public enum SensorType : int {
@@ -22,7 +21,6 @@ namespace DOTS_MLAgents.Data
         REWARD,
         DONE,
         ID,
-
     } 
 
     public class SensorAttribute : Attribute{ 
@@ -79,8 +77,6 @@ namespace DOTS_MLAgents.Data
                 dim = Enum.GetValues(field.FieldType).Length;
             }
 
-
-
             return new SensorMetadata{
                 Name = new char64(field.Name),
                 SensorType = attribute.SensorType,
@@ -90,8 +86,5 @@ namespace DOTS_MLAgents.Data
 
             };
         }
-
-        
-        
     }
 }

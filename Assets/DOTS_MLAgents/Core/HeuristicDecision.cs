@@ -26,6 +26,5 @@ namespace DOTS_MLAgents.Core {
                 actuators[i] = _lambda(sensors[i]);
             }
         }
-
     }
 }

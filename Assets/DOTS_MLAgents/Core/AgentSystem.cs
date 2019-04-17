@@ -42,7 +42,6 @@ namespace DOTS_MLAgents.Core
     {   
         
         public IDecisionRequester DecisionRequester { get; set; }
-        private int _phase;
         
         public IAgentDecision<TS, TA> Decision { get; set; }
         
@@ -108,7 +107,6 @@ namespace DOTS_MLAgents.Core
                 return;
             }
             DecisionRequester.Reset();
-            
 
             var nAgents = _componentGroup.CalculateLength();
             
@@ -135,8 +133,6 @@ namespace DOTS_MLAgents.Core
 
             sensors.Dispose();
             actuators.Dispose();
-
         }
-
     }
 }

@@ -42,9 +42,13 @@ namespace DOTS_MLAgents.Core{
         // This is a temporary test file
         // TODO : Replace with a file creation system
         // TODO : Implement the communication in a separate class
-        // TODO : Have separate files for sensor and actuators
-        // private string filenameWrite = "Assets/shared_communication_file.txt";
+        // IDEA : Have separate files for sensor and actuators
+        // TODO : Specify file path through command line arguments
+        # if UNITY_EDITOR
+        private string filenameWrite = "Assets/shared_communication_file.txt";
+        # else
         private string filenameWrite = "shared_communication_file.txt";
+        #endif
 
 
         private MemoryMappedViewAccessor accessor;

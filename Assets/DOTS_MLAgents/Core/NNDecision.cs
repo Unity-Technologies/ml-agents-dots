@@ -59,11 +59,6 @@ namespace DOTS_MLAgents.Core {
                 throw new Exception("Error in the length of the sensors and actuators");
             }
 
-
-
-
-
-
             // unsafe{
             //     fixed (float* s = &sensorData[0]) { 
             //         UnsafeUtility.MemCpy(s , sensors.GetUnsafePtr(), batch * _sensorSize);
@@ -81,7 +76,6 @@ namespace DOTS_MLAgents.Core {
             //     UnsafeUtility.CopyStructureToPtr(ref ss, (byte*) (tmpS.GetUnsafePtr()) + i * _sensorSize);
             // }
             }
-
 
             sensorData = tmpS.ToArray();
 
@@ -102,14 +96,9 @@ namespace DOTS_MLAgents.Core {
             //     }
             // }
 
-            
-
             var tmpA = new NativeArray<float>(batch * _actuatorSize / SIZE_OF_FLOAT_IN_MEMORY, Allocator.Persistent);
 
-
-
             tmpA.CopyFrom(actuatorT.data.Download(tmpA.Length));
-
 
             for(var i = 0; i< batch; i++){
                 var act = new TA();
@@ -117,12 +106,10 @@ namespace DOTS_MLAgents.Core {
                 actuators[i] = act;
             }
 
-
             tmpS.Dispose();
             tmpA.Dispose();
             
         }
-
 
         private void VerifySensor(){
             if (! typeof(TS).Equals(_sensorType)){
@@ -138,7 +125,5 @@ namespace DOTS_MLAgents.Core {
                 _actuatorType = typeof(TA);
             }
         }
-
-
     }
 }
