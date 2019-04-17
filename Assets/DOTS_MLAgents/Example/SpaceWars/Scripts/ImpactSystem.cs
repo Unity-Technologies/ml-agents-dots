@@ -86,7 +86,6 @@ namespace DOTS_MLAgents.Example.SpaceWars.Scripts
 
             var handle = destroyJob.Schedule(this, inputDeps);
             _entityCommandBufferSystem.AddJobHandleForProducer(handle);
-            handle.Complete();
             handle = exploJob.Schedule(this, handle);
             _entityCommandBufferSystem.AddJobHandleForProducer(handle);
             return handle;
