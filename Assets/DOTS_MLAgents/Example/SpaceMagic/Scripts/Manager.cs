@@ -53,6 +53,8 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
         /// </summary>
         public GameObject prefab;
 
+        private Entity _prefabEntity;
+
         /// <summary>
         /// The Neural Network models for the three IAgentDecision
         /// </summary>
@@ -95,6 +97,7 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
                         Value = new float3(-100f*val.z/d +val.x, 0 + val.y, 50f*val.x/d + val.z)
                     };
                 };
+            _prefabEntity = GameObjectConversionUtility.ConvertGameObjectHierarchy(prefab, World.Active);
 
             Spawn(1);
         }
@@ -148,7 +151,7 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
         void Spawn(int amount)
         {
             NativeArray<Entity> entities = new NativeArray<Entity>(amount, Allocator.Temp);
-            manager.Instantiate(prefab, entities);
+            manager.Instantiate(_prefabEntity, entities);
             for (int i = 0; i < amount; i++)
             {
                 float valX = Random.Range(-1f, 1f);

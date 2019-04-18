@@ -26,14 +26,10 @@ namespace DOTS_MLAgents.Example.SpaceWars.Scripts
      
             public float deltaTime;
             
-            [ReadOnly] public EntityCommandBuffer.Concurrent buffer;
+            public EntityCommandBuffer.Concurrent buffer;
     
-            public void Execute(Entity entity, int i, ref Translation position, ref Rotation rotation, ref Ship ship, ref Steering steering)
+            public void Execute(Entity entity, int i, ref Translation position, ref Rotation rotation, ref Ship ship, [ReadOnly] ref Steering steering)
             {
-                var r = rotation;
-                var s = steering;
-                var p = position;
-                
                 rotation.Value = math.mul(
                     rotation.Value,
                     quaternion.AxisAngle(math.up(), Globals.SHIP_ROTATION_SPEED * steering.YAxis * deltaTime));
@@ -87,7 +83,7 @@ namespace DOTS_MLAgents.Example.SpaceWars.Scripts
         private struct ProjectileMovement : IJobForEach<Translation, Rotation, Projectile>
         {
             public float deltaTime;
-            public void Execute(ref Translation position, ref Rotation rotation, ref Projectile projectile)
+            public void Execute(ref Translation position, [ReadOnly] ref Rotation rotation, [ReadOnly] ref Projectile projectile)
             {
                 position.Value += deltaTime * Globals.PROJECTILE_SPEED * 
                            math.mul(rotation.Value, new float3(0, 0, 1));
@@ -115,7 +111,10 @@ namespace DOTS_MLAgents.Example.SpaceWars.Scripts
             
             var handle = moveJob.Schedule(this, inputDeps);
             handle = destroyjob.Schedule(this, handle);
+            _entityCommandBufferSystem.AddJobHandleForProducer(handle);
+            
             handle = projectileJob.Schedule(this, handle);
+
             return handle;
         }
     }

@@ -52,7 +52,7 @@ namespace DOTS_MLAgents.Core
         // TODO : Decide if we want to keep at all
         private Logger _logger;
 
-        protected override void OnCreateManager()
+        protected override void OnCreate()
         {
             if (DecisionRequester == null)
             {
@@ -60,20 +60,20 @@ namespace DOTS_MLAgents.Core
             }
 
             _logger = new Logger(GetType().Name);
-            _logger.Log("OnCreateManager");
+            _logger.Log("AgentSystem.OnCreate");
             SetNewComponentGroup();
             _sensorSize = UnsafeUtility.SizeOf<TS>();
             _actuatorSize = UnsafeUtility.SizeOf<TA>();
         }
 
-        protected override void OnDestroyManager()
+        protected override void OnDestroy()
         {
-            _logger.Log("OnDestroyManager");
+            _logger.Log("AgentSystem.OnDestroy");
         }
 
         public void SetNewComponentGroup(params ComponentType[] t)
         {
-            _logger.Log("UpdateComponentGroup");
+            _logger.Log("AgentSystem.UpdateComponentGroup");
             var componentTypes = t.ToList();
             componentTypes.Add(ComponentType.ReadOnly(typeof(TS)));
             componentTypes.Add(typeof(TA));
@@ -133,6 +133,8 @@ namespace DOTS_MLAgents.Core
 
             sensors.Dispose();
             actuators.Dispose();
+            
         }
+        
     }
 }

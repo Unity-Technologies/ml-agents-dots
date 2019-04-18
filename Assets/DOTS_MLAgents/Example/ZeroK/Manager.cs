@@ -51,6 +51,8 @@ namespace DOTS_MLAgents.Example.ZeroK.Scripts
         /// </summary>
         public GameObject prefab;
 
+        private Entity _prefabEntity;
+
         [Range(0,100)]
         public float TimeScale=1;
         
@@ -94,7 +96,8 @@ namespace DOTS_MLAgents.Example.ZeroK.Scripts
              sA.DecisionRequester = new FixedCountRequester(1);
 
             //  Time.captureFramerate = 60;
-             
+            _prefabEntity = GameObjectConversionUtility.ConvertGameObjectHierarchy(prefab, World.Active);
+            
             Spawn(100);
         }
 
@@ -108,7 +111,7 @@ namespace DOTS_MLAgents.Example.ZeroK.Scripts
         void Spawn(int amount)
         {
             NativeArray<Entity> entities = new NativeArray<Entity>(amount, Allocator.Temp);
-            manager.Instantiate(prefab, entities);
+            manager.Instantiate(_prefabEntity, entities);
             for (int i = 0; i < amount; i++)
             {
                 float valX = Random.Range(-1f, 1f);

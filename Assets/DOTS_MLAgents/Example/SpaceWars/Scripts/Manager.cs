@@ -29,6 +29,7 @@ namespace DOTS_MLAgents.Example.SpaceWars.Scripts
 
         private EntityManager manager;
         public GameObject prefab;
+        private Entity _prefabEntity;
 
 
         private SmartShipSystem _shipSystemA;
@@ -47,6 +48,7 @@ namespace DOTS_MLAgents.Example.SpaceWars.Scripts
             QualitySettings.vSyncCount = 0;
             Application.targetFrameRate = -1;
             manager = World.Active.EntityManager;
+            
             _sensorSystem = World.Active.GetOrCreateSystem<SensorPopulate>();
             _impactSystem = World.Active.GetOrCreateSystem<ImpactSystem>();
             _impactSystem.Radius = 20;
@@ -63,6 +65,7 @@ namespace DOTS_MLAgents.Example.SpaceWars.Scripts
             else{
                 _shipSystemA.Decision = new HumanDecision<ShipSensor>();
             }
+            
             _playerSystem = World.Active.GetOrCreateSystem<PlayerShipSystem>();
             if (shipDecisionSelector == DecisionSelector.ExternalDecision)
             {
@@ -75,10 +78,12 @@ namespace DOTS_MLAgents.Example.SpaceWars.Scripts
             else{
                 _playerSystem.Decision = new HumanDecision<ShipSensor>();
             }
+            
             _playerSystem.SetNewComponentGroup(typeof(PlayerFlag));
             _shipSystemA.DecisionRequester = new FixedTimeRequester(0.1f);
 
-            _playerEntity = manager.Instantiate(prefab);
+            _prefabEntity = GameObjectConversionUtility.ConvertGameObjectHierarchy(prefab, World.Active);
+            _playerEntity = manager.Instantiate(_prefabEntity);
             MakeSpaceShip(_playerEntity);
             manager.AddComponentData(_playerEntity, new PlayerFlag());
             manager.SetComponentData(_playerEntity, new Ship
@@ -146,7 +151,7 @@ namespace DOTS_MLAgents.Example.SpaceWars.Scripts
         {
             Globals.NumberShips += amount;
             NativeArray<Entity> entities = new NativeArray<Entity>(amount, Allocator.Temp);
-            manager.Instantiate(prefab, entities);
+            manager.Instantiate(_prefabEntity, entities);
             for (int i = 0; i < amount; i++)
             {
                 MakeSpaceShip(entities[i]);
