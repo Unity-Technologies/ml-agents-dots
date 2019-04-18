@@ -11,7 +11,7 @@ namespace DOTS_MLAgents.Example.SpaceWars.Scripts
         where TS : struct, IComponentData
     {
         
-        public void BatchProcess(ref NativeArray<TS> sensors, ref NativeArray<Steering> actuators, int offset = 0, int size = -1)
+        public void BatchProcess([ReadOnly] NativeArray<TS> sensors, NativeArray<Steering> actuators, int offset = 0, int size = -1)
         {
             var input = new float3();
             if (Input.GetKey(KeyCode.LeftArrow))

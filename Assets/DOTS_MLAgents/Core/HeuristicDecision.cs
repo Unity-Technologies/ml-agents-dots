@@ -16,7 +16,7 @@ namespace DOTS_MLAgents.Core {
 
         public HeuristicDecision(Func<TS, TA> lambda) => _lambda = lambda;
 
-        public void BatchProcess(ref NativeArray<TS> sensors, ref NativeArray<TA> actuators , int offset = 0, int size = -1)
+        public void BatchProcess([ReadOnly] NativeArray<TS> sensors, NativeArray<TA> actuators , int offset = 0, int size = -1)
         {
             if (size ==-1){
                 size = sensors.Length - offset;

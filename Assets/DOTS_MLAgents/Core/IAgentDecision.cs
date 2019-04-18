@@ -19,9 +19,10 @@ namespace DOTS_MLAgents.Core
         /// batch. T.</param>
         /// <param name="actuators">The aggregated data for the actuator information present in the
         /// batch. </param>
-        void BatchProcess(ref NativeArray<TS> sensors, ref NativeArray<TA> actuators, int offset = 0, int size = -1);
+        void BatchProcess([ReadOnly] NativeArray<TS> sensors, NativeArray<TA> actuators, int offset = 0, int size = -1);
 
         // TODO : It is debatable wether or not we want to enforce the type here
+        // TODO : Pass a JobHandle as input and return a JobHandle as output
     }
 
 }

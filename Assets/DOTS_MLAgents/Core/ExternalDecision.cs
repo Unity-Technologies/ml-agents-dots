@@ -64,7 +64,7 @@ namespace DOTS_MLAgents.Core{
             Debug.Log("Is Ready to Communicate");
         }
         
-         public void BatchProcess(ref NativeArray<TS> sensors, ref NativeArray<TA> actuators, int offset = 0, int size = -1)
+         public void BatchProcess([ReadOnly] NativeArray<TS> sensors, NativeArray<TA> actuators, int offset = 0, int size = -1)
         {
             Profiler.BeginSample("__Communicating");
 

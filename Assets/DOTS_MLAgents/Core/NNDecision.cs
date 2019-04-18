@@ -48,7 +48,7 @@ namespace DOTS_MLAgents.Core {
 
         }
 
-        public void BatchProcess(ref NativeArray<TS> sensors, ref NativeArray<TA> actuators , int offset = 0, int size = -1)
+        public void BatchProcess([ReadOnly] NativeArray<TS> sensors, NativeArray<TA> actuators , int offset = 0, int size = -1)
         {
             VerifySensor();
             VerifyActuator();
@@ -68,8 +68,7 @@ namespace DOTS_MLAgents.Core {
             var tmpS = new NativeArray<float>(batch * _sensorSize / SIZE_OF_FLOAT_IN_MEMORY, Allocator.Persistent);
 
             for(var i = 0; i< batch; i++){
-                var ss = sensors[i];
-                TensorUtility.CopyToNativeArray(ss, tmpS,  i * _sensorSize );
+                TensorUtility.CopyToNativeArray(sensors[i], tmpS,  i * _sensorSize );
 
             //      unsafe
             // {

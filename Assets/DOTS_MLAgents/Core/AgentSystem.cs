@@ -36,7 +36,7 @@ namespace DOTS_MLAgents.Core
      * data in batch and generate a new NativeArray<float> that will be used to populate the
      * Actuator data of all compatible Entities.
      */
-    public abstract class AgentSystem<TS, TA> : ComponentSystem, IAgentSystem<TS, TA>
+    public abstract class AgentSystem<TS, TA> : JobComponentSystem, IAgentSystem<TS, TA>
         where TS : struct, IComponentData
         where TA : struct, IComponentData
     {   
@@ -97,14 +97,14 @@ namespace DOTS_MLAgents.Core
             _componentGroup.ResetFilter();
         }
 
-        protected override void OnUpdate()
+        protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
             _logger.Log("OnUpdate");
 
             DecisionRequester.Update();
             if (!DecisionRequester.Ready)
             {
-                return;
+                return inputDeps;
             }
             DecisionRequester.Reset();
 
@@ -117,7 +117,7 @@ namespace DOTS_MLAgents.Core
              */
             if (Decision == null || nAgents == 0)
             {
-                return;
+                return inputDeps;
             }
             
             /*
@@ -127,13 +127,13 @@ namespace DOTS_MLAgents.Core
             var sensors = _componentGroup.ToComponentDataArray<TS>(Allocator.TempJob);
             var actuators = new NativeArray<TA>(sensors.Length, Allocator.TempJob);
 
-            Decision.BatchProcess(ref sensors, ref actuators, 0, nAgents);
+            Decision.BatchProcess(sensors, actuators, 0, nAgents);
 
             _componentGroup.CopyFromComponentDataArray<TA>(actuators);
 
             sensors.Dispose();
             actuators.Dispose();
-            
+            return inputDeps;
         }
         
     }
