@@ -1,3 +1,44 @@
+## Alternative API
+Another approach to designing ml-agents-dots would be to mimic typical API used for example in [Unity.Physics](https://github.com/Unity-Technologies/Unity.Physics) where a "MLAgents World" holds data, processes it and the data can then be retrieved. An example of a simple world is given [here](Assets/DOTS_MLAgents/BCore/MLAgentsWorld.cs)
+The user would access the `MLAgentsWorld` in the main thread :
+
+```csharp
+var sys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
+var world = sys.GetExistingMLAgentsWorld<TS, TA>("The name of the policy associated");
+``` 
+The user could then in his own jobs add and retrieve data from the world. Here is an example of a job in which the user populates the sensor data :
+
+```csharp
+public struct MyPopulatingJob : IParallelJobFor
+{
+	public DataCollector dataCollector;
+	public NativeArray<TS> sensors;
+	public int reward;
+	public void Execute(i){
+		dataCollector.CollectData(index i, ..., sensors[i], reward);
+	}
+}
+```
+
+The job would be called this way :
+
+```csharp
+var sys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
+var world = sys.GetExistingMLAgentsWorld<TS, TA>("The name of the policy associated");
+
+protected override JobHandle OnUpdate(JobHandle inputDeps)
+{
+    var job = new MyPopulationJob{
+	    dataCollector = world.DataCollector;
+	    sensors = ...;
+	    reward = ...;
+    }
+    return job.Schedule(N_Agents, 64, inputDeps);
+}
+```
+
+
+
 # ml-agents-dots
 
 This is a proof of concept for DOTS based ML-Agents
@@ -68,7 +109,6 @@ public struct ShipSensor : IComponentData
 }
 ```
 Alternatively, we could use the name of the properties of the sensor instead of relying on specific attributes. This would make the API more flexible since a researcher would not need to implement specific Attributes to satisfy a particular use case.
-
 
 
 
