@@ -12,7 +12,13 @@ namespace DOTS_MLAgents.Core
     public struct ActuatorEvent
     {
         public Entity Entity;
-        public float3 Action;
+        public NativeSlice<float> ActionSlice;
+
+        public T GetAction<T>() where T : struct
+        {
+            // Do some check
+            return ActionSlice.SliceConvert<T>()[0];
+        }
     }
 
     // The signature of the Job the user is able to create
@@ -88,11 +94,11 @@ namespace DOTS_MLAgents.Core
                             Current = new ActuatorEvent
                             {
                                 Entity = EventReader.AgentIds[m_CurrentWorkItem],
-                                Action = new float3(
-                                    EventReader.Actuators[m_CurrentWorkItem * 3 + 0],
-                                    EventReader.Actuators[m_CurrentWorkItem * 3 + 1],
-                                    EventReader.Actuators[m_CurrentWorkItem * 3 + 2]
-                            )
+                                //     Action = 
+                                //         EventReader.Actuators[m_CurrentWorkItem * 3 + 0],
+                                //         EventReader.Actuators[m_CurrentWorkItem * 3 + 1],
+                                //         EventReader.Actuators[m_CurrentWorkItem * 3 + 2]
+                                // )
                             };
                         AdvanceReader();
                         return true;
@@ -134,20 +140,18 @@ namespace DOTS_MLAgents.Core
                 // {
                 //     data.UserJobData.Execute(eventData);
                 // }
-
+                int size = jobData.EventReader.ActuatorSize;
                 for (int i = 0; i < jobData.EventReader.AgentIds.Length; i++)
                 // var i = 1;
                 {
                     // UnityEngine.Debug.Log("Pointer obtained : " + new IntPtr(UnsafeUtility.AddressOf(ref jobData)));
 
+
+
                     jobData.UserJobData.Execute(new ActuatorEvent
                     {
                         Entity = jobData.EventReader.AgentIds[i],
-                        Action = new float3(
-                             jobData.EventReader.Actuators[i * 3 + 0],
-                            jobData.EventReader.Actuators[i * 3 + 1],
-                            jobData.EventReader.Actuators[i * 3 + 2]
-                            )
+                        ActionSlice = jobData.EventReader.Actuators.Slice(i * size, (i + 1) * size)
                     });
                 }
 

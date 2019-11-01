@@ -74,7 +74,7 @@ public class TestMonoB : JobComponentSystem
         public int myNumber;
         public void Execute(ActuatorEvent data)
         {
-            Debug.Log(data.Entity.Index + "  " + data.Action.x);
+            Debug.Log(data.Entity.Index + "  " + data.GetAction<float3>().x);
         }
     }
 
