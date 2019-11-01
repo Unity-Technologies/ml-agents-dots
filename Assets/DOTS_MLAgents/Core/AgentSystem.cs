@@ -108,7 +108,7 @@ namespace DOTS_MLAgents.Core
             }
             DecisionRequester.Reset();
 
-            var nAgents = _componentGroup.CalculateLength();
+            var nAgents = _componentGroup.CalculateEntityCount();
             
             /*
              * If the AgentSystem is not active or if there is no Decision component on the
@@ -123,7 +123,7 @@ namespace DOTS_MLAgents.Core
             /*
              * Collecting the DataArray necessary for the computation
              */
-            _logger.Log("On update with "+_componentGroup.CalculateLength()+" entities");
+            _logger.Log("On update with "+_componentGroup.CalculateEntityCount()+" entities");
             var sensors = _componentGroup.ToComponentDataArray<TS>(Allocator.TempJob);
             var actuators = new NativeArray<TA>(sensors.Length, Allocator.TempJob);
 

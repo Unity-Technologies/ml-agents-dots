@@ -40,16 +40,20 @@ public class TestMonoB : JobComponentSystem
             entities = entities,
             world = world
         };
-        var actJob = new UserCreateActingJob
-        {
-            entities = entities,
-            actuatorData = world.ActuatorData
-        };
+
         inputDeps = senseJob.Schedule(5, 2, inputDeps);
 
         inputDeps = sys.ManualUpdate(inputDeps);
 
-        inputDeps = actJob.Schedule(5, 2, inputDeps);
+        inputDeps.Complete();
+
+        var reactiveJob = new UserCreatedActionEventJob
+        {
+            myNumber = 666
+        };
+        inputDeps = reactiveJob.Schedule(world.ActuatorDataHolder, inputDeps);
+
+
         inputDeps.Complete();
         return inputDeps;
     }
@@ -65,16 +69,13 @@ public class TestMonoB : JobComponentSystem
         }
     }
 
-    public struct UserCreateActingJob : IJobParallelFor
+    public struct UserCreatedActionEventJob : IActuatorJob
     {
-        public NativeArray<Entity> entities;
-        public ActuatorData actuatorData;
-
-        public void Execute(int i)
+        public int myNumber;
+        public void Execute(ActuatorEvent data)
         {
-            float3 tmp = new float3();
-            actuatorData.GetActuator(entities[i], out tmp);
-            Debug.Log("Works if the numbers are the same: " + tmp[0] + "  " + entities[i].Index);
+            Debug.Log(data.Entity.Index + "  " + data.Action.x);
         }
     }
+
 }

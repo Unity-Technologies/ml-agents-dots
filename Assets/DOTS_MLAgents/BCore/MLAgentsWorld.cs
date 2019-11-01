@@ -25,11 +25,11 @@ namespace DOTS_MLAgents.Core
 
         public unsafe DataCollector(Type type, int capacity = 100)
         {
-            Sensors = new NativeArray<float>(capacity * UnsafeUtility.SizeOf(type), Allocator.Persistent);
+            SensorFloatSize = UnsafeUtility.SizeOf(type) / sizeof(float);
+            Sensors = new NativeArray<float>(capacity * SensorFloatSize * 4, Allocator.Persistent);
             Rewards = new NativeArray<float>(capacity, Allocator.Persistent);
             DoneFlags = new NativeArray<bool>(capacity, Allocator.Persistent);
             AgentIds = new NativeArray<Entity>(capacity, Allocator.Persistent);
-            SensorFloatSize = UnsafeUtility.SizeOf(type) / sizeof(float);
             AgentCounter = 0;
         }
 
@@ -46,7 +46,8 @@ namespace DOTS_MLAgents.Core
             {
                 Debug.Log("Error in the type of sensor");
             }
-
+            // https://docs.unity3d.com/Packages/com.unity.jobs@0.0/manual/custom_job_types.html#custom-job-types
+            // This is on how to create a NativeCounter
             int index = Interlocked.Increment(ref AgentCounter) - 1;
             //Sensor
             // Maybe can optimize here
@@ -74,38 +75,28 @@ namespace DOTS_MLAgents.Core
     }
 
 
-    public struct ActuatorData : IDisposable
+    public struct ActionDataHolder : IDisposable
     {
         // Huge issue around the indexing but EntityManager solved it...
         [NativeDisableParallelForRestriction] public NativeArray<float> Actuators;
 
-        [NativeDisableParallelForRestriction] public NativeHashMap<Entity, int> AgentIndices;
+        [NativeDisableParallelForRestriction] public NativeArray<Entity> AgentIds;
         [ReadOnly] public int ActuatorSize;
 
-        public ActuatorData(Type type, int capacity = 100)
+        public int NumAgents;
+
+        public ActionDataHolder(Type type, int capacity = 100)
         {
-            Actuators = new NativeArray<float>(capacity * UnsafeUtility.SizeOf(type), Allocator.Persistent);
             ActuatorSize = UnsafeUtility.SizeOf(type) / sizeof(float);
-            AgentIndices = new NativeHashMap<Entity, int>(capacity, Allocator.Persistent);
-        }
-        public void GetActuator<T>(Entity entity, out T actuator) where T : struct
-        {
-            int index = -1;
-            AgentIndices.TryGetValue(entity, out index);
-            if (index == -1)
-            {
-                Debug.Log("The entity did not have an actuator last step");
-                // This is why a trigger event job is more appropriate
-            }
-            int start = ActuatorSize * index;
-            int end = ActuatorSize * (index + 1);
-            actuator = Actuators.Slice(start, end).SliceConvert<T>()[0];
+            Actuators = new NativeArray<float>(capacity * ActuatorSize * 4, Allocator.Persistent);
+            AgentIds = new NativeArray<Entity>(capacity, Allocator.Persistent);
+            NumAgents = 0;
         }
 
         public void Dispose()
         {
             Actuators.Dispose();
-            AgentIndices.Dispose();
+            AgentIds.Dispose();
         }
 
     }
@@ -113,17 +104,17 @@ namespace DOTS_MLAgents.Core
     public struct MLAgentsWorld : IDisposable
     {
         public DataCollector DataCollector;
-        public ActuatorData ActuatorData;
+        public ActionDataHolder ActuatorDataHolder;
 
         public MLAgentsWorld(Type sensorType, Type actuatorType, int capacity = 100)
         {
             DataCollector = new DataCollector(sensorType, capacity);
-            ActuatorData = new ActuatorData(actuatorType, capacity);
+            ActuatorDataHolder = new ActionDataHolder(actuatorType, capacity);
         }
         public void Dispose()
         {
             DataCollector.Dispose();
-            ActuatorData.Dispose();
+            ActuatorDataHolder.Dispose();
         }
     }
 }

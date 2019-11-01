@@ -12,7 +12,7 @@ using Unity.Transforms;
 
 namespace DOTS_MLAgents.Core
 {
-    public class MLAgentsWorldSystem : JobComponentSystem
+    public class MLAgentsWorldSystem : JobComponentSystem // Should this be a ISimulation from Unity.Physics ?
     {
 
         private Dictionary<string, MLAgentsWorld> WorldDict;
@@ -60,30 +60,36 @@ namespace DOTS_MLAgents.Core
                 var world = val.Value;
 
 
-                inputDeps.Complete();
-                world.ActuatorData.AgentIndices.Clear();
 
+                inputDeps.Complete();
 
                 var j = new CopyActuatorData
                 {
-                    data = world.DataCollector.Sensors, // Just the identity for now
-                    actuatorData = world.ActuatorData
+                    sensorData = world.DataCollector.Sensors, // Just the identity for now
+                    actuatorData = world.ActuatorDataHolder.Actuators
                 };
-                inputDeps = j.Schedule(DataCollector.AgentCounter * world.ActuatorData.ActuatorSize, 2, inputDeps);
+                inputDeps = j.Schedule(DataCollector.AgentCounter * world.ActuatorDataHolder.ActuatorSize, 2, inputDeps);
                 inputDeps.Complete();
 
-
-                var j2 = new CreateAgentIdMapping
+                var k = new CopyAgentIdData
                 {
-                    currentAgents = world.DataCollector.AgentIds,
-                    actuatorData = world.ActuatorData
+                    agentData = world.DataCollector.AgentIds,
+                    actuatorData = world.ActuatorDataHolder.AgentIds
                 };
-                inputDeps = j2.Schedule(DataCollector.AgentCounter, /*Broken if I dont */DataCollector.AgentCounter, inputDeps);
-
-
-
-
+                inputDeps = k.Schedule(DataCollector.AgentCounter, 2, inputDeps);
                 inputDeps.Complete();
+
+                // string s = "";
+                // for (int i = 0; i < DataCollector.AgentCounter; i++)
+                // {
+                //     s += world.ActuatorDataHolder.AgentIds[i].Index + " ";
+                //     // s += world.DataCollector.AgentIds[i].Index + " ";
+                // }
+                // Debug.Log(s);
+
+
+
+                world.ActuatorDataHolder.NumAgents = DataCollector.AgentCounter;
 
 
 
@@ -100,29 +106,23 @@ namespace DOTS_MLAgents.Core
 
     public struct CopyActuatorData : IJobParallelFor
     {
-        [ReadOnly] public NativeArray<float> data;
-        [WriteOnly] public ActuatorData actuatorData;
+        [ReadOnly] public NativeArray<float> sensorData;
+        [WriteOnly] public NativeArray<float> actuatorData;
         public void Execute(int i)
         {
-            actuatorData.Actuators[i] = data[i];
+            actuatorData[i] = sensorData[i];
         }
     }
 
-    public struct CreateAgentIdMapping : IJobParallelFor
+    public struct CopyAgentIdData : IJobParallelFor
     {
-        [ReadOnly] public NativeArray<Entity> currentAgents;
-        [WriteOnly] public ActuatorData actuatorData;
-
+        [ReadOnly] public NativeArray<Entity> agentData;
+        [WriteOnly] public NativeArray<Entity> actuatorData;
         public void Execute(int i)
         {
-
-            var suc = actuatorData.AgentIndices.TryAdd(currentAgents[i], i);
-            // Adding to hashmap concurrently is harder than this.
-            if (!suc)
-            {
-                Debug.LogError("Fail : " + currentAgents[i] + " " + i + " " + actuatorData.AgentIndices.TryGetValue(currentAgents[i], out _));
-            }
+            actuatorData[i] = agentData[i];
         }
     }
+
 
 }
