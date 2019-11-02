@@ -42,7 +42,7 @@ namespace DOTS_MLAgents.Core
         internal static unsafe JobHandle ScheduleImpl<T>(this T jobData, ActionDataHolder actionDataHolder, JobHandle inputDeps)
          where T : struct, IActuatorJob
         {
-            inputDeps.Complete();
+            // inputDeps.Complete();
             // Creating a data struct that contains the data the user passed into the job (This is what T is here)
             var data = new ActionEventJobData<T>
             {
@@ -140,7 +140,7 @@ namespace DOTS_MLAgents.Core
                 // {
                 //     data.UserJobData.Execute(eventData);
                 // }
-                int size = jobData.EventReader.ActuatorSize;
+                int size = jobData.EventReader.ActuatorFloatSize;
                 for (int i = 0; i < jobData.EventReader.AgentIds.Length; i++)
                 // var i = 1;
                 {
@@ -151,7 +151,7 @@ namespace DOTS_MLAgents.Core
                     jobData.UserJobData.Execute(new ActuatorEvent
                     {
                         Entity = jobData.EventReader.AgentIds[i],
-                        ActionSlice = jobData.EventReader.Actuators.Slice(i * size, (i + 1) * size)
+                        ActionSlice = jobData.EventReader.Actuators.Slice(i * size, size)
                     });
                 }
 

@@ -15,15 +15,17 @@ public class TestMonoB : JobComponentSystem
     private MLAgentsWorldSystem sys;
     private MLAgentsWorld world;
     private NativeArray<Entity> entities;
-    private int counter;
+
+    public const int N_Agents = 50;
 
     // Start is called before the first frame update
     protected override void OnCreate()
     {
+        Application.targetFrameRate = -1;
         sys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
         world = sys.GetExistingMLAgentsWorld<float3, float3>("test");
-        entities = new NativeArray<Entity>(5, Allocator.Persistent);
-        for (int i = 0; i < 5; i++)
+        entities = new NativeArray<Entity>(N_Agents, Allocator.Persistent);
+        for (int i = 0; i < N_Agents; i++)
         {
             entities[i] = World.Active.EntityManager.CreateEntity();
         }
@@ -33,7 +35,6 @@ public class TestMonoB : JobComponentSystem
     // Update is called once per frame
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
-        counter++;
 
         var senseJob = new UserCreateSensingJob
         {
@@ -41,11 +42,11 @@ public class TestMonoB : JobComponentSystem
             world = world
         };
 
-        inputDeps = senseJob.Schedule(5, 2, inputDeps);
+        inputDeps = senseJob.Schedule(N_Agents, 2, inputDeps);
 
         inputDeps = sys.ManualUpdate(inputDeps);
 
-        inputDeps.Complete();
+
 
         var reactiveJob = new UserCreatedActionEventJob
         {
@@ -54,7 +55,6 @@ public class TestMonoB : JobComponentSystem
         inputDeps = reactiveJob.Schedule(world.ActuatorDataHolder, inputDeps);
 
 
-        inputDeps.Complete();
         return inputDeps;
     }
 
@@ -74,7 +74,8 @@ public class TestMonoB : JobComponentSystem
         public int myNumber;
         public void Execute(ActuatorEvent data)
         {
-            Debug.Log(data.Entity.Index + "  " + data.GetAction<float3>().x);
+            var tmp = data.GetAction<float3>();
+            // Debug.Log(data.Entity.Index + "  " + data.GetAction<float3>().x);
         }
     }
 

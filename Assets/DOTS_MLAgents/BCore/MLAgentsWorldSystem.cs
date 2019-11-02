@@ -15,6 +15,8 @@ namespace DOTS_MLAgents.Core
     public class MLAgentsWorldSystem : JobComponentSystem // Should this be a ISimulation from Unity.Physics ?
     {
 
+        public const int n_threads = 2;
+
         private Dictionary<string, MLAgentsWorld> WorldDict;
         public MLAgentsWorld GetExistingMLAgentsWorld<TS, TA>(string policyId)
         where TS : struct
@@ -25,7 +27,7 @@ namespace DOTS_MLAgents.Core
             {
                 return WorldDict[policyId];
             }
-            var newWorld = new MLAgentsWorld(typeof(TS), typeof(TA), 5);
+            var newWorld = new MLAgentsWorld(typeof(TS), typeof(TA), TestMonoB.N_Agents);
             WorldDict[policyId] = newWorld;
             return newWorld;
         }
@@ -61,23 +63,31 @@ namespace DOTS_MLAgents.Core
 
 
 
-                inputDeps.Complete();
+                inputDeps.Complete(); // Need to complete here to ensure we have the right Agent Count
+
 
                 var j = new CopyActuatorData
                 {
                     sensorData = world.DataCollector.Sensors, // Just the identity for now
                     actuatorData = world.ActuatorDataHolder.Actuators
                 };
-                inputDeps = j.Schedule(DataCollector.AgentCounter * world.ActuatorDataHolder.ActuatorSize, 2, inputDeps);
-                inputDeps.Complete();
+
+
+
+                inputDeps = j.Schedule(
+                    world.DataCollector.AgentCounter.Count * world.ActuatorDataHolder.ActuatorFloatSize,
+                    n_threads,
+                    inputDeps);
 
                 var k = new CopyAgentIdData
                 {
                     agentData = world.DataCollector.AgentIds,
                     actuatorData = world.ActuatorDataHolder.AgentIds
                 };
-                inputDeps = k.Schedule(DataCollector.AgentCounter, 2, inputDeps);
-                inputDeps.Complete();
+                inputDeps = k.Schedule(
+                    world.DataCollector.AgentCounter.Count,
+                    n_threads, inputDeps);
+
 
                 // string s = "";
                 // for (int i = 0; i < DataCollector.AgentCounter; i++)
@@ -88,14 +98,18 @@ namespace DOTS_MLAgents.Core
                 // Debug.Log(s);
 
 
-
-                world.ActuatorDataHolder.NumAgents = DataCollector.AgentCounter;
-
-
+                // This is not a job ...s
+                // world.ActuatorDataHolder.NumAgents = world.DataCollector.AgentCounter.Count;
 
 
+                // world.DataCollector.AgentCounter.Count = 0;
 
-                DataCollector.AgentCounter = 0;
+                var l = new ResetCounterJob
+                {
+                    SensorCounter = world.DataCollector.AgentCounter,
+                    actionData = world.ActuatorDataHolder
+                };
+                inputDeps = l.Schedule(inputDeps);
             }
 
             return inputDeps;
@@ -121,6 +135,19 @@ namespace DOTS_MLAgents.Core
         public void Execute(int i)
         {
             actuatorData[i] = agentData[i];
+        }
+    }
+
+    public struct ResetCounterJob : IJob
+    {
+        public NativeCounter SensorCounter;
+        public ActionDataHolder actionData;
+
+        public void Execute()
+        {
+            actionData.NumAgents = SensorCounter.Count;
+            SensorCounter.Count = 0;
+
         }
     }
 

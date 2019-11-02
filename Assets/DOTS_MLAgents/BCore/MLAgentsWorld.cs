@@ -13,24 +13,25 @@ using System.Threading;
 namespace DOTS_MLAgents.Core
 {
 
-    public struct DataCollector
+    public unsafe struct DataCollector
     {
-
         [NativeDisableParallelForRestriction] [WriteOnly] public NativeArray<float> Sensors;
         [NativeDisableParallelForRestriction] [WriteOnly] private NativeArray<float> Rewards;
         [NativeDisableParallelForRestriction] [WriteOnly] private NativeArray<bool> DoneFlags;
         [NativeDisableParallelForRestriction] [WriteOnly] public NativeArray<Entity> AgentIds;
-        [ReadOnly] private int SensorFloatSize;
-        public static int AgentCounter; // must be static so there is a reference, can only have one DataCollector adding data at a time
+        [ReadOnly] public int SensorFloatSize;
+
+        //https://forum.unity.com/threads/is-it-okay-to-read-a-nativecounter-concurrents-value-in-a-parallel-job.533037/
+        [NativeDisableParallelForRestriction] public NativeCounter AgentCounter;
 
         public unsafe DataCollector(Type type, int capacity = 100)
         {
             SensorFloatSize = UnsafeUtility.SizeOf(type) / sizeof(float);
-            Sensors = new NativeArray<float>(capacity * SensorFloatSize * 4, Allocator.Persistent);
+            Sensors = new NativeArray<float>(capacity * SensorFloatSize, Allocator.Persistent);
             Rewards = new NativeArray<float>(capacity, Allocator.Persistent);
             DoneFlags = new NativeArray<bool>(capacity, Allocator.Persistent);
             AgentIds = new NativeArray<Entity>(capacity, Allocator.Persistent);
-            AgentCounter = 0;
+            AgentCounter = new NativeCounter(Allocator.Persistent);
         }
 
         // Does it make sense to identify by Entity?
@@ -44,16 +45,17 @@ namespace DOTS_MLAgents.Core
         {
             if (UnsafeUtility.SizeOf<T>() != SensorFloatSize * sizeof(float))
             {
+                // Need to hadle safety but it is not possible to store System.Type (class) in a struct
                 Debug.Log("Error in the type of sensor");
             }
             // https://docs.unity3d.com/Packages/com.unity.jobs@0.0/manual/custom_job_types.html#custom-job-types
             // This is on how to create a NativeCounter
-            int index = Interlocked.Increment(ref AgentCounter) - 1;
+
+            int index = AgentCounter.ToConcurrent().Increment() - 1;
             //Sensor
             // Maybe can optimize here
             int start = SensorFloatSize * index;
-            int end = SensorFloatSize * (index + 1);
-            var tmp = Sensors.Slice(start, end).SliceConvert<T>();
+            var tmp = Sensors.Slice(start, SensorFloatSize).SliceConvert<T>();
             tmp[0] = sensor;
             // // Reward
             Rewards[index] = reward;
@@ -71,6 +73,7 @@ namespace DOTS_MLAgents.Core
             Rewards.Dispose();
             DoneFlags.Dispose();
             AgentIds.Dispose();
+            AgentCounter.Dispose();
         }
     }
 
@@ -81,14 +84,14 @@ namespace DOTS_MLAgents.Core
         [NativeDisableParallelForRestriction] public NativeArray<float> Actuators;
 
         [NativeDisableParallelForRestriction] public NativeArray<Entity> AgentIds;
-        [ReadOnly] public int ActuatorSize;
+        [ReadOnly] public int ActuatorFloatSize;
 
         public int NumAgents;
 
         public ActionDataHolder(Type type, int capacity = 100)
         {
-            ActuatorSize = UnsafeUtility.SizeOf(type) / sizeof(float);
-            Actuators = new NativeArray<float>(capacity * ActuatorSize * 4, Allocator.Persistent);
+            ActuatorFloatSize = UnsafeUtility.SizeOf(type) / sizeof(float);
+            Actuators = new NativeArray<float>(capacity * ActuatorFloatSize, Allocator.Persistent);
             AgentIds = new NativeArray<Entity>(capacity, Allocator.Persistent);
             NumAgents = 0;
         }
