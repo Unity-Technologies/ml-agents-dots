@@ -14,10 +14,10 @@ namespace DOTS_MLAgents.Core
         public Entity Entity;
         public NativeSlice<float> ActionSlice;
 
-        public T GetAction<T>() where T : struct
+        public void GetAction<T>(out T action) where T : struct
         {
             // Do some check
-            return ActionSlice.SliceConvert<T>()[0];
+            action = ActionSlice.SliceConvert<T>()[0];
         }
     }
 

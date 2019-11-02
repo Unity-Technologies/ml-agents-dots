@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using UnityEngine;
 using DOTS_MLAgents.Core;
 
+
 public class TestMonoB : JobComponentSystem
 {
     private MLAgentsWorldSystem sys;
@@ -25,6 +26,7 @@ public class TestMonoB : JobComponentSystem
         sys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
         world = sys.GetExistingMLAgentsWorld<float3, float3>("test");
         entities = new NativeArray<Entity>(N_Agents, Allocator.Persistent);
+        // World.Active.EntityManager.CreateEntity(entities);
         for (int i = 0; i < N_Agents; i++)
         {
             entities[i] = World.Active.EntityManager.CreateEntity();
@@ -74,8 +76,9 @@ public class TestMonoB : JobComponentSystem
         public int myNumber;
         public void Execute(ActuatorEvent data)
         {
-            var tmp = data.GetAction<float3>();
-            // Debug.Log(data.Entity.Index + "  " + data.GetAction<float3>().x);
+            var tmp = new float3();
+            data.GetAction(out tmp);
+            Debug.Log(data.Entity.Index + "  " + tmp.x);
         }
     }
 
