@@ -12,29 +12,45 @@ using System.Threading;
 
 namespace DOTS_MLAgents.Core
 {
-
-    public unsafe struct DataCollector
+    public struct MLAgentsWorld : IDisposable
     {
         [NativeDisableParallelForRestriction] [WriteOnly] public NativeArray<float> Sensors;
         [NativeDisableParallelForRestriction] [WriteOnly] private NativeArray<float> Rewards;
         [NativeDisableParallelForRestriction] [WriteOnly] private NativeArray<bool> DoneFlags;
-        [NativeDisableParallelForRestriction] [WriteOnly] public NativeArray<Entity> AgentIds;
+        [NativeDisableParallelForRestriction] public NativeArray<Entity> AgentIds;
         [ReadOnly] public int SensorFloatSize;
+        [ReadOnly] public int ActuatorFloatSize;
+        [NativeDisableParallelForRestriction] public NativeArray<float> Actuators;
 
         //https://forum.unity.com/threads/is-it-okay-to-read-a-nativecounter-concurrents-value-in-a-parallel-job.533037/
         [NativeDisableParallelForRestriction] public NativeCounter AgentCounter;
 
-        public unsafe DataCollector(Type type, int capacity = 100)
+        // [NativeDisableUnsafePtrRestriction] public JobHandle FinalJobHandle;
+
+        public MLAgentsWorld(Type sensorType, Type actuatorType, int capacity = 100)
         {
-            SensorFloatSize = UnsafeUtility.SizeOf(type) / sizeof(float);
+            SensorFloatSize = UnsafeUtility.SizeOf(sensorType) / sizeof(float);
             Sensors = new NativeArray<float>(capacity * SensorFloatSize, Allocator.Persistent);
             Rewards = new NativeArray<float>(capacity, Allocator.Persistent);
             DoneFlags = new NativeArray<bool>(capacity, Allocator.Persistent);
             AgentIds = new NativeArray<Entity>(capacity, Allocator.Persistent);
             AgentCounter = new NativeCounter(Allocator.Persistent);
-        }
 
-        // Does it make sense to identify by Entity?
+            ActuatorFloatSize = UnsafeUtility.SizeOf(actuatorType) / sizeof(float);
+            Actuators = new NativeArray<float>(capacity * ActuatorFloatSize, Allocator.Persistent);
+            AgentIds = new NativeArray<Entity>(capacity, Allocator.Persistent);
+
+            // FinalJobHandle = new JobHandle();
+        }
+        public void Dispose()
+        {
+            Sensors.Dispose();
+            Rewards.Dispose();
+            DoneFlags.Dispose();
+            AgentIds.Dispose();
+            Actuators.Dispose();
+            AgentCounter.Dispose();
+        }
 
         public int CollectData<T>(
             Entity entity,
@@ -67,57 +83,6 @@ namespace DOTS_MLAgents.Core
             return index;
         }
 
-        public void Dispose()
-        {
-            Sensors.Dispose();
-            Rewards.Dispose();
-            DoneFlags.Dispose();
-            AgentIds.Dispose();
-            AgentCounter.Dispose();
-        }
-    }
 
-
-    public struct ActionDataHolder : IDisposable
-    {
-        // Huge issue around the indexing but EntityManager solved it...
-        [NativeDisableParallelForRestriction] public NativeArray<float> Actuators;
-
-        [NativeDisableParallelForRestriction] public NativeArray<Entity> AgentIds;
-        [ReadOnly] public int ActuatorFloatSize;
-
-        public int NumAgents;
-
-        public ActionDataHolder(Type type, int capacity = 100)
-        {
-            ActuatorFloatSize = UnsafeUtility.SizeOf(type) / sizeof(float);
-            Actuators = new NativeArray<float>(capacity * ActuatorFloatSize, Allocator.Persistent);
-            AgentIds = new NativeArray<Entity>(capacity, Allocator.Persistent);
-            NumAgents = 0;
-        }
-
-        public void Dispose()
-        {
-            Actuators.Dispose();
-            AgentIds.Dispose();
-        }
-
-    }
-
-    public struct MLAgentsWorld : IDisposable
-    {
-        public DataCollector DataCollector;
-        public ActionDataHolder ActuatorDataHolder;
-
-        public MLAgentsWorld(Type sensorType, Type actuatorType, int capacity = 100)
-        {
-            DataCollector = new DataCollector(sensorType, capacity);
-            ActuatorDataHolder = new ActionDataHolder(actuatorType, capacity);
-        }
-        public void Dispose()
-        {
-            DataCollector.Dispose();
-            ActuatorDataHolder.Dispose();
-        }
     }
 }

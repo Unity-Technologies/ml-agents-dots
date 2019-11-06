@@ -32,14 +32,14 @@ namespace DOTS_MLAgents.Core
     {
 
         // The scheduler the user will call when scheduling their job
-        public static unsafe JobHandle Schedule<T>(this T jobData, ActionDataHolder actionDataHolder, JobHandle inputDeps)
+        public static unsafe JobHandle Schedule<T>(this T jobData, MLAgentsWorld mlagentsWorld, JobHandle inputDeps)
             where T : struct, IActuatorJob
         {
-            return ScheduleImpl(jobData, actionDataHolder, inputDeps);
+            return ScheduleImpl(jobData, mlagentsWorld, inputDeps);
         }
 
         // Passing this along
-        internal static unsafe JobHandle ScheduleImpl<T>(this T jobData, ActionDataHolder actionDataHolder, JobHandle inputDeps)
+        internal static unsafe JobHandle ScheduleImpl<T>(this T jobData, MLAgentsWorld mlagentsWorld, JobHandle inputDeps)
          where T : struct, IActuatorJob
         {
             // inputDeps.Complete();
@@ -47,7 +47,7 @@ namespace DOTS_MLAgents.Core
             var data = new ActionEventJobData<T>
             {
                 UserJobData = jobData,
-                EventReader = actionDataHolder // Need to create this before hand with the actuator data
+                EventReader = mlagentsWorld // Need to create this before hand with the actuator data
             };
 
             // Scheduling a Job out of thin air by using a pointer called jobReflectionData in the ActuatorSystemJobStruct
@@ -61,59 +61,59 @@ namespace DOTS_MLAgents.Core
         internal unsafe struct ActionEventJobData<T> where T : struct
         {
             public T UserJobData;
-            [NativeDisableContainerSafetyRestriction] public ActionDataHolder EventReader;
+            [NativeDisableContainerSafetyRestriction] public MLAgentsWorld EventReader;
 
             #region experimental
 
-            public Enumerator GetEnumerator()
-            {
-                return new Enumerator(EventReader);
-            }
+            // public Enumerator GetEnumerator()
+            // {
+            //     return new Enumerator(EventReader);
+            // }
 
-            public struct Enumerator /* : IEnumerator<TriggerEvent> */
-            {
-                ActionDataHolder EventReader;
-                private int m_CurrentWorkItem;
-                private readonly int m_NumWorkItems;
-                public ActuatorEvent Current { get; private set; }
+            // public struct Enumerator /* : IEnumerator<TriggerEvent> */
+            // {
+            //     ActionDataHolder EventReader;
+            //     private int m_CurrentWorkItem;
+            //     private readonly int m_NumWorkItems;
+            //     public ActuatorEvent Current { get; private set; }
 
-                public Enumerator(ActionDataHolder eventReader)
-                {
-                    m_CurrentWorkItem = 0;
-                    Current = default;
-                    m_NumWorkItems = eventReader.NumAgents;
-                    EventReader = eventReader;
+            //     public Enumerator(ActionDataHolder eventReader)
+            //     {
+            //         m_CurrentWorkItem = 0;
+            //         Current = default;
+            //         m_NumWorkItems = eventReader.NumAgents;
+            //         EventReader = eventReader;
 
-                }
+            //     }
 
-                public bool MoveNext()
-                {
-                    if (m_CurrentWorkItem < m_NumWorkItems)
-                    {
-                        if (m_CurrentWorkItem < m_NumWorkItems)
-                            Current = new ActuatorEvent
-                            {
-                                Entity = EventReader.AgentIds[m_CurrentWorkItem],
-                                //     Action = 
-                                //         EventReader.Actuators[m_CurrentWorkItem * 3 + 0],
-                                //         EventReader.Actuators[m_CurrentWorkItem * 3 + 1],
-                                //         EventReader.Actuators[m_CurrentWorkItem * 3 + 2]
-                                // )
-                            };
-                        AdvanceReader();
-                        return true;
-                    }
-                    return false;
-                }
+            //     public bool MoveNext()
+            //     {
+            //         if (m_CurrentWorkItem < m_NumWorkItems)
+            //         {
+            //             if (m_CurrentWorkItem < m_NumWorkItems)
+            //                 Current = new ActuatorEvent
+            //                 {
+            //                     Entity = EventReader.AgentIds[m_CurrentWorkItem],
+            //                     //     Action = 
+            //                     //         EventReader.Actuators[m_CurrentWorkItem * 3 + 0],
+            //                     //         EventReader.Actuators[m_CurrentWorkItem * 3 + 1],
+            //                     //         EventReader.Actuators[m_CurrentWorkItem * 3 + 2]
+            //                     // )
+            //                 };
+            //             AdvanceReader();
+            //             return true;
+            //         }
+            //         return false;
+            //     }
 
-                private void AdvanceReader()
-                {
-                    while (m_CurrentWorkItem < m_NumWorkItems)
-                    {
-                        m_CurrentWorkItem++;
-                    }
-                }
-            }
+            //     private void AdvanceReader()
+            //     {
+            //         while (m_CurrentWorkItem < m_NumWorkItems)
+            //         {
+            //             m_CurrentWorkItem++;
+            //         }
+            //     }
+            // }
             #endregion
 
         }
@@ -140,13 +140,12 @@ namespace DOTS_MLAgents.Core
                 // {
                 //     data.UserJobData.Execute(eventData);
                 // }
+
+
                 int size = jobData.EventReader.ActuatorFloatSize;
                 for (int i = 0; i < jobData.EventReader.AgentIds.Length; i++)
                 // var i = 1;
                 {
-                    // UnityEngine.Debug.Log("Pointer obtained : " + new IntPtr(UnsafeUtility.AddressOf(ref jobData)));
-
-
 
                     jobData.UserJobData.Execute(new ActuatorEvent
                     {
@@ -157,7 +156,7 @@ namespace DOTS_MLAgents.Core
 
                 // foreach (ActuatorEvent t in jobData)
                 // {
-                //     UnityEngine.Debug.Log("tRESt");
+                //     // UnityEngine.Debug.Log("tRESt");
                 //     jobData.UserJobData.Execute(t);
                 // }
 

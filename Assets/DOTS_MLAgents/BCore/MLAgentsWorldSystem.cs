@@ -12,10 +12,15 @@ using Unity.Transforms;
 
 namespace DOTS_MLAgents.Core
 {
+
+    // [UpdateInGroup(typeof(SimulationSystemGroup))]
     public class MLAgentsWorldSystem : JobComponentSystem // Should this be a ISimulation from Unity.Physics ?
     {
 
-        public const int n_threads = 2;
+        public const int n_threads = 4;
+
+        private JobHandle dependencies;
+        public JobHandle FinalJobHandle;
 
         private Dictionary<string, MLAgentsWorld> WorldDict;
         public MLAgentsWorld GetExistingMLAgentsWorld<TS, TA>(string policyId)
@@ -52,66 +57,49 @@ namespace DOTS_MLAgents.Core
         protected override void OnCreate()
         {
             WorldDict = new Dictionary<string, MLAgentsWorld>();
+            dependencies = new JobHandle();
+            FinalJobHandle = new JobHandle();
         }
 
-        protected override JobHandle OnUpdate(JobHandle inputDeps) { return inputDeps; }
-        public JobHandle ManualUpdate(JobHandle inputDeps)
+        public void RegisterDependency(JobHandle handle)
         {
+            dependencies = JobHandle.CombineDependencies(handle, dependencies);
+        }
+
+        protected override JobHandle OnUpdate(JobHandle inputDeps)
+        // { return inputDeps; }
+        // public JobHandle ManualUpdate(JobHandle inputDeps)
+        {
+            // Need to complete here to ensure we have the right Agent Count
+            dependencies.Complete();
             foreach (var val in WorldDict)
             {
                 var world = val.Value;
 
 
-
-                inputDeps.Complete(); // Need to complete here to ensure we have the right Agent Count
-
-
                 var j = new CopyActuatorData
                 {
-                    sensorData = world.DataCollector.Sensors, // Just the identity for now
-                    actuatorData = world.ActuatorDataHolder.Actuators
+                    sensorData = world.Sensors, // Just the identity for now
+                    actuatorData = world.Actuators
                 };
 
-
-
-                inputDeps = j.Schedule(
-                    world.DataCollector.AgentCounter.Count * world.ActuatorDataHolder.ActuatorFloatSize,
-                    n_threads,
-                    inputDeps);
-
-                var k = new CopyAgentIdData
-                {
-                    agentData = world.DataCollector.AgentIds,
-                    actuatorData = world.ActuatorDataHolder.AgentIds
-                };
-                inputDeps = k.Schedule(
-                    world.DataCollector.AgentCounter.Count,
-                    n_threads, inputDeps);
-
-
-                // string s = "";
-                // for (int i = 0; i < DataCollector.AgentCounter; i++)
-                // {
-                //     s += world.ActuatorDataHolder.AgentIds[i].Index + " ";
-                //     // s += world.DataCollector.AgentIds[i].Index + " ";
-                // }
-                // Debug.Log(s);
-
-
-                // This is not a job ...s
-                // world.ActuatorDataHolder.NumAgents = world.DataCollector.AgentCounter.Count;
-
-
-                // world.DataCollector.AgentCounter.Count = 0;
 
                 var l = new ResetCounterJob
                 {
-                    SensorCounter = world.DataCollector.AgentCounter,
-                    actionData = world.ActuatorDataHolder
+                    SensorCounter = world.AgentCounter,
                 };
-                inputDeps = l.Schedule(inputDeps);
+
+
+                FinalJobHandle = j.Schedule(
+                    world.AgentCounter.Count * world.ActuatorFloatSize,
+                    n_threads,
+                    FinalJobHandle);
+
+                FinalJobHandle = l.Schedule(FinalJobHandle);
             }
 
+            inputDeps = JobHandle.CombineDependencies(inputDeps, FinalJobHandle);
+            inputDeps.Complete();
             return inputDeps;
         }
     }
@@ -128,24 +116,14 @@ namespace DOTS_MLAgents.Core
         }
     }
 
-    public struct CopyAgentIdData : IJobParallelFor
-    {
-        [ReadOnly] public NativeArray<Entity> agentData;
-        [WriteOnly] public NativeArray<Entity> actuatorData;
-        public void Execute(int i)
-        {
-            actuatorData[i] = agentData[i];
-        }
-    }
+
 
     public struct ResetCounterJob : IJob
     {
         public NativeCounter SensorCounter;
-        public ActionDataHolder actionData;
 
         public void Execute()
         {
-            actionData.NumAgents = SensorCounter.Count;
             SensorCounter.Count = 0;
 
         }

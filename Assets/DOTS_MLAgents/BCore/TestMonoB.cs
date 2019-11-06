@@ -11,6 +11,9 @@ using UnityEngine;
 using DOTS_MLAgents.Core;
 
 
+
+// [UpdateInGroup(typeof(SimulationSystemGroup))]
+// [UpdateAfter(typeof(MLAgentsWorldSystem))]
 public class TestMonoB : JobComponentSystem
 {
     private MLAgentsWorldSystem sys;
@@ -37,6 +40,13 @@ public class TestMonoB : JobComponentSystem
     // Update is called once per frame
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
+        // inputDeps.Complete();
+
+        var reactiveJob = new UserCreatedActionEventJob
+        {
+            myNumber = 666
+        };
+        inputDeps = reactiveJob.Schedule(world, inputDeps);
 
         var senseJob = new UserCreateSensingJob
         {
@@ -44,17 +54,14 @@ public class TestMonoB : JobComponentSystem
             world = world
         };
 
-        inputDeps = senseJob.Schedule(N_Agents, 2, inputDeps);
+        inputDeps = senseJob.Schedule(N_Agents, MLAgentsWorldSystem.n_threads, inputDeps);
+        sys.RegisterDependency(inputDeps);
 
-        inputDeps = sys.ManualUpdate(inputDeps);
+        // inputDeps = sys.ManualUpdate(inputDeps);
+
+        // inputDeps.Complete();
 
 
-
-        var reactiveJob = new UserCreatedActionEventJob
-        {
-            myNumber = 666
-        };
-        inputDeps = reactiveJob.Schedule(world.ActuatorDataHolder, inputDeps);
 
 
         return inputDeps;
@@ -67,7 +74,7 @@ public class TestMonoB : JobComponentSystem
 
         public void Execute(int i)
         {
-            world.DataCollector.CollectData(entities[i], new float3(entities[i].Index, 0, 0));
+            world.CollectData(entities[i], new float3(entities[i].Index, 0, 0));
         }
     }
 
@@ -78,7 +85,7 @@ public class TestMonoB : JobComponentSystem
         {
             var tmp = new float3();
             data.GetAction(out tmp);
-            Debug.Log(data.Entity.Index + "  " + tmp.x);
+            // Debug.Log(data.Entity.Index + "  " + tmp.x);
         }
     }
 
