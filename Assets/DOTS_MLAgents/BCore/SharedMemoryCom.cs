@@ -37,11 +37,23 @@ namespace DOTS_MLAgents.Core
 
         public SharedMemoryCom(string fileName)
         {
-            // File.Delete(fileName);
-            // File.Create(fileName, FILE_CAPACITY).Dispose();
+            Debug.Log(File.Exists(fileName));
+            if (File.Exists(fileName))
+            {
+                Debug.Log("File does exist");
+                File.Delete(fileName);
+            }
+            Debug.Log(File.Exists(fileName));
+            var f = File.Create(fileName, FILE_CAPACITY);
+            f.Write(new byte[FILE_CAPACITY], 0, FILE_CAPACITY);
+            f.Dispose();
+            Debug.Log(File.Exists(fileName));
+
             var mmf = MemoryMappedFile.CreateFromFile(fileName, FileMode.Open, fileName);
+            Debug.Log(mmf);
             accessor = mmf.CreateViewAccessor(
                 0, FILE_CAPACITY, MemoryMappedFileAccess.ReadWrite);
+            Debug.Log(accessor == null);
             accessor.Write(PYTHON_READY_POSITION, false);
             accessor.Write(UNITY_READY_POSITION, false);
             Debug.Log("Is Ready to Communicate");
