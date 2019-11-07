@@ -1,6 +1,7 @@
 import mmap
 import struct
 import numpy as np
+import tempfile
 
 
 class UnityCommunication:
@@ -14,10 +15,10 @@ class UnityCommunication:
     PYTHON_READY_POSITION = 100000
     ACTUATOR_DATA_POSITION = 100001
     # FILE_NAME = "../../../ml-agents-ecs/Assets/shared_communication_file.txt"
-    FILE_NAME = "shared_communication_file.txt"
+    FILE_ID = "shared_communication_file.txt"
 
     def __init__(self):
-        with open(self.FILE_NAME, "r+b") as f:
+        with open(tempfile.gettempdir() + "/" + self.FILE_ID, "r+b") as f:
             # memory-map the file, size 0 means whole file
             self.accessor = mmap.mmap(f.fileno(), 0)
 

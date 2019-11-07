@@ -74,8 +74,6 @@ namespace DOTS_MLAgents.Core
             IntPtr src = new IntPtr(world.Sensors.GetUnsafePtr());
             int length = world.AgentCounter.Count * world.SensorFloatSize * sizeof(float);
             Buffer.MemoryCopy(src.ToPointer(), dst.ToPointer(), length, length);
-            // accessor.WriteArray(SENSOR_DATA_POSITION, sensors.Slice(offset, batch).ToArray(), 0, batch);
-
         }
 
         public void Advance()
@@ -98,8 +96,6 @@ namespace DOTS_MLAgents.Core
 
         public void LoadWorld(MLAgentsWorld world)
         {
-            // accessor.ReadArray(ACTUATOR_DATA_POSITION, actuatorData, 0, batch);
-            // actuators.Slice(offset, batch).CopyFrom(actuatorData);
             byte* ptr = (byte*)0;
             accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref ptr);
             IntPtr src = IntPtr.Add(new IntPtr(ptr), ACTUATOR_DATA_POSITION);
