@@ -35,8 +35,11 @@ namespace DOTS_MLAgents.Core
 
         private MemoryMappedViewAccessor accessor;
 
-        public SharedMemoryCom(string fileName)
+        public SharedMemoryCom(string fileId)
         {
+
+            var fileName = Path.Combine(Path.GetTempPath(), fileId);
+            Debug.Log(fileName);
             Debug.Log(File.Exists(fileName));
             if (File.Exists(fileName))
             {

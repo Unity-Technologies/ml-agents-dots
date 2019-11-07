@@ -61,7 +61,7 @@ namespace DOTS_MLAgents.Core
             WorldDict = new Dictionary<string, MLAgentsWorld>();
             dependencies = new JobHandle();
             FinalJobHandle = new JobHandle();
-            com = new SharedMemoryCom("Assets/shared_communication_file.txt");
+            com = new SharedMemoryCom("shared_communication_file.txt");
         }
 
         public void RegisterDependency(JobHandle handle)
