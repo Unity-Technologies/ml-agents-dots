@@ -35,6 +35,7 @@ namespace DOTS_MLAgents.Core
 
 
         private MemoryMappedViewAccessor accessor;
+        private IntPtr accessorPointer;
 
         public SharedMemoryCom(string fileId)
         {
@@ -52,6 +53,10 @@ namespace DOTS_MLAgents.Core
                 0, FILE_CAPACITY, MemoryMappedFileAccess.ReadWrite);
             mmf.Dispose();
 
+            byte* ptr = (byte*)0;
+            accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref ptr);
+            accessorPointer = new IntPtr(ptr);
+
             accessor.Write(PYTHON_READY_POSITION, false);
             accessor.Write(UNITY_READY_POSITION, false);
             Debug.Log("Is Ready to Communicate");
@@ -68,9 +73,8 @@ namespace DOTS_MLAgents.Core
             accessor.Write(NUMBER_AGENTS_POSITION, world.AgentCounter.Count);
             accessor.Write(SENSOR_SIZE_POSITION, world.SensorFloatSize);
             accessor.Write(ACTUATOR_SIZE_POSITION, world.ActuatorFloatSize);
-            byte* ptr = (byte*)0;
-            accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref ptr);
-            IntPtr dst = IntPtr.Add(new IntPtr(ptr), SENSOR_DATA_POSITION);
+
+            IntPtr dst = IntPtr.Add(accessorPointer, SENSOR_DATA_POSITION);
             IntPtr src = new IntPtr(world.Sensors.GetUnsafePtr());
             int length = world.AgentCounter.Count * world.SensorFloatSize * sizeof(float);
             Buffer.MemoryCopy(src.ToPointer(), dst.ToPointer(), length, length);
@@ -96,9 +100,7 @@ namespace DOTS_MLAgents.Core
 
         public void LoadWorld(MLAgentsWorld world)
         {
-            byte* ptr = (byte*)0;
-            accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref ptr);
-            IntPtr src = IntPtr.Add(new IntPtr(ptr), ACTUATOR_DATA_POSITION);
+            IntPtr src = IntPtr.Add(accessorPointer, ACTUATOR_DATA_POSITION);
             IntPtr dst = new IntPtr(world.Actuators.GetUnsafePtr());
             int length = world.AgentCounter.Count * world.ActuatorFloatSize * sizeof(float);
             Buffer.MemoryCopy(src.ToPointer(), dst.ToPointer(), length, length);
@@ -106,6 +108,7 @@ namespace DOTS_MLAgents.Core
 
         public void Dispose()
         {
+            accessor.SafeMemoryMappedViewHandle.ReleasePointer();
             accessor.Dispose();
         }
     }
