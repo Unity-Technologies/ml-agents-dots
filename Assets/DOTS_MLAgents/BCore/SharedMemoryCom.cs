@@ -13,7 +13,7 @@ using System.Runtime.InteropServices;
 
 namespace DOTS_MLAgents.Core
 {
-    public unsafe class SharedMemoryCom
+    public unsafe class SharedMemoryCom : IDisposable
     {
 
         // [ Unity Ready (1) , nAgents (4) , sensorSize (4) , actuatorSize (4) , Data
@@ -33,30 +33,25 @@ namespace DOTS_MLAgents.Core
 
 
 
+
         private MemoryMappedViewAccessor accessor;
 
         public SharedMemoryCom(string fileId)
         {
-
             var fileName = Path.Combine(Path.GetTempPath(), fileId);
-            Debug.Log(fileName);
-            Debug.Log(File.Exists(fileName));
             if (File.Exists(fileName))
             {
-                Debug.Log("File does exist");
                 File.Delete(fileName);
             }
-            Debug.Log(File.Exists(fileName));
             var f = File.Create(fileName, FILE_CAPACITY);
             f.Write(new byte[FILE_CAPACITY], 0, FILE_CAPACITY);
-            f.Dispose();
-            Debug.Log(File.Exists(fileName));
+            f.Close();
 
-            var mmf = MemoryMappedFile.CreateFromFile(fileName, FileMode.Open, fileName);
-            Debug.Log(mmf);
+            var mmf = MemoryMappedFile.CreateFromFile(fileName, FileMode.Open);
             accessor = mmf.CreateViewAccessor(
                 0, FILE_CAPACITY, MemoryMappedFileAccess.ReadWrite);
-            Debug.Log(accessor == null);
+            mmf.Dispose();
+
             accessor.Write(PYTHON_READY_POSITION, false);
             accessor.Write(UNITY_READY_POSITION, false);
             Debug.Log("Is Ready to Communicate");
@@ -103,9 +98,6 @@ namespace DOTS_MLAgents.Core
 
         public void LoadWorld(MLAgentsWorld world)
         {
-
-
-
             // accessor.ReadArray(ACTUATOR_DATA_POSITION, actuatorData, 0, batch);
             // actuators.Slice(offset, batch).CopyFrom(actuatorData);
             byte* ptr = (byte*)0;
@@ -114,6 +106,11 @@ namespace DOTS_MLAgents.Core
             IntPtr dst = new IntPtr(world.Actuators.GetUnsafePtr());
             int length = world.AgentCounter.Count * world.ActuatorFloatSize * sizeof(float);
             Buffer.MemoryCopy(src.ToPointer(), dst.ToPointer(), length, length);
+        }
+
+        public void Dispose()
+        {
+            accessor.Dispose();
         }
     }
 }

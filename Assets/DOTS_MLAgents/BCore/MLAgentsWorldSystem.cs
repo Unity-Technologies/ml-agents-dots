@@ -12,7 +12,6 @@ using Unity.Transforms;
 
 namespace DOTS_MLAgents.Core
 {
-
     // [UpdateInGroup(typeof(SimulationSystemGroup))]
     public class MLAgentsWorldSystem : JobComponentSystem // Should this be a ISimulation from Unity.Physics ?
     {
@@ -64,6 +63,8 @@ namespace DOTS_MLAgents.Core
             com = new SharedMemoryCom("shared_communication_file.txt");
         }
 
+
+
         public void RegisterDependency(JobHandle handle)
         {
             dependencies = JobHandle.CombineDependencies(handle, dependencies);
@@ -109,7 +110,13 @@ namespace DOTS_MLAgents.Core
             inputDeps.Complete();
             return inputDeps;
         }
+
+        protected override void OnDestroy()
+        {
+            com.Dispose();
+        }
     }
+
 
 
 
