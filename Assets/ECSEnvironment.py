@@ -3,13 +3,10 @@ import struct
 import numpy as np
 
 from python_communication import UnityCommunication
-from .brain import BrainInfo, BrainParameters
+from mlagents.envs.brain import BrainInfo, BrainParameters
 
 
 class ECSEnvironment(object):
-    VEC_SIZE = 8
-    ACT_SIZE = 3
-
     def __init__(self):
         self.comm = UnityCommunication()
         self.step_count = 0
@@ -46,13 +43,11 @@ class ECSEnvironment(object):
             "ECSBrain": BrainInfo(
                 [],
                 sensor,
-                [" "] * sensor.shape[0],
                 reward=sensor[:, 0],
                 agents=list(range(sensor.shape[0])),
                 local_done=[done] * sensor.shape[0],
                 max_reached=[done] * sensor.shape[0],
                 vector_action=sensor,
-                text_action=[" "] * sensor.shape[0],
             )
         }
 
@@ -67,15 +62,7 @@ class ECSEnvironment(object):
     @property
     def brains(self):
         return {
-            "ECSBrain": BrainParameters(
-                "ECSBrain",
-                self.VEC_SIZE,
-                1,
-                [],
-                [self.ACT_SIZE],
-                [" "] * self.ACT_SIZE,
-                1,
-            )
+            "ECSBrain": BrainParameters("ECSBrain", 1, 1, [], [1], [" "] * 1, 1)
         }  # 1 for continuopus
 
     @property

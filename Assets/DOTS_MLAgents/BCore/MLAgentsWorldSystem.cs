@@ -22,6 +22,8 @@ namespace DOTS_MLAgents.Core
         private JobHandle dependencies;
         public JobHandle FinalJobHandle;
 
+        private SharedMemoryCom com;
+
         private Dictionary<string, MLAgentsWorld> WorldDict;
         public MLAgentsWorld GetExistingMLAgentsWorld<TS, TA>(string policyId)
         where TS : struct
@@ -59,6 +61,7 @@ namespace DOTS_MLAgents.Core
             WorldDict = new Dictionary<string, MLAgentsWorld>();
             dependencies = new JobHandle();
             FinalJobHandle = new JobHandle();
+            com = new SharedMemoryCom("Assets/shared_communication_file.txt");
         }
 
         public void RegisterDependency(JobHandle handle)
@@ -77,11 +80,20 @@ namespace DOTS_MLAgents.Core
                 var world = val.Value;
 
 
-                var j = new CopyActuatorData
+                /*var j = new CopyActuatorData
                 {
                     sensorData = world.Sensors, // Just the identity for now
                     actuatorData = world.Actuators
                 };
+                FinalJobHandle = j.Schedule(
+                                    world.AgentCounter.Count * world.ActuatorFloatSize,
+                                    n_threads,
+                                    FinalJobHandle);
+                                    */
+
+                com.WriteWorld(world);
+                com.Advance();
+                com.LoadWorld(world);
 
 
                 var l = new ResetCounterJob
@@ -89,11 +101,6 @@ namespace DOTS_MLAgents.Core
                     SensorCounter = world.AgentCounter,
                 };
 
-
-                FinalJobHandle = j.Schedule(
-                    world.AgentCounter.Count * world.ActuatorFloatSize,
-                    n_threads,
-                    FinalJobHandle);
 
                 FinalJobHandle = l.Schedule(FinalJobHandle);
             }

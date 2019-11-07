@@ -85,7 +85,7 @@ public class TestMonoB : JobComponentSystem
         {
             var tmp = new float3();
             data.GetAction(out tmp);
-            // Debug.Log(data.Entity.Index + "  " + tmp.x);
+            Debug.Log(data.Entity.Index + "  " + tmp.x);
         }
     }
 
