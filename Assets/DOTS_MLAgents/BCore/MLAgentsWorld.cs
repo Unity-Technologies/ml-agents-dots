@@ -1,13 +1,8 @@
-using System.Linq;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
-using Unity.Jobs;
-using Unity.Burst;
 using System;
-using System.Runtime.InteropServices;
 using UnityEngine;
-using System.Threading;
 
 
 namespace DOTS_MLAgents.Core
@@ -25,7 +20,36 @@ namespace DOTS_MLAgents.Core
         //https://forum.unity.com/threads/is-it-okay-to-read-a-nativecounter-concurrents-value-in-a-parallel-job.533037/
         [NativeDisableParallelForRestriction] public NativeCounter AgentCounter;
 
-        // [NativeDisableUnsafePtrRestriction] public JobHandle FinalJobHandle;
+        public struct DecisionRequest
+        {
+            private int index;
+            private MLAgentsWorld world;
+
+            public DecisionRequest(int index, MLAgentsWorld world)
+            {
+                this.index = index;
+                this.world = world;
+            }
+
+            public DecisionRequest SetReward(float r)
+            {
+                world.Rewards[index] = r;
+                return this;
+            }
+
+            public DecisionRequest SetObservation<T>(T sensor) where T : struct
+            {
+                if (UnsafeUtility.SizeOf<T>() != world.SensorFloatSize * sizeof(float))
+                {
+                    // Need to handle safety but it is not possible to store System.Type (class) in a struct
+                    //Debug.Log("Error in the type of sensor"); No strings in burst
+                }
+                int start = world.SensorFloatSize * index;
+                var tmp = world.Sensors.Slice(start, world.SensorFloatSize).SliceConvert<T>();
+                tmp[0] = sensor;
+                return this;
+            }
+        }
 
         public MLAgentsWorld(Type sensorType, Type actuatorType, int capacity = 100)
         {
@@ -38,7 +62,6 @@ namespace DOTS_MLAgents.Core
 
             ActuatorFloatSize = UnsafeUtility.SizeOf(actuatorType) / sizeof(float);
             Actuators = new NativeArray<float>(capacity * ActuatorFloatSize, Allocator.Persistent);
-            AgentIds = new NativeArray<Entity>(capacity, Allocator.Persistent);
 
             // FinalJobHandle = new JobHandle();
         }
@@ -52,37 +75,11 @@ namespace DOTS_MLAgents.Core
             AgentCounter.Dispose();
         }
 
-        public int CollectData<T>(
-            Entity entity,
-            T sensor,
-            float reward = 0f,
-            bool done = false
-            ) where T : struct
+        public DecisionRequest RequestDecision(Entity entity)
         {
-            if (UnsafeUtility.SizeOf<T>() != SensorFloatSize * sizeof(float))
-            {
-                // Need to hadle safety but it is not possible to store System.Type (class) in a struct
-                Debug.Log("Error in the type of sensor");
-            }
-            // https://docs.unity3d.com/Packages/com.unity.jobs@0.0/manual/custom_job_types.html#custom-job-types
-            // This is on how to create a NativeCounter
-
-            int index = AgentCounter.ToConcurrent().Increment() - 1;
-            //Sensor
-            // Maybe can optimize here
-            int start = SensorFloatSize * index;
-            var tmp = Sensors.Slice(start, SensorFloatSize).SliceConvert<T>();
-            tmp[0] = sensor;
-            // // Reward
-            Rewards[index] = reward;
-            // // Done
-            DoneFlags[index] = done;
-            // // AgentId
+            var index = AgentCounter.ToConcurrent().Increment() - 1;
             AgentIds[index] = entity;
-
-            return index;
+            return new DecisionRequest(index, this);
         }
-
-
     }
 }

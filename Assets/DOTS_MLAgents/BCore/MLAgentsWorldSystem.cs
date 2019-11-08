@@ -16,7 +16,9 @@ namespace DOTS_MLAgents.Core
     public class MLAgentsWorldSystem : JobComponentSystem // Should this be a ISimulation from Unity.Physics ?
     {
 
-        public const int n_threads = 4;
+        public const bool COMMUNICATE = false;
+
+        public const int n_threads = 64;
 
         private JobHandle dependencies;
         public JobHandle FinalJobHandle;
@@ -60,7 +62,10 @@ namespace DOTS_MLAgents.Core
             WorldDict = new Dictionary<string, MLAgentsWorld>();
             dependencies = new JobHandle();
             FinalJobHandle = new JobHandle();
-            com = new SharedMemoryCom("shared_communication_file.txt");
+            if (COMMUNICATE)
+            {
+                com = new SharedMemoryCom("shared_communication_file.txt");
+            }
         }
 
 
@@ -80,21 +85,25 @@ namespace DOTS_MLAgents.Core
             {
                 var world = val.Value;
 
-
-                /*var j = new CopyActuatorData
+                if (COMMUNICATE)
                 {
-                    sensorData = world.Sensors, // Just the identity for now
-                    actuatorData = world.Actuators
-                };
-                FinalJobHandle = j.Schedule(
-                                    world.AgentCounter.Count * world.ActuatorFloatSize,
-                                    n_threads,
-                                    FinalJobHandle);
-                                    */
+                    com.WriteWorld(world);
+                    com.Advance();
+                    com.LoadWorld(world);
+                }
+                else
+                {
+                    var j = new CopyActuatorData
+                    {
+                        sensorData = world.Sensors, // Just the identity for now
+                        actuatorData = world.Actuators
+                    };
+                    FinalJobHandle = j.Schedule(
+                                        world.AgentCounter.Count * world.ActuatorFloatSize,
+                                        n_threads,
+                                        FinalJobHandle);
 
-                com.WriteWorld(world);
-                com.Advance();
-                com.LoadWorld(world);
+                }
 
 
                 var l = new ResetCounterJob
@@ -113,7 +122,10 @@ namespace DOTS_MLAgents.Core
 
         protected override void OnDestroy()
         {
-            com.Dispose();
+            if (COMMUNICATE)
+            {
+                com.Dispose();
+            }
         }
     }
 

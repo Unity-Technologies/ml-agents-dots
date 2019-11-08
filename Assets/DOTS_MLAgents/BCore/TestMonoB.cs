@@ -20,7 +20,7 @@ public class TestMonoB : JobComponentSystem
     private MLAgentsWorld world;
     private NativeArray<Entity> entities;
 
-    public const int N_Agents = 50;
+    public const int N_Agents = 500;
 
     // Start is called before the first frame update
     protected override void OnCreate()
@@ -67,6 +67,7 @@ public class TestMonoB : JobComponentSystem
         return inputDeps;
     }
 
+    [BurstCompile]
     public struct UserCreateSensingJob : IJobParallelFor
     {
         public NativeArray<Entity> entities;
@@ -74,10 +75,15 @@ public class TestMonoB : JobComponentSystem
 
         public void Execute(int i)
         {
-            world.CollectData(entities[i], new float3(entities[i].Index, 0, 0));
+            // world.CollectData(entities[i], new float3(entities[i].Index, 0, 0));
+            world.RequestDecision(entities[i])
+                .SetReward(1.0f)
+                .SetObservation(new float3(entities[i].Index, 0, 0));
+
         }
     }
 
+    // [BurstCompile]
     public struct UserCreatedActionEventJob : IActuatorJob
     {
         public int myNumber;
@@ -85,7 +91,7 @@ public class TestMonoB : JobComponentSystem
         {
             var tmp = new float3();
             data.GetAction(out tmp);
-            Debug.Log(data.Entity.Index + "  " + tmp.x);
+            // Debug.Log(data.Entity.Index + "  " + tmp.x);
         }
     }
 
