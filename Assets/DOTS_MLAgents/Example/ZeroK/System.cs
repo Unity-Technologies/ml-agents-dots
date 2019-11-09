@@ -15,12 +15,12 @@ namespace DOTS_MLAgents.Example.ZeroK.Scripts
     /// and the sphere that are too far off are reset to the center.
     /// </summary>
     [UpdateBefore(typeof(UnityEngine.Experimental.PlayerLoop.FixedUpdate))]
-    public class MovementSystem : JobComponentSystem
+    public class ZKMovementSystem : JobComponentSystem
     {
         private struct MovementJob : IJobForEach<Translation, Speed>
         {
             public float deltaTime;
-    
+
             public void Execute(
                 ref Translation position, ref Speed speed)
             {
@@ -39,34 +39,35 @@ namespace DOTS_MLAgents.Example.ZeroK.Scripts
                     position.Value.z * position.Value.z > 1e6)
                 {
                     position.Value = initialPosition;
-                    speed.Value = 10*initialPosition;
+                    speed.Value = 10 * initialPosition;
                 }
             }
         }
-    
+
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
             var moveJob = new MovementJob
             {
                 deltaTime = Time.deltaTime
             };
-            var resetJob = new ResetPositionsJob{
+            var resetJob = new ResetPositionsJob
+            {
                 initialPosition = new float3(
                     RandomS.Range(-1f, 1f),
                     RandomS.Range(-1f, 1f),
                     RandomS.Range(-1f, 1f))
             };
-            var handle =  moveJob.Schedule(this, inputDeps);
+            var handle = moveJob.Schedule(this, inputDeps);
             return resetJob.Schedule(this, handle);
         }
-    }   
-    
+    }
+
     [UpdateBefore(typeof(UnityEngine.Experimental.PlayerLoop.FixedUpdate))]
     public class PopulateSensor : JobComponentSystem
     {
         private struct PopulateJob : IJobForEach<Sensor, Translation>
         {
-    
+
             public void Execute(
                 ref Sensor sensor, ref Translation pos)
             {
@@ -77,8 +78,8 @@ namespace DOTS_MLAgents.Example.ZeroK.Scripts
                 {
                     sensor.Done = 1f;
                 }
-//                sensor.Reward = math.min(0.1f, 1f / math.length(pos.Value));
-                sensor.Reward = 0.1f * math.min(1f , 1f / math.length(pos.Value)) - 0.05f;
+                //                sensor.Reward = math.min(0.1f, 1f / math.length(pos.Value));
+                sensor.Reward = 0.1f * math.min(1f, 1f / math.length(pos.Value)) - 0.05f;
 
             }
         }
@@ -94,23 +95,24 @@ namespace DOTS_MLAgents.Example.ZeroK.Scripts
                 {
                     sensor.Done = 0;
                     sensor.Timer = 0;
-                    position.Value = random.NextFloat3(20 * new float3(1,1,1)) - 10 * new float3(1,1,1);
+                    position.Value = random.NextFloat3(20 * new float3(1, 1, 1)) - 10 * new float3(1, 1, 1);
 
                 }
             }
         }
-    
+
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
             var moveJob = new PopulateJob
             {
             };
-            var resetJob = new ResetPositionsJob{
+            var resetJob = new ResetPositionsJob
+            {
                 random = new Random((uint)RandomS.Range(1, 100000))
             };
-            var handle =  moveJob.Schedule(this, inputDeps);
+            var handle = moveJob.Schedule(this, inputDeps);
             return resetJob.Schedule(this, handle);
         }
-    }  
-    
+    }
+
 }

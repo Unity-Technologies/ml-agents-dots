@@ -14,6 +14,7 @@ using DOTS_MLAgents.Core;
 
 // [UpdateInGroup(typeof(SimulationSystemGroup))]
 // [UpdateAfter(typeof(MLAgentsWorldSystem))]
+[DisableAutoCreation]
 public class TestMonoB : JobComponentSystem
 {
     private MLAgentsWorldSystem sys;
@@ -53,7 +54,6 @@ public class TestMonoB : JobComponentSystem
             entities = entities,
             world = world
         };
-
         inputDeps = senseJob.Schedule(N_Agents, MLAgentsWorldSystem.n_threads, inputDeps);
         sys.RegisterDependency(inputDeps);
 
@@ -79,6 +79,7 @@ public class TestMonoB : JobComponentSystem
             world.RequestDecision(entities[i])
                 .SetReward(1.0f)
                 .SetObservation(new float3(entities[i].Index, 0, 0));
+            // Debug.Log("REQUESTING DECISION");
 
         }
     }
@@ -91,7 +92,7 @@ public class TestMonoB : JobComponentSystem
         {
             var tmp = new float3();
             data.GetAction(out tmp);
-            // Debug.Log(data.Entity.Index + "  " + tmp.x);
+            Debug.Log(data.Entity.Index + "  " + tmp.x);
         }
     }
 

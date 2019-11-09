@@ -10,9 +10,6 @@ using System.Runtime.InteropServices;
 
 namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
 {
-    public class SpaceSystemA : AgentSystem<Translation, Acceleration>{ }
-    public class SpaceSystemB : AgentSystem<Translation, Acceleration>{ }
-    public class SpaceSystemC : AgentSystem<Translation, Acceleration>{ }
 
     /// <summary>
     /// Manager is responsible for instantiation the spheres and the IAgentSystem that will make
@@ -41,12 +38,9 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
         /// The distance at which the spheres are instantiated from the center
         /// </summary>
         public float maxDistance;
-        
+
         private EntityManager manager;
 
-        private SpaceSystemA sA;
-        private SpaceSystemB sB;
-        private SpaceSystemC sC;
 
         /// <summary>
         /// The sphere prefab
@@ -59,8 +53,6 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
         /// The Neural Network models for the three IAgentDecision
         /// </summary>
         public NNModel modelA;
-        public NNModel modelB;
-        public NNModel modelC;
 
         System.Func<Translation, Acceleration> heuristic;
 
@@ -68,35 +60,19 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
         {
             manager = World.Active.EntityManager;
 
+            var sys = World.Active.GetExistingSystem<MLAgentsWorldSystem>();
+            sys.SetModel("SpaceMagic", modelA);
 
-            sA=  World.Active.GetExistingSystem<SpaceSystemA>();
-            sB=  World.Active.GetExistingSystem<SpaceSystemB>();
-            sC=  World.Active.GetExistingSystem<SpaceSystemC>();
-
-//            sA.Enabled = false;
-//            sB.Enabled = false;
-//            sC.Enabled = false;
-
-            sA.SetNewComponentGroup(typeof(SphereGroup));
-            sB.SetNewComponentGroup(typeof(SphereGroup));
-            sC.SetNewComponentGroup(typeof(SphereGroup));
-
-            sA.SetFilter<SphereGroup>(new SphereGroup{Group = 0});
-            sB.SetFilter<SphereGroup>(new SphereGroup{Group = 1});
-            sC.SetFilter<SphereGroup>(new SphereGroup{Group = 2});
-
-            sA.Decision = new NNDecision<Translation, Acceleration>(modelA);
-            sB.Decision = new NNDecision<Translation, Acceleration>(modelB);
-            sC.Decision = new NNDecision<Translation, Acceleration>(modelC);
-
-            heuristic = pos => {
-                    float3 val = pos.Value;
-                    var d = (val.x * val.x+ val.y * val.y + val.z * val.z);
-                    val = - 3f * val;
-                    return new Acceleration{
-                        Value = new float3(-100f*val.z/d +val.x, 0 + val.y, 50f*val.x/d + val.z)
-                    };
+            heuristic = pos =>
+            {
+                float3 val = pos.Value;
+                var d = (val.x * val.x + val.y * val.y + val.z * val.z);
+                val = -3f * val;
+                return new Acceleration
+                {
+                    Value = new float3(-100f * val.z / d + val.x, 0 + val.y, 50f * val.x / d + val.z)
                 };
+            };
             _prefabEntity = GameObjectConversionUtility.ConvertGameObjectHierarchy(prefab, World.Active);
 
             Spawn(1);
@@ -120,32 +96,6 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
                 Spawn(1000);
             }
 
-            if (Input.GetKeyDown((KeyCode.U)))
-            {
-                // sA.Decision = new HeuristicSpace(new float3(20,0,0), 3);
-                sA.Decision = new HeuristicDecision<Translation, Acceleration>( heuristic);
-            }
-            if (Input.GetKeyDown((KeyCode.I)))
-            {
-                sA.Decision = new NNDecision<Translation, Acceleration>(modelA);
-            }
-            if (Input.GetKeyDown((KeyCode.J)))
-            {
-                sB.Decision = new HeuristicDecision<Translation, Acceleration>( heuristic);
-            }
-            if (Input.GetKeyDown((KeyCode.K)))
-            {
-                sB.Decision = new NNDecision<Translation, Acceleration>(modelB);
-            }
-            if (Input.GetKeyDown((KeyCode.N)))
-            {
-                sC.Decision = new HeuristicDecision<Translation, Acceleration>( heuristic);
-            }
-            if (Input.GetKeyDown((KeyCode.M)))
-            {
-                sC.Decision = new NNDecision<Translation, Acceleration>(modelC);
-            }
-
         }
 
         void Spawn(int amount)
@@ -161,7 +111,7 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
                 float speedX = Random.Range(-1f, 1f);
                 float speedY = Random.Range(-1f, 1f);
                 float speedZ = Random.Range(-1f, 1f);
-                manager.AddSharedComponentData(entities[i], new SphereGroup{Group = i%3});
+                manager.AddSharedComponentData(entities[i], new SphereGroup { Group = i % 3 });
                 manager.SetComponentData(entities[i], new Acceleration());
                 manager.SetComponentData(entities[i],
                     new Translation

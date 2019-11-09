@@ -9,16 +9,26 @@ using DOTS_MLAgents.Core.Inference;
 using Unity.Mathematics;
 using UnityEngine;
 using Unity.Transforms;
+using Barracuda;
 
 namespace DOTS_MLAgents.Core
 {
+
+    public enum Mode
+    {
+        COMMUNICATION,
+        BARRACUDA,
+        HEURISTIC
+    }
     // [UpdateInGroup(typeof(SimulationSystemGroup))]
     public class MLAgentsWorldSystem : JobComponentSystem // Should this be a ISimulation from Unity.Physics ?
     {
 
-        public const bool COMMUNICATE = false;
+        public const Mode MODE = Mode.BARRACUDA;
 
         public const int n_threads = 64;
+
+        public const int max_agents = 10000;
 
         private JobHandle dependencies;
         public JobHandle FinalJobHandle;
@@ -26,6 +36,8 @@ namespace DOTS_MLAgents.Core
         private SharedMemoryCom com;
 
         private Dictionary<string, MLAgentsWorld> WorldDict;
+
+        private Dictionary<string, BarracudaWorldProcessor> ModelStore;
         public MLAgentsWorld GetExistingMLAgentsWorld<TS, TA>(string policyId)
         where TS : struct
         where TA : struct
@@ -35,9 +47,15 @@ namespace DOTS_MLAgents.Core
             {
                 return WorldDict[policyId];
             }
-            var newWorld = new MLAgentsWorld(typeof(TS), typeof(TA), TestMonoB.N_Agents);
+            Debug.Log("A whole new world : " + policyId);
+            var newWorld = new MLAgentsWorld(typeof(TS), typeof(TA), max_agents);
             WorldDict[policyId] = newWorld;
             return newWorld;
+        }
+
+        public void SetModel(string policyId, NNModel model)
+        {
+            ModelStore.Add(policyId, new BarracudaWorldProcessor(model));
         }
 
         NNModel m_model;
@@ -52,17 +70,14 @@ namespace DOTS_MLAgents.Core
             // TODO
             return 0f;
         }
-        public void SetNNModel(string policyId, NNModel model)
-        {
-
-        }
 
         protected override void OnCreate()
         {
             WorldDict = new Dictionary<string, MLAgentsWorld>();
+            ModelStore = new Dictionary<string, BarracudaWorldProcessor>();
             dependencies = new JobHandle();
             FinalJobHandle = new JobHandle();
-            if (COMMUNICATE)
+            if (MODE == Mode.COMMUNICATION)
             {
                 com = new SharedMemoryCom("shared_communication_file.txt");
             }
@@ -85,13 +100,15 @@ namespace DOTS_MLAgents.Core
             {
                 var world = val.Value;
 
-                if (COMMUNICATE)
+                Debug.Log("MODE : " + MODE + "  " + val.Key);
+
+                if (MODE == Mode.COMMUNICATION)
                 {
                     com.WriteWorld(world);
                     com.Advance();
                     com.LoadWorld(world);
                 }
-                else
+                else if (MODE == Mode.HEURISTIC)
                 {
                     var j = new CopyActuatorData
                     {
@@ -102,17 +119,14 @@ namespace DOTS_MLAgents.Core
                                         world.AgentCounter.Count * world.ActuatorFloatSize,
                                         n_threads,
                                         FinalJobHandle);
-
+                }
+                else if (MODE == Mode.BARRACUDA)
+                {
+                    ModelStore[val.Key].ProcessWorld(world);
                 }
 
 
-                var l = new ResetCounterJob
-                {
-                    SensorCounter = world.AgentCounter,
-                };
 
-
-                FinalJobHandle = l.Schedule(FinalJobHandle);
             }
 
             inputDeps = JobHandle.CombineDependencies(inputDeps, FinalJobHandle);
@@ -122,7 +136,7 @@ namespace DOTS_MLAgents.Core
 
         protected override void OnDestroy()
         {
-            if (COMMUNICATE)
+            if (MODE == Mode.COMMUNICATION)
             {
                 com.Dispose();
             }
@@ -144,16 +158,6 @@ namespace DOTS_MLAgents.Core
 
 
 
-    public struct ResetCounterJob : IJob
-    {
-        public NativeCounter SensorCounter;
-
-        public void Execute()
-        {
-            SensorCounter.Count = 0;
-
-        }
-    }
 
 
 }

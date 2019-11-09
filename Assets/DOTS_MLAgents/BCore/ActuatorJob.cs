@@ -143,7 +143,7 @@ namespace DOTS_MLAgents.Core
 
 
                 int size = jobData.EventReader.ActuatorFloatSize;
-                for (int i = 0; i < jobData.EventReader.AgentIds.Length; i++)
+                for (int i = 0; i < jobData.EventReader.AgentCounter.Count; i++)
                 // var i = 1;
                 {
 
@@ -153,6 +153,7 @@ namespace DOTS_MLAgents.Core
                         ActionSlice = jobData.EventReader.Actuators.Slice(i * size, size)
                     });
                 }
+                jobData.EventReader.AgentCounter.Count = 0;
 
                 // foreach (ActuatorEvent t in jobData)
                 // {

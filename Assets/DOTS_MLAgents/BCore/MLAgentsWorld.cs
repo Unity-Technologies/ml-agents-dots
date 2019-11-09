@@ -62,7 +62,6 @@ namespace DOTS_MLAgents.Core
 
             ActuatorFloatSize = UnsafeUtility.SizeOf(actuatorType) / sizeof(float);
             Actuators = new NativeArray<float>(capacity * ActuatorFloatSize, Allocator.Persistent);
-
             // FinalJobHandle = new JobHandle();
         }
         public void Dispose()
