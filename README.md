@@ -9,34 +9,55 @@ var world = sys.GetExistingMLAgentsWorld<TS, TA>("The name of the policy associa
 The user could then in his own jobs add and retrieve data from the world. Here is an example of a job in which the user populates the sensor data :
 
 ```csharp
-public struct MyPopulatingJob : IParallelJobFor
-{
-	public DataCollector dataCollector;
-	public NativeArray<TS> sensors;
-	public int reward;
-	public void Execute(i){
-		dataCollector.CollectData(index i, ..., sensors[i], reward);
-	}
-}
+public struct UserCreateSensingJob : IJobParallelFor
+    {
+        public NativeArray<Entity> entities;
+        public MLAgentsWorld world;
+
+        public void Execute(int i)
+        {
+            world.RequestDecision(entities[i])
+                .SetReward(1.0f)
+                .SetObservation(new float3(3.0f, 0, 0));
+
+        }
+    }
 ```
 
 The job would be called this way :
 
 ```csharp
 var sys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
-var world = sys.GetExistingMLAgentsWorld<TS, TA>("The name of the policy associated");
+var myWorld = sys.GetExistingMLAgentsWorld<TS, TA>("The name of the policy associated");
 
 protected override JobHandle OnUpdate(JobHandle inputDeps)
 {
     var job = new MyPopulationJob{
-	    dataCollector = world.DataCollector;
-	    sensors = ...;
-	    reward = ...;
+	    world = myWorld,
+	    entities = ...,
+	    sensors = ...,
+	    reward = ...,
     }
     return job.Schedule(N_Agents, 64, inputDeps);
 }
 ```
 
+Note that this API can also be called outside of a job and used in the main thread to be compatible with OOTS. There is no reliance at all on IComponentData which means that we do not have to feed the data with blitable structs but could use NativeArrays / Textures as well.
+
+In order to retrieve actions, here is an example of what the API could look like : 
+
+```csharp
+public struct UserCreatedActionEventJob : IActuatorJob
+    {
+        public void Execute(ActuatorEvent data)
+        {
+            var tmp = new float3();
+            data.GetAction(out tmp);
+            Debug.Log(data.Entity.Index + "  " + tmp.x);
+        }
+    }
+```
+The ActuatorEvent data contains a key (here an entity) to identify the Agent and a GetAction method to retrieve the data in the event. This is very simular to how collisions are currently handled in the Physics package.
 
 
 # ml-agents-dots
