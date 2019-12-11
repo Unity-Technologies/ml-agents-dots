@@ -152,8 +152,6 @@ MonoBehaviour:
   maxDistance: 2
   prefab: {fileID: 8480657802093770681, guid: 9002bbfd4ae214a8fb609aeacaa0de4d, type: 3}
   modelA: {fileID: -589297107861187629, guid: c16aa6693b8834a58855a5592bb4f5f8, type: 3}
-  modelB: {fileID: 8648952372107404602, guid: a3e419de75dc44356b527bf0b06e3b81, type: 3}
-  modelC: {fileID: -5333372902151889801, guid: 8533bf952c61d430e8765c2c16cde480, type: 3}
 --- !u!4 &883511626
 Transform:
   m_ObjectHideFlags: 0
@@ -244,13 +242,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1006088310}
-  m_LocalRotation: {x: 0.2588191, y: 0, z: 0, w: 0.9659258}
+  m_LocalRotation: {x: 0.42261827, y: 0, z: 0, w: 0.9063079}
   m_LocalPosition: {x: 0, y: 200, z: -153}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 30, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 50, y: 0, z: 0}
 --- !u!1 &1246396923
 GameObject:
   m_ObjectHideFlags: 0

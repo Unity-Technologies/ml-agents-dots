@@ -10,6 +10,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using Unity.Transforms;
 using Barracuda;
+using System.IO;
 
 namespace DOTS_MLAgents.Core
 {
@@ -24,7 +25,7 @@ namespace DOTS_MLAgents.Core
     public class MLAgentsWorldSystem : JobComponentSystem // Should this be a ISimulation from Unity.Physics ?
     {
 
-        public const Mode MODE = Mode.BARRACUDA;
+        public const Mode MODE = Mode.COMMUNICATION;
 
         public const int n_threads = 64;
 
@@ -38,19 +39,27 @@ namespace DOTS_MLAgents.Core
         private Dictionary<string, MLAgentsWorld> WorldDict;
 
         private Dictionary<string, BarracudaWorldProcessor> ModelStore;
-        public MLAgentsWorld GetExistingMLAgentsWorld<TS, TA>(string policyId)
-        where TS : struct
-        where TA : struct
+        public MLAgentsWorld GetExistingWorld(string policyId)
         {
-            // Can this be passed by reference ?
             if (WorldDict.ContainsKey(policyId))
             {
                 return WorldDict[policyId];
             }
-            Debug.Log("A whole new world : " + policyId);
-            var newWorld = new MLAgentsWorld(typeof(TS), typeof(TA), max_agents);
-            WorldDict[policyId] = newWorld;
-            return newWorld;
+            else
+            {
+                throw new System.Exception("TODO");
+            }
+        }
+        public void SubscribeWorld(string policyId, MLAgentsWorld world)
+        {
+            if (!WorldDict.ContainsKey(policyId))
+            {
+                WorldDict[policyId] = world;
+            }
+            else
+            {
+                throw new System.Exception("TODO");
+            }
         }
 
         public void SetModel(string policyId, NNModel model)
@@ -79,7 +88,8 @@ namespace DOTS_MLAgents.Core
             FinalJobHandle = new JobHandle();
             if (MODE == Mode.COMMUNICATION)
             {
-                com = new SharedMemoryCom("shared_communication_file.txt");
+                com = new SharedMemoryCom(Path.Combine(Path.GetTempPath(), "ml-agents", "default"));
+                com.Advance();
             }
         }
 
@@ -104,25 +114,31 @@ namespace DOTS_MLAgents.Core
 
                 if (MODE == Mode.COMMUNICATION)
                 {
-                    com.WriteWorld(world);
-                    com.Advance();
-                    com.LoadWorld(world);
+                    com.WriteWorld(val.Key, world);
+
+                    com.SetUnityReady();
+                    var command = com.Advance(); // Should be called only once, not per world as right now
+                    Debug.Log(command);
+                    Debug.Log(com.ReadAndClearSideChannelData()?.Length);
+
+
+                    com.LoadWorld(val.Key, world);
                 }
                 else if (MODE == Mode.HEURISTIC)
                 {
                     var j = new CopyActuatorData
                     {
                         sensorData = world.Sensors, // Just the identity for now
-                        actuatorData = world.Actuators
+                        actuatorData = world.ContinuousActuators
                     };
                     FinalJobHandle = j.Schedule(
-                                        world.AgentCounter.Count * world.ActuatorFloatSize,
+                                        world.AgentCounter.Count * world.ActionSize,
                                         n_threads,
                                         FinalJobHandle);
                 }
                 else if (MODE == Mode.BARRACUDA)
                 {
-                    ModelStore[val.Key].ProcessWorld(world);
+                    // ModelStore[val.Key].ProcessWorld(world);
                 }
 
 
@@ -139,6 +155,10 @@ namespace DOTS_MLAgents.Core
             if (MODE == Mode.COMMUNICATION)
             {
                 com.Dispose();
+            }
+            foreach (var kv in WorldDict)
+            {
+                kv.Value.Dispose();
             }
         }
     }

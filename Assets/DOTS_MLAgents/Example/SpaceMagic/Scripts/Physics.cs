@@ -22,7 +22,7 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
             public void Execute(ActuatorEvent ev)
             {
                 var a = new Acceleration();
-                ev.GetAction(out a);
+                ev.GetContinuousAction(out a);
                 ECB.SetComponent(ev.Entity, a);
             }
         }
@@ -40,7 +40,7 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
             {
                 position.Value += deltaTime * speed.Value;
                 speed.Value += deltaTime * (acceleration.Value - 0.05f * speed.Value);
-                w.RequestDecision(entity).SetObservation(position);
+                w.RequestDecision(entity).SetObservation(0, position);
             }
         }
 
@@ -65,7 +65,8 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
         protected override void OnCreate()
         {
             var sys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
-            world = sys.GetExistingMLAgentsWorld<Translation, Acceleration>("SpaceMagic");
+            world = new MLAgentsWorld(1000, ActionType.CONTINUOUS, new int3[] { new int3(3, 0, 0) }, 3);
+            sys.SubscribeWorld("SpaceMagic", world);
             timeBarrier = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
         }
 

@@ -28,7 +28,10 @@ public class TestMonoB : JobComponentSystem
     {
         Application.targetFrameRate = -1;
         sys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
-        world = sys.GetExistingMLAgentsWorld<float3, float3>("test");
+
+        world = new MLAgentsWorld(100, ActionType.CONTINUOUS, new int3[] { new int3(3, 0, 0) }, 3);
+        sys.SubscribeWorld("test", world);
+
         entities = new NativeArray<Entity>(N_Agents, Allocator.Persistent);
         // World.Active.EntityManager.CreateEntity(entities);
         for (int i = 0; i < N_Agents; i++)
@@ -78,7 +81,7 @@ public class TestMonoB : JobComponentSystem
             // world.CollectData(entities[i], new float3(entities[i].Index, 0, 0));
             world.RequestDecision(entities[i])
                 .SetReward(1.0f)
-                .SetObservation(new float3(entities[i].Index, 0, 0));
+                .SetObservation(0, new float3(entities[i].Index, 0, 0));
             // Debug.Log("REQUESTING DECISION");
 
         }
@@ -91,7 +94,7 @@ public class TestMonoB : JobComponentSystem
         public void Execute(ActuatorEvent data)
         {
             var tmp = new float3();
-            data.GetAction(out tmp);
+            data.GetContinuousAction(out tmp);
             Debug.Log(data.Entity.Index + "  " + tmp.x);
         }
     }

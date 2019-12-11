@@ -1,14 +1,4 @@
 using System;
-using Unity.Collections;
-using Unity.Jobs;
-using System.IO.MemoryMappedFiles;
-using System.IO;
-using Unity.Collections.LowLevel.Unsafe;
-using UnityEngine;
-using UnityEngine.Profiling;
-using Unity.Entities;
-using System.IO;
-using System.Runtime.InteropServices;
 using Barracuda;
 using DOTS_MLAgents.Core.Inference;
 
@@ -42,16 +32,16 @@ namespace DOTS_MLAgents.Core
         public void ProcessWorld(MLAgentsWorld world)
         {
 
-            var _sensorT = new Tensor(
-                new TensorShape(world.AgentCounter.Count, world.SensorFloatSize),
-                world.Sensors.ToArray(),
-                "sensor");
+            // var _sensorT = new Tensor(
+            //     new TensorShape(world.AgentCounter.Count, world.SensorFloatSize),
+            //     world.Sensors.ToArray(),
+            //     "sensor");
 
-            _engine.Execute(_sensorT);
-            _sensorT.Dispose();
-            var actuatorT = _engine.Fetch("actuator");
-            world.Actuators.Slice(0, world.AgentCounter.Count * world.SensorFloatSize).CopyFrom(actuatorT.data.Download(world.AgentCounter.Count * world.SensorFloatSize));
-            actuatorT.Dispose();
+            // _engine.Execute(_sensorT);
+            // _sensorT.Dispose();
+            // var actuatorT = _engine.Fetch("actuator");
+            // world.Actuators.Slice(0, world.AgentCounter.Count * world.SensorFloatSize).CopyFrom(actuatorT.data.Download(world.AgentCounter.Count * world.SensorFloatSize));
+            // actuatorT.Dispose();
         }
 
 

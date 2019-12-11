@@ -12,12 +12,18 @@ namespace DOTS_MLAgents.Core
     public struct ActuatorEvent
     {
         public Entity Entity;
-        public NativeSlice<float> ActionSlice;
+        public NativeSlice<float> ContinuousActionSlice;
+        public NativeSlice<int> DiscreteActionSlice;
 
-        public void GetAction<T>(out T action) where T : struct
+        public void GetDiscreteAction<T>(out T action) where T : struct
         {
             // Do some check
-            action = ActionSlice.SliceConvert<T>()[0];
+            action = DiscreteActionSlice.SliceConvert<T>()[0];
+        }
+        public void GetContinuousAction<T>(out T action) where T : struct
+        {
+            // Do some check
+            action = ContinuousActionSlice.SliceConvert<T>()[0];
         }
     }
 
@@ -135,33 +141,19 @@ namespace DOTS_MLAgents.Core
             public delegate void ExecuteJobFunction(ref ActionEventJobData<T> jobData, IntPtr listDataPtr, IntPtr unusedPtr, ref JobRanges ranges, int jobIndex);
             public static unsafe void Execute(ref ActionEventJobData<T> jobData, IntPtr listDataPtr, IntPtr unusedPtr, ref JobRanges ranges, int jobIndex)
             {
-                // data.UserJobData.Execute(new ActuatorData());
-                // foreach (ActuatorData eventData in data.EventReader)
-                // {
-                //     data.UserJobData.Execute(eventData);
-                // }
 
-
-                int size = jobData.EventReader.ActuatorFloatSize;
+                int size = jobData.EventReader.ActionSize;
                 for (int i = 0; i < jobData.EventReader.AgentCounter.Count; i++)
-                // var i = 1;
                 {
 
                     jobData.UserJobData.Execute(new ActuatorEvent
                     {
                         Entity = jobData.EventReader.AgentIds[i],
-                        ActionSlice = jobData.EventReader.Actuators.Slice(i * size, size)
+                        // DiscreteActionSlice = jobData.EventReader.DiscreteActuators.Slice(i * size, size),
+                        ContinuousActionSlice = jobData.EventReader.ContinuousActuators.Slice(i * size, size)
                     });
                 }
                 jobData.EventReader.AgentCounter.Count = 0;
-
-                // foreach (ActuatorEvent t in jobData)
-                // {
-                //     // UnityEngine.Debug.Log("tRESt");
-                //     jobData.UserJobData.Execute(t);
-                // }
-
-                // data.UserJobData.Execute(new ActuatorEvent());
 
             }
         }
