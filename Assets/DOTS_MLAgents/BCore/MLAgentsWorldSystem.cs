@@ -106,26 +106,35 @@ namespace DOTS_MLAgents.Core
         {
             // Need to complete here to ensure we have the right Agent Count
             dependencies.Complete();
-            foreach (var val in WorldDict)
+
+
+            Debug.Log("MODE : " + MODE);
+
+            if (MODE == Mode.COMMUNICATION)
             {
-                var world = val.Value;
-
-                Debug.Log("MODE : " + MODE + "  " + val.Key);
-
-                if (MODE == Mode.COMMUNICATION)
+                foreach (var val in WorldDict)
                 {
+                    var world = val.Value;
                     com.WriteWorld(val.Key, world);
+                }
+                com.WriteSideChannelData(new byte[4]);
+                com.SetUnityReady();
+                var command = com.Advance(); // Should be called only once, not per world as right now
 
-                    com.SetUnityReady();
-                    var command = com.Advance(); // Should be called only once, not per world as right now
-                    Debug.Log(command);
-                    Debug.Log(com.ReadAndClearSideChannelData()?.Length);
-                    // com.WriteSideChannelData(new byte[4]);
+                Debug.Log(command);
+                Debug.Log(com.ReadAndClearSideChannelData()?.Length);
 
+                foreach (var val in WorldDict)
+                {
+                    var world = val.Value;
                     com.LoadWorld(val.Key, world);
                 }
-                else if (MODE == Mode.HEURISTIC)
+            }
+            else if (MODE == Mode.HEURISTIC)
+            {
+                foreach (var val in WorldDict)
                 {
+                    var world = val.Value;
                     var j = new CopyActuatorData
                     {
                         sensorData = world.Sensors, // Just the identity for now
@@ -136,14 +145,12 @@ namespace DOTS_MLAgents.Core
                                         n_threads,
                                         FinalJobHandle);
                 }
-                else if (MODE == Mode.BARRACUDA)
-                {
-                    // ModelStore[val.Key].ProcessWorld(world);
-                }
-
-
-
             }
+            else if (MODE == Mode.BARRACUDA)
+            {
+                // ModelStore[val.Key].ProcessWorld(world);
+            }
+
 
             inputDeps = JobHandle.CombineDependencies(inputDeps, FinalJobHandle);
             inputDeps.Complete();

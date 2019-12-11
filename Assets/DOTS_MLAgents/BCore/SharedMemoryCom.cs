@@ -78,7 +78,6 @@ namespace DOTS_MLAgents.Core
             var mmf = MemoryMappedFile.CreateFromFile(path, FileMode.Open);
             accessor = mmf.CreateViewAccessor(0, 8, MemoryMappedFileAccess.ReadWrite);
             var capacity = accessor.ReadInt32(k_FileLengthOffset);
-            Debug.Log("INTIIAL CAPACITY " + capacity);
             var version = accessor.ReadInt32(k_VersionOffset);
             if (version != k_ApiVersion)
             {
@@ -114,11 +113,12 @@ namespace DOTS_MLAgents.Core
 
         public void WriteSideChannelData(byte[] data)
         {
-            if (data.Length > SideChannelCapacity() - 4)
+            int oldCapacity = SideChannelCapacity();
+            if (data.Length > oldCapacity - 4)
             { // 4 is the int for the size of the data
-                int newCapacity = SideChannelCapacity();
-                newCapacity = data.Length * 2 + 20;
+                int newCapacity = data.Length * 2 + 20;
                 ExtendFile(newCapacity, 0);
+                MoveAllOffsets(newCapacity - oldCapacity);
             }
             accessor.Write(k_SideChannelOffset + 4, data.Length);
             accessor.WriteArray(k_SideChannelOffset + 8, data, 0, data.Length);
@@ -134,7 +134,6 @@ namespace DOTS_MLAgents.Core
                 // Write empty bytes
                 var old_size = accessor.ReadInt32(k_FileLengthOffset);
                 newTotalCapacity = old_size + (channelCapacity - oldChannelCapacity) + additionalRLDataCapacity;
-                Debug.Log("NEW TOTAL CAPACITY " + newTotalCapacity);
                 fs.Write(new byte[newTotalCapacity], 0, newTotalCapacity);
 
             }
@@ -166,8 +165,6 @@ namespace DOTS_MLAgents.Core
             newAccessor.Write(k_SideChannelOffset, channelCapacity);
             currentRLDataCapacity += additionalRLDataCapacity;
 
-            Debug.Log("OLD FILE " + filePath + "  " + (k_SideChannelOffset + 4 + oldChannelCapacity) + "  " + accessor.ReadInt32((k_SideChannelOffset + 4 + oldChannelCapacity)));
-
             // Mark file as dirty : 
             accessor.Write(k_CommandOffset, (sbyte)PythonCommand.CHANGE_FILE);
             accessor.Write(k_MutexOffset, false);
@@ -179,7 +176,6 @@ namespace DOTS_MLAgents.Core
             accessor = newAccessor;
             accessorPointer = newAccessorPointer;
             filePath = newFilePath;
-            Debug.Log("NEW FILE " + filePath + "  " + (k_SideChannelOffset + 4 + channelCapacity) + "  " + accessor.ReadInt32((k_SideChannelOffset + 4 + channelCapacity)));
         }
 
         public static int GetRequiredCapacity(MLAgentsWorld world)
@@ -299,26 +295,20 @@ namespace DOTS_MLAgents.Core
         public void WriteWorld(string worldName, MLAgentsWorld world)
         {
 
+
             if (!groupOffsets.ContainsKey(worldName))
             {
-                Debug.Log("SC CAPACITY " + SideChannelCapacity());
                 var numberGroupsOffset = k_SideChannelOffset + 4 + SideChannelCapacity();
                 var nGroups = accessor.ReadInt32(numberGroupsOffset);
                 accessor.Write(numberGroupsOffset, nGroups + 1);
 
-
-                Debug.Log("N GROUPS " + numberGroupsOffset + "  " + accessor.ReadInt32(numberGroupsOffset) + " " + filePath);
 
                 var requiredCapacity = GetRequiredCapacity(world);
                 var oldEndOffset = accessor.ReadInt32(k_FileLengthOffset);
                 ExtendFile(SideChannelCapacity(), requiredCapacity);
                 groupOffsets[worldName] = WriteAgentGroupSpecs(worldName, world, oldEndOffset);
 
-                Debug.Log("Required capacity " + requiredCapacity);
-                Debug.Log("Action offset : " + groupOffsets[worldName].ActionOffset);
             }
-
-            Debug.Log("WriteWorld " + filePath + "  " + (k_SideChannelOffset + 4 + SideChannelCapacity()) + "  " + accessor.ReadInt32((k_SideChannelOffset + 4 + SideChannelCapacity())));
 
             var offsets = groupOffsets[worldName];
 
@@ -370,7 +360,6 @@ namespace DOTS_MLAgents.Core
 
                 Buffer.MemoryCopy(src.ToPointer(), dst.ToPointer(), length, length);
             }
-            Debug.Log("WriteWorld2 " + filePath + "  " + (k_SideChannelOffset + 4 + SideChannelCapacity()) + "  " + accessor.ReadInt32((k_SideChannelOffset + 4 + SideChannelCapacity())));
 
         }
 
@@ -388,6 +377,11 @@ namespace DOTS_MLAgents.Core
             filePath = filePath + "_";
             CreateAccessor(filePath);
             var delta = SideChannelCapacity() - oldChannelCapacity;
+            MoveAllOffsets(delta);
+        }
+
+        private void MoveAllOffsets(int delta)
+        {
             var keys = groupOffsets.Keys.ToList();
             foreach (var k in keys)
             {
@@ -402,7 +396,6 @@ namespace DOTS_MLAgents.Core
                 newOffset.ActionOffset = groupOffsets[k].ActionOffset + delta;
                 groupOffsets[k] = newOffset;
             }
-
         }
 
         private void WaitOnPython()
@@ -433,11 +426,9 @@ namespace DOTS_MLAgents.Core
         public PythonCommand Advance()
         {
 
-            Debug.Log("FILEPATH : " + filePath);
             WaitOnPython();
 
             PythonCommand commandReceived = (PythonCommand)accessor.ReadSByte(k_CommandOffset);
-            Debug.Log(commandReceived);
             switch (commandReceived)
             {
                 case PythonCommand.RESET:
@@ -456,9 +447,6 @@ namespace DOTS_MLAgents.Core
         public void LoadWorld(string worldName, MLAgentsWorld world)
         {
             var offsets = groupOffsets[worldName];
-
-            Debug.Log("LoadWorld " + filePath + "  " + (k_SideChannelOffset + 4 + SideChannelCapacity()) + "  " + accessor.ReadInt32((k_SideChannelOffset + 4 + SideChannelCapacity())));
-
             IntPtr src = IntPtr.Add(accessorPointer, offsets.ActionOffset);
             IntPtr dst = new IntPtr(world.DiscreteActuators.GetUnsafePtr());
             if (world.ActionType == ActionType.CONTINUOUS)

@@ -106,7 +106,6 @@ class SharedMemoryCom:
         message_len = struct.unpack_from(
             "<i", self.accessor, self.SIDE_CHANNEL_CAPACITY_OFFSET + 4
         )[0]
-        print("Message len", message_len)
         if message_len == 0:
             return bytearray()
         else:
@@ -155,7 +154,6 @@ class SharedMemoryCom:
             os.remove(self.file_name)
             self.file_name = None
         elif command == PythonCommand.CHANGE_FILE:
-            print("CHANGE FILE")
             self._delete_file_and_move_to_new_file()
             self._group_offsets_dirty = True
             self._wait_for_unity_helper()
@@ -168,16 +166,6 @@ class SharedMemoryCom:
     def _create_next_file(self, side_channel_new_capacity: int) -> None:
         # Will never need to increase the RL data capacity
         # Is only triggered by a too large side channel data
-        print(
-            "OLD N GROUPS : ",
-            struct.unpack_from(
-                "<i",
-                self.accessor,
-                self.SIDE_CHANNEL_CAPACITY_OFFSET
-                + self._get_side_channel_capacity(self.accessor)
-                + 4,
-            ),
-        )
         new_file_name = self.file_name + "_"
         side_channel_old_capacity = self._get_side_channel_capacity(self.accessor)
         self._clear_side_channel()
@@ -200,16 +188,6 @@ class SharedMemoryCom:
         with open(new_file_name, "r+b") as f:
             # memory-map the file, size 0 means whole file
             self.accessor = mmap.mmap(f.fileno(), 0)
-        print(
-            "NEW N GROUPS : ",
-            struct.unpack_from(
-                "<i",
-                self.accessor,
-                self.SIDE_CHANNEL_CAPACITY_OFFSET
-                + self._get_side_channel_capacity(self.accessor)
-                + 4,
-            ),
-        )
 
     def _delete_file_and_move_to_new_file(self) -> None:
         # Only when Unity wants to change the file
@@ -229,7 +207,6 @@ class SharedMemoryCom:
     @staticmethod
     def _get_agent_group_section_offset(accessor) -> int:
         sc_capacity = SharedMemoryCom._get_side_channel_capacity(accessor)
-        print("SC capacity", sc_capacity)
         return SharedMemoryCom.SIDE_CHANNEL_CAPACITY_OFFSET + 4 + sc_capacity
 
     @staticmethod
@@ -266,15 +243,14 @@ class SharedMemoryCom:
         # 4 bytes : n_agents at current step
         # ? Bytes : the data : obs,reward,done,max_step,agent_id,masks,action
         offset = self._get_agent_group_section_offset(self.accessor)
-        print(offset)
         n_groups, offset = self._get_int(self.accessor, offset)
-        print(offset, n_groups, self.file_name)
 
         self.group_offsets.clear()
 
         for _ in range(n_groups):
             # Get the specs of the group
             group_name, offset = self._get_string(self.accessor, offset)
+
             max_n_agents, offset = self._get_int(self.accessor, offset)
             is_continuous, offset = self._get_bool(self.accessor, offset)
             a_size, offset = self._get_int(self.accessor, offset)
