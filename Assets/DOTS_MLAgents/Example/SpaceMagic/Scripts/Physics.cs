@@ -67,6 +67,9 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
             var sys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
             world = new MLAgentsWorld(1000, ActionType.CONTINUOUS, new int3[] { new int3(3, 0, 0) }, 3);
             sys.SubscribeWorld("SpaceMagic", world);
+
+            // world = new MLAgentsWorld(10, ActionType.CONTINUOUS, new int3[] { new int3(5, 0, 0) }, 6);
+            // sys.SubscribeWorld("SpaceMagic2", world);
             timeBarrier = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
         }
 

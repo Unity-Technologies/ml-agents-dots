@@ -31,7 +31,7 @@ def test_create_shared_memory():
     sm = SharedMemoryCom(False)
     with open(sm.get_file_name(), "r+b") as f:
         accessor = mmap.mmap(f.fileno(), 0)
-    assert len(accessor) == 18  # The size of an initialization file
+    assert len(accessor) == 22  # The size of an initialization file
     first_file_path = sm.get_file_name()
     assert os.path.exists(first_file_path)  # Ensure the file was created
     os.remove(first_file_path)
@@ -45,7 +45,7 @@ def test_file_expansion():
     first_file_path = sm.get_file_name()
     sm.write_side_channel_data(struct.pack("<i", 2019))
     # Not enough space on the file to write, creates a new file and flags the old as obsolete
-    data = sm.read_side_channel_data()
+    data = sm.read_side_channel_data_and_clear()
     value = struct.unpack("<i", data)[0]
     assert value == 2019
     assert sm.get_file_name()[-1] == "_"

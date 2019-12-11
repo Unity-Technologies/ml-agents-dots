@@ -120,7 +120,7 @@ namespace DOTS_MLAgents.Core
                     var command = com.Advance(); // Should be called only once, not per world as right now
                     Debug.Log(command);
                     Debug.Log(com.ReadAndClearSideChannelData()?.Length);
-
+                    // com.WriteSideChannelData(new byte[4]);
 
                     com.LoadWorld(val.Key, world);
                 }

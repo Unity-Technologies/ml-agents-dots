@@ -112,12 +112,19 @@ namespace DOTS_MLAgents.Core
             return result;
         }
 
-        public void WriteSideChannelData()
+        public void WriteSideChannelData(byte[] data)
         {
-            throw new Exception("TODO");
+            if (data.Length > SideChannelCapacity() - 4)
+            { // 4 is the int for the size of the data
+                int newCapacity = SideChannelCapacity();
+                newCapacity = data.Length * 2 + 20;
+                ExtendFile(newCapacity, 0);
+            }
+            accessor.Write(k_SideChannelOffset + 4, data.Length);
+            accessor.WriteArray(k_SideChannelOffset + 8, data, 0, data.Length);
         }
 
-        private void ExtendFile(int channelCapacity, int additionalRLDataCapacity)
+        public void ExtendFile(int channelCapacity, int additionalRLDataCapacity)
         {
             var newFilePath = filePath + "_";
             var oldChannelCapacity = SideChannelCapacity();
@@ -147,18 +154,19 @@ namespace DOTS_MLAgents.Core
             // Copy sideChannel
             IntPtr src = IntPtr.Add(accessorPointer, k_SideChannelOffset + 4);
             IntPtr dst = IntPtr.Add(newAccessorPointer, k_SideChannelOffset + 4);
-            Buffer.MemoryCopy(src.ToPointer(), dst.ToPointer(), SideChannelCapacity(), SideChannelCapacity());
+            Buffer.MemoryCopy(src.ToPointer(), dst.ToPointer(), oldChannelCapacity, oldChannelCapacity);
 
             // Copy RL DATA
-            src = IntPtr.Add(accessorPointer, k_SideChannelOffset + 4 + SideChannelCapacity());
+            src = IntPtr.Add(accessorPointer, k_SideChannelOffset + 4 + oldChannelCapacity);
             dst = IntPtr.Add(newAccessorPointer, k_SideChannelOffset + 4 + channelCapacity);
             Buffer.MemoryCopy(src.ToPointer(), dst.ToPointer(), currentRLDataCapacity, currentRLDataCapacity);
 
             // Change the capacity of file, side channel and RL data
-            newAccessor.Write(0, newTotalCapacity);
+            newAccessor.Write(k_FileLengthOffset, newTotalCapacity);
             newAccessor.Write(k_SideChannelOffset, channelCapacity);
             currentRLDataCapacity += additionalRLDataCapacity;
 
+            Debug.Log("OLD FILE " + filePath + "  " + (k_SideChannelOffset + 4 + oldChannelCapacity) + "  " + accessor.ReadInt32((k_SideChannelOffset + 4 + oldChannelCapacity)));
 
             // Mark file as dirty : 
             accessor.Write(k_CommandOffset, (sbyte)PythonCommand.CHANGE_FILE);
@@ -171,6 +179,7 @@ namespace DOTS_MLAgents.Core
             accessor = newAccessor;
             accessorPointer = newAccessorPointer;
             filePath = newFilePath;
+            Debug.Log("NEW FILE " + filePath + "  " + (k_SideChannelOffset + 4 + channelCapacity) + "  " + accessor.ReadInt32((k_SideChannelOffset + 4 + channelCapacity)));
         }
 
         public static int GetRequiredCapacity(MLAgentsWorld world)
@@ -309,6 +318,8 @@ namespace DOTS_MLAgents.Core
                 Debug.Log("Action offset : " + groupOffsets[worldName].ActionOffset);
             }
 
+            Debug.Log("WriteWorld " + filePath + "  " + (k_SideChannelOffset + 4 + SideChannelCapacity()) + "  " + accessor.ReadInt32((k_SideChannelOffset + 4 + SideChannelCapacity())));
+
             var offsets = groupOffsets[worldName];
 
             // N Agents
@@ -359,6 +370,8 @@ namespace DOTS_MLAgents.Core
 
                 Buffer.MemoryCopy(src.ToPointer(), dst.ToPointer(), length, length);
             }
+            Debug.Log("WriteWorld2 " + filePath + "  " + (k_SideChannelOffset + 4 + SideChannelCapacity()) + "  " + accessor.ReadInt32((k_SideChannelOffset + 4 + SideChannelCapacity())));
+
         }
 
         private void OnCloseCommand()
@@ -444,6 +457,7 @@ namespace DOTS_MLAgents.Core
         {
             var offsets = groupOffsets[worldName];
 
+            Debug.Log("LoadWorld " + filePath + "  " + (k_SideChannelOffset + 4 + SideChannelCapacity()) + "  " + accessor.ReadInt32((k_SideChannelOffset + 4 + SideChannelCapacity())));
 
             IntPtr src = IntPtr.Add(accessorPointer, offsets.ActionOffset);
             IntPtr dst = new IntPtr(world.DiscreteActuators.GetUnsafePtr());

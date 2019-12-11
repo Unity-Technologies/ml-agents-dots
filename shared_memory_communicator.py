@@ -46,7 +46,7 @@ class SharedMemoryCom:
     VERSION_OFFSET = 4
     MUTEXT_OFFSET = 8  # Unity blocked = True, Python Blocked = False
     COMMAND_OFFSET = 9
-    SIDE_CHANNEL_OFFSET = 10
+    SIDE_CHANNEL_CAPACITY_OFFSET = 10
 
     def __init__(self, use_default: bool = False):
         directory = os.path.join(tempfile.gettempdir(), self.DIRECTORY)
@@ -65,7 +65,7 @@ class SharedMemoryCom:
         self.file_name = file_name
         data = bytearray(
             struct.pack(
-                "<ii?Bii", 18, self.API_VERSION, False, PythonCommand.DEFAULT, 0, 0
+                "<ii?Biii", 22, self.API_VERSION, False, PythonCommand.DEFAULT, 4, 0, 0
             )
         )
         self._create_file(self.file_name, data)
@@ -94,21 +94,27 @@ class SharedMemoryCom:
         capacity = self._get_side_channel_capacity(self.accessor)
         if len(data) >= capacity - 4:
             # 4 if for the int giving the actual size of payload
-            self._create_next_file(2 * len(data))
-        struct.pack_into("<i", self.accessor, self.SIDE_CHANNEL_OFFSET + 4, len(data))
-        start = self.SIDE_CHANNEL_OFFSET + 8
+            self._create_next_file(2 * len(data) + 20)
+            self._refresh_agent_group_offsets()
+        struct.pack_into(
+            "<i", self.accessor, self.SIDE_CHANNEL_CAPACITY_OFFSET + 4, len(data)
+        )
+        start = self.SIDE_CHANNEL_CAPACITY_OFFSET + 8
         self.accessor[start : start + len(data)] = data
 
     def read_side_channel_data_and_clear(self) -> bytearray:
         message_len = struct.unpack_from(
-            "<i", self.accessor, self.SIDE_CHANNEL_OFFSET + 4
+            "<i", self.accessor, self.SIDE_CHANNEL_CAPACITY_OFFSET + 4
         )[0]
+        print("Message len", message_len)
         if message_len == 0:
             return bytearray()
         else:
-            start = self.SIDE_CHANNEL_OFFSET + 8
+            start = self.SIDE_CHANNEL_CAPACITY_OFFSET + 8
             result = bytearray(self.accessor[start : start + message_len])
-            struct.pack_into("<i", self.accessor, self.SIDE_CHANNEL_OFFSET + 4, 0)
+            struct.pack_into(
+                "<i", self.accessor, self.SIDE_CHANNEL_CAPACITY_OFFSET + 4, 0
+            )
             self.accessor[start : start + message_len] = bytearray(message_len)
             return result
 
@@ -149,28 +155,39 @@ class SharedMemoryCom:
             os.remove(self.file_name)
             self.file_name = None
         elif command == PythonCommand.CHANGE_FILE:
+            print("CHANGE FILE")
             self._delete_file_and_move_to_new_file()
             self._group_offsets_dirty = True
             self._wait_for_unity_helper()
 
     def _clear_side_channel(self):
         capacity = self._get_side_channel_capacity(self.accessor)
-        start = self.SIDE_CHANNEL_OFFSET + 4
+        start = self.SIDE_CHANNEL_CAPACITY_OFFSET + 4
         self.accessor[start : start + capacity] = bytearray(capacity)
 
     def _create_next_file(self, side_channel_new_capacity: int) -> None:
         # Will never need to increase the RL data capacity
         # Is only triggered by a too large side channel data
+        print(
+            "OLD N GROUPS : ",
+            struct.unpack_from(
+                "<i",
+                self.accessor,
+                self.SIDE_CHANNEL_CAPACITY_OFFSET
+                + self._get_side_channel_capacity(self.accessor)
+                + 4,
+            ),
+        )
         new_file_name = self.file_name + "_"
         side_channel_old_capacity = self._get_side_channel_capacity(self.accessor)
         self._clear_side_channel()
         data = bytearray(self.accessor)
-        start = self.SIDE_CHANNEL_OFFSET + 4
+        start = self.SIDE_CHANNEL_CAPACITY_OFFSET + 4
         data[start:start] = bytearray(
             side_channel_new_capacity - side_channel_old_capacity
         )
         struct.pack_into(
-            "<i", data, self.SIDE_CHANNEL_OFFSET, side_channel_new_capacity
+            "<i", data, self.SIDE_CHANNEL_CAPACITY_OFFSET, side_channel_new_capacity
         )
         struct.pack_into("<i", data, 0, len(data))
         self._create_file(new_file_name, data)
@@ -183,6 +200,16 @@ class SharedMemoryCom:
         with open(new_file_name, "r+b") as f:
             # memory-map the file, size 0 means whole file
             self.accessor = mmap.mmap(f.fileno(), 0)
+        print(
+            "NEW N GROUPS : ",
+            struct.unpack_from(
+                "<i",
+                self.accessor,
+                self.SIDE_CHANNEL_CAPACITY_OFFSET
+                + self._get_side_channel_capacity(self.accessor)
+                + 4,
+            ),
+        )
 
     def _delete_file_and_move_to_new_file(self) -> None:
         # Only when Unity wants to change the file
@@ -195,13 +222,15 @@ class SharedMemoryCom:
 
     @staticmethod
     def _get_side_channel_capacity(acc) -> int:
-        return struct.unpack_from("<i", acc, SharedMemoryCom.SIDE_CHANNEL_OFFSET)[0]
+        return struct.unpack_from(
+            "<i", acc, SharedMemoryCom.SIDE_CHANNEL_CAPACITY_OFFSET
+        )[0]
 
     @staticmethod
     def _get_agent_group_section_offset(accessor) -> int:
         sc_capacity = SharedMemoryCom._get_side_channel_capacity(accessor)
         print("SC capacity", sc_capacity)
-        return SharedMemoryCom.SIDE_CHANNEL_OFFSET + 4 + sc_capacity
+        return SharedMemoryCom.SIDE_CHANNEL_CAPACITY_OFFSET + 4 + sc_capacity
 
     @staticmethod
     def _get_int(accessor, offset) -> Tuple[int, int]:
