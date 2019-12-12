@@ -7,7 +7,12 @@ The user would access the `MLAgentsWorld` in the main thread :
 
 ```csharp
 var sys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
-var world = sys.GetExistingMLAgentsWorld<TS, TA>("The name of the policy associated");
+var world = new MLAgentsWorld(
+  100, // The maximum number of agents that can request a decision per step
+  ActionType.CONTINUOUS, // Continuous = float, Discrete = int
+  new int3[] { new int3(3, 0, 0) }, // The observation shapes (here, one observation of shape (3,0,0))
+  3); // The number of actions
+sys.SubscribeWorld("TheNameOfTheWorld", world);
 ``` 
 The user could then in his own jobs add and retrieve data from the world. Here is an example of a job in which the user populates the sensor data :
 
@@ -21,7 +26,7 @@ public struct UserCreateSensingJob : IJobParallelFor
         {
             world.RequestDecision(entities[i])
                 .SetReward(1.0f)
-                .SetObservation(new float3(3.0f, 0, 0));
+                .SetObservation(0, new float3(3.0f, 0, 0)); // observation index and then observation struct
 
         }
     }
@@ -30,9 +35,6 @@ public struct UserCreateSensingJob : IJobParallelFor
 The job would be called this way :
 
 ```csharp
-var sys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
-var myWorld = sys.GetExistingMLAgentsWorld<TS, TA>("The name of the policy associated");
-
 protected override JobHandle OnUpdate(JobHandle inputDeps)
 {
     var job = new MyPopulationJob{
