@@ -7,11 +7,13 @@ The user would access the `MLAgentsWorld` in the main thread :
 
 ```csharp
 var sys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
+
 var world = new MLAgentsWorld(
-  100, // The maximum number of agents that can request a decision per step
-  ActionType.CONTINUOUS, // Continuous = float, Discrete = int
+  100,                              // The maximum number of agents that can request a decision per step
+  ActionType.CONTINUOUS,            // Continuous = float, Discrete = int
   new int3[] { new int3(3, 0, 0) }, // The observation shapes (here, one observation of shape (3,0,0))
-  3); // The number of actions
+  3);                               // The number of actions
+  
 sys.SubscribeWorld("TheNameOfTheWorld", world);
 ``` 
 The user could then in his own jobs add and retrieve data from the world. Here is an example of a job in which the user populates the sensor data :
