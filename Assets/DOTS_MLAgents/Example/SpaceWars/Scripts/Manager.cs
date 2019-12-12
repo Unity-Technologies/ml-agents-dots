@@ -11,10 +11,6 @@ using Random = UnityEngine.Random;
 namespace DOTS_MLAgents.Example.SpaceWars.Scripts
 {
 
-    public class SmartShipSystem : AgentSystem<ShipSensor, Steering> { }
-    public class PlayerShipSystem : AgentSystem<ShipSensor, Steering> { }
-
-
     public class Manager : MonoBehaviour
     {
         public float TargetAngle;
@@ -31,10 +27,6 @@ namespace DOTS_MLAgents.Example.SpaceWars.Scripts
         public GameObject prefab;
         private Entity _prefabEntity;
 
-
-        private SmartShipSystem _shipSystemA;
-        private PlayerShipSystem _playerSystem;
-
         private SensorPopulate _sensorSystem;
         private ImpactSystem _impactSystem;
 
@@ -48,39 +40,11 @@ namespace DOTS_MLAgents.Example.SpaceWars.Scripts
             QualitySettings.vSyncCount = 0;
             Application.targetFrameRate = -1;
             manager = World.Active.EntityManager;
-            
+
             _sensorSystem = World.Active.GetOrCreateSystem<SensorPopulate>();
             _impactSystem = World.Active.GetOrCreateSystem<ImpactSystem>();
             _impactSystem.Radius = 20;
 
-            _shipSystemA = World.Active.GetOrCreateSystem<SmartShipSystem>();
-            if (shipDecisionSelector == DecisionSelector.ExternalDecision)
-            {
-                _shipSystemA.Decision = new ExternalDecision<ShipSensor, Steering>();
-            }
-            else if (shipDecisionSelector == DecisionSelector.NeuralNetwork)
-            {
-                _shipSystemA.Decision = new NNDecision<ShipSensor, Steering>(model);
-            }
-            else{
-                _shipSystemA.Decision = new HumanDecision<ShipSensor>();
-            }
-            
-            _playerSystem = World.Active.GetOrCreateSystem<PlayerShipSystem>();
-            if (shipDecisionSelector == DecisionSelector.ExternalDecision)
-            {
-                _playerSystem.Decision = new ExternalDecision<ShipSensor, Steering>();
-            }
-            else if (shipDecisionSelector == DecisionSelector.NeuralNetwork)
-            {
-                _playerSystem.Decision = new NNDecision<ShipSensor, Steering>(model);
-            }
-            else{
-                _playerSystem.Decision = new HumanDecision<ShipSensor>();
-            }
-            
-            _playerSystem.SetNewComponentGroup(typeof(PlayerFlag));
-            _shipSystemA.DecisionRequester = new FixedTimeRequester(0.1f);
 
             _prefabEntity = GameObjectConversionUtility.ConvertGameObjectHierarchy(prefab, World.Active);
             _playerEntity = manager.Instantiate(_prefabEntity);

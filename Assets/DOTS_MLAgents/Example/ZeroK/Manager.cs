@@ -9,8 +9,6 @@ using Random = UnityEngine.Random;
 
 namespace DOTS_MLAgents.Example.ZeroK.Scripts
 {
-    [UpdateBefore(typeof(UnityEngine.Experimental.PlayerLoop.FixedUpdate))]
-    public class ZKSystem : AgentSystem<Sensor, Speed> { }
     //    public class SpaceSystemB : AgentSystem<Position, Acceleration>{ }
     //    public class SpaceSystemC : AgentSystem<Position, Acceleration>{ }
 
@@ -43,8 +41,6 @@ namespace DOTS_MLAgents.Example.ZeroK.Scripts
         public float maxDistance;
         private EntityManager manager;
 
-        private ZKSystem sA;
-
 
         /// <summary>
         /// The sphere prefab
@@ -68,31 +64,6 @@ namespace DOTS_MLAgents.Example.ZeroK.Scripts
 
             Time.captureFramerate = 60;
             manager = World.Active.EntityManager;
-
-
-            sA = World.Active.GetExistingSystem<ZKSystem>();
-            //            sB=  World.Active.GetExistingManager<SpaceSystemB>();
-            //            sC=  World.Active.GetExistingManager<SpaceSystemC>();
-
-            //            sA.Enabled = false;
-            //            sB.Enabled = false;
-            //            sC.Enabled = false;
-
-            //            sA.SetNewComponentGroup(typeof(SphereGroup));
-            //            sB.SetNewComponentGroup(typeof(SphereGroup));
-            //            sC.SetNewComponentGroup(typeof(SphereGroup));
-            //            
-            //            sA.SetFilter<SphereGroup>(new SphereGroup{Group = 0});
-            //            sB.SetFilter<SphereGroup>(new SphereGroup{Group = 1});
-            //            sC.SetFilter<SphereGroup>(new SphereGroup{Group = 2});
-            sA.Decision = new HeuristicDecision<Sensor, Speed>(s => new Speed { Value = new float3(1, 1, 1) });
-            // sA.Decision = new ExternalDecision<Sensor, Speed>();
-            //    sA.Decision = new SpaceMagic.Scripts.HeuristicSpace(new float3(0,0,0), 1f);
-
-            //    sA.Decision = new NNDecision(modelA);
-            //            sB.Decision = new NNDecision(modelB);
-            //            sC.Decision = new NNDecision(modelC);
-            sA.DecisionRequester = new FixedCountRequester(1);
 
             //  Time.captureFramerate = 60;
             _prefabEntity = GameObjectConversionUtility.ConvertGameObjectHierarchy(prefab, World.Active);
