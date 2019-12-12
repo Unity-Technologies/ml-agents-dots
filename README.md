@@ -1,4 +1,7 @@
-## Alternative API
+
+# ML-Agents DOTS
+
+# Proposed API
 Another approach to designing ml-agents-dots would be to mimic typical API used for example in [Unity.Physics](https://github.com/Unity-Technologies/Unity.Physics) where a "MLAgents World" holds data, processes it and the data can then be retrieved. An example of a simple world is given [here](Assets/DOTS_MLAgents/BCore/MLAgentsWorld.cs)
 The user would access the `MLAgentsWorld` in the main thread :
 
@@ -57,79 +60,43 @@ public struct UserCreatedActionEventJob : IActuatorJob
         }
     }
 ```
-The ActuatorEvent data contains a key (here an entity) to identify the Agent and a GetAction method to retrieve the data in the event. This is very simular to how collisions are currently handled in the Physics package.
+The ActuatorEvent data contains a key (here an entity) to identify the Agent and a GetAction method to retrieve the data in the event. This is very similar to how collisions are currently handled in the Physics package.
 
+## Communication Between C# and Python
+In order to exchange data with Python, we would use shared memory. Python will create a small file that contains information required for starting the communication. The path to the file will be randomly generated randomly generated and passed by Python to the Unity Executable as command line argument. For in editor training, a default file will be used.  Using shared memory would allow faster data exchange and will remove the need to serialize the data to an intermediate format.
 
-# ml-agents-dots
+### Shared memory layout
+#### Header
 
-This is a proof of concept for DOTS based ML-Agents
+ - int : 4 bytes : File Length : Size of the file (will change as the file grows) (start at 22)
+ - int : 4 bytes : Version number : Unity and Python expecting the same memory layout
+ - bool : 1 byte : mutex : Is it Python or Unity’s turn to edit the file (Unity blocked = True, Python Blocked = False) (start at `False`)
+ - ushort : 1 byte : Command : [step, reset, change file, close] (starts at `step`)
+   - step : DEFAULT : Nothing special
+   - reset : RESET : Only from Python to Unity to signal a reset
+   - change file : CHANGE_FILE : Can be sent by both C# and Python : Means the file is too short and needs to be changed. Both processes will switch to a new file (append `_` at the end of the old path) and delete the old one after reading the message. Note that to change file, the process must : Create the new file (with more capacity), copy the content of the file at appropriate location, add contexts to the file recompute the offsets to specific locations in the file, set the change file command, flip the mutex on the old file, use the new file and only flip the mutex when ready
+ - int : 4 bytes : The total amount of data in the side channel (starts at 4 for the next message length int)
+ - int : 4 bytes : The length of the side channel data in bytes for the current step
 
-## The core code is inside of `DOTS_MLAgents.Core`
+#### Side channel data
 
-### High Level API
+ - int : 4 bytes : The length of the side channel data for the current step (starts at 0)
+ - ??? : Side channel data (Size = total side channel capacity - 4 bytes )
 
-`AgentSystem<Sensor, Actuator>` is a ComponentSystem that updates the Actuator based of the data present in Sensor for all of the compatible Entities. The user can create a new `AgentSystem` by defining a class this way :
+#### RL Data section
 
-```csharp
- public class MyAgentSystem : AgentSystem<MySensor, MyActuator> { }
-```
+ - int : 4 bytes : The number of Agent groups in the simulation (starts at 0)
+ - For each group : 
 
-The user can modify properties of `MyAgentSystem` to modify which Entities will be affected by MyAgentSystem.
-The user can also swap the decision mechanism of the system by modifying the `Decision` property of the System.
-To access the instance of MyAgentSystem, use :
-
-```csharp
- World.Active.GetExistingManager<MyAgentSystem>(); 
-```
-
-It is the responsibility of the user to create and populate the `MySensor` of each Entity as well as create and use the data in the `MyActuator` of each Entity. `MySensor` and `MyActuator` must be IComponentData struct that only contains [blittable](https://docs.microsoft.com/en-us/dotnet/framework/interop/blittable-and-non-blittable-types) float fields. 
-__Note that an Agent IComponentData must be attached to an Entity to be affected by MyAgentSystem.__
-     At each call to OnUpdate, the Data from the sensors of compatible entities will be aggregated into a single `NativeArray<float>`. The AgentSystem will then process this data in batch and generate a new `NativeArray<float>` that will be used to populate the Actuator data of all compatible Entities. Other types of data are not supported in this version.
-     
-### Low Level API
-The high level API gathers the data of the sensors and the actuators and passes them into its `IAgentDecision<TS,TA> Decision` property by calling 
-
-```csharp
-void BatchProcess([ReadOnly] NativeArray<TS> sensors, NativeArray<TA> actuators, int offset = 0, int size = -1);
-```
-
-The sensors and actuators are then processed (either with a neural network, a heuristic or a Python process).
-Note that this Object Oriented approach to decision making might not be as fast as other approaches since it requires the data to be copied into NativeArrays. 
-For example, the System processing the data on the entities via a `IJobChunck` would be a lot faster but would make it harder to have a low level API.
-
-    
-## Example scenes
-
-### SpaceMagic
-
-Press `A`, `S`, `D` to spawn 1, 100 and 1000 new Entities in the scene.
-There are 3 random neural networks used to update the acceleration of the spheres based on their position. You can replace the Decision type on each of the system from Neural Network to Heuristic by pressing `U` and `I` for the first one, `J` and `K` for the second and `N` and `M` for the third.
-
-### SpaceWars
-
-Press `A`, `S`, `D` to spawn 1, 100 and 1000 new Entities in the scene. This scene does uses a Neural Network trained to imitate a Heuristic that orient the ships and make them shoot towards the large spherical target.
-
-### ZeroK
-
-This scene is meant to demonstrate training. It uses an External decision mechanism that reads and writes to a file shared with Python. Python converts the messages to the classic mlagents.envs interface. A basic implementation of Python communication using shared memory has been added (OSX only). Communication will need to be made more flexible and ideally will be able to support non-RL use cases.
-
-## Future Work
-
-In future work, we will explore C# refection so the definition of the sensor and actuator can be more flexible. We could create a map of the sensor/actuator struct memory structure and communicate it to python so it can put it into appropriate struct objects. We could also use refection to define which numbers in the sensor correspond to Reward and done signals. 
-
-```csharp
-[Serializable]
-public struct ShipSensor : IComponentData
-{
-	[RewardAttribute]
-	public float Reward;
-	[FloatSensorAttribute(name="Absolute Ship Position")
-	public float3 Position;
-        
-	public quaternion Rotation;
-}
-```
-Alternatively, we could use the name of the properties of the sensor instead of relying on specific attributes. This would make the API more flexible since a researcher would not need to implement specific Attributes to satisfy a particular use case.
-
+   - string : 64 byte : group name
+   - int : 4 bytes : maximum number of Agents
+   - bool : 1 byte : is action discrete (False) or continuous (True)
+   - int : 4 bytes : action space size (continuous) / number of branches (discrete)
+     - If discrete only : array of action sizes for each branch (size = n_branches x 4)
+   - int : 4 bytes : number of observations
+   - For each observation :
+     - 3 int : shape (the shape of the tensor observation for one agent)
+   - 4 bytes : n_agents at current step
+   - ??? bytes : the data : obs,reward,done,max_step,agent_id,masks,action
 
 
