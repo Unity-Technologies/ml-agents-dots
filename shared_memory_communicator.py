@@ -131,10 +131,12 @@ class SharedMemoryCom:
         bytes_data = data.tobytes()
         self.accessor[offset : offset + len(bytes_data)] = bytes_data
 
-    def get_ndarray(self, offset: int, bytes_count: int, t: np.dtype) -> np.ndarray:
+    def get_ndarray(
+        self, offset: int, shape: Tuple[int, ...], t: np.dtype
+    ) -> np.ndarray:
         return np.frombuffer(
-            buffer=self.accessor, dtype=t, count=bytes_count, offset=offset
-        )
+            buffer=self.accessor, dtype=t, count=np.prod(shape), offset=offset
+        ).reshape(shape)
 
     def _wait_for_unity_helper(self):
         while struct.unpack_from("<?", self.accessor, self.MUTEXT_OFFSET)[0]:
@@ -227,6 +229,17 @@ class SharedMemoryCom:
         byte_array = bytes(accessor[offset + 1 : offset + string_len + 1])
         result = byte_array.decode("ascii")
         return result, offset + SharedMemoryCom.STRING_LEN
+
+    def get_n_agent_groups(self):
+        offset = self._get_agent_group_section_offset(self.accessor)
+        n_groups, _ = self._get_int(self.accessor, offset)
+        return n_groups
+
+    def get_n_agents(self, group_name: str) -> int:
+        result, _ = self._get_int(
+            self.accessor, self.group_offsets[group_name].n_agents_offset
+        )
+        return result
 
     def _refresh_agent_group_offsets(self):
         # Generates the offsets and returns the GroupSpecs

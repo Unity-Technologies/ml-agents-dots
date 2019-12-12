@@ -8,7 +8,12 @@ from typing import Dict, List, Optional, Any
 
 from mlagents.envs.side_channel.side_channel import SideChannel
 
-from mlagents.envs.base_env import BaseEnv, BatchedStepResult, AgentGroupSpec
+from mlagents.envs.base_env import (
+    BaseEnv,
+    BatchedStepResult,
+    AgentGroupSpec,
+    ActionType,
+)
 from mlagents.envs.timers import timed, hierarchical_timer
 from mlagents.envs.exception import (
     UnityEnvironmentException,
@@ -21,7 +26,11 @@ from sys import platform
 import signal
 import struct
 
-from .shared_memory_communicator import SharedMemoryCom
+from shared_memory_communicator import (
+    SharedMemoryCom,
+    PythonCommand,
+    AgentGroupFileOffsets,
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("mlagents.envs")
@@ -59,10 +68,7 @@ class UnityEnvironment(BaseEnv):
             logger.info(
                 "Start training by pressing the Play button in the Unity Editor."
             )
-
-        self._env_state: Dict[str, BatchedStepResult] = {}
         self._env_specs: Dict[str, AgentGroupSpec] = {}
-        self._env_actions: Dict[str, np.array] = {}
         self._is_first_message = True
         # self._update_group_specs(aca_output)
 
@@ -80,6 +86,7 @@ class UnityEnvironment(BaseEnv):
                         )
                     )
                 side_channels_dict[_sc.channel_type] = _sc
+        return side_channels_dict
 
     @staticmethod
     def executable_launcher(exec_name, memory_path, args):
@@ -161,37 +168,27 @@ class UnityEnvironment(BaseEnv):
                 ) from perm
 
     def reset(self) -> None:
-        outputs = self.communicator.exchange(self._generate_reset_input())
-        if outputs is None:
+        self._step(PythonCommand.RESET)
+
+    def _step(self, command: PythonCommand) -> None:
+        channel_data = self._generate_side_channel_data(self.side_channels)
+        self.communicator.write_side_channel_data(channel_data)
+        self.communicator.give_unity_control(command)
+        self.communicator.wait_for_unity()
+        if not self.communicator.active:
             raise UnityCommunicationException("Communicator has stopped.")
-        self._update_group_specs(outputs)
-        rl_output = outputs.rl_output
-        self._update_state(rl_output)
-        self._is_first_message = False
-        self._env_actions.clear()
+        self._parse_side_channel_message(
+            self.side_channels, self.communicator.read_side_channel_data_and_clear()
+        )
+        if len(self._env_specs) != self.communicator.get_n_agent_groups():
+            self._env_specs = self.create_group_spec(self.communicator.group_offsets)
 
     @timed
     def step(self) -> None:
         if self._is_first_message:
+            self._is_first_message = False
             return self.reset()
-        # fill the blanks for missing actions
-        for group_name in self._env_specs:
-            if group_name not in self._env_actions:
-                n_agents = 0
-                if group_name in self._env_state:
-                    n_agents = self._env_state[group_name].n_agents()
-                self._env_actions[group_name] = self._env_specs[
-                    group_name
-                ].create_empty_action(n_agents)
-        step_input = self._generate_step_input(self._env_actions)
-        with hierarchical_timer("communicator.exchange"):
-            outputs = self.communicator.exchange(step_input)
-        if outputs is None:
-            raise UnityCommunicationException("Communicator has stopped.")
-        self._update_group_specs(outputs)
-        rl_output = outputs.rl_output
-        self._update_state(rl_output)
-        self._env_actions.clear()
+        self._step(PythonCommand.DEFAULT)
 
     def get_agent_groups(self) -> List[str]:
         return list(self._env_specs.keys())
@@ -205,11 +202,13 @@ class UnityEnvironment(BaseEnv):
 
     def set_actions(self, agent_group: str, action: np.array) -> None:
         self._assert_group_exists(agent_group)
-        if agent_group not in self._env_state:
+        offsets = self.communicator.group_offsets[agent_group]
+        expected_n_agents = self.communicator.get_n_agents(agent_group)
+        if expected_n_agents == 0:
             return
         spec = self._env_specs[agent_group]
         expected_type = np.float32 if spec.is_action_continuous() else np.int32
-        expected_shape = (self._env_state[agent_group].n_agents(), spec.action_size)
+        expected_shape = (expected_n_agents, spec.action_size)
         if action.shape != expected_shape:
             raise UnityActionException(
                 "The group {0} needs an input of dimension {1} but received input of dimension {2}".format(
@@ -218,43 +217,38 @@ class UnityEnvironment(BaseEnv):
             )
         if action.dtype != expected_type:
             action = action.astype(expected_type)
-        self._env_actions[agent_group] = action
+        self.communicator.set_ndarray(offsets.action_offset, action)
 
     def set_action_for_agent(
         self, agent_group: str, agent_id: int, action: np.array
     ) -> None:
-        self._assert_group_exists(agent_group)
-        if agent_group not in self._env_state:
-            return
-        spec = self._env_specs[agent_group]
-        expected_shape = (spec.action_size,)
-        if action.shape != expected_shape:
-            raise UnityActionException(
-                "The Agent {0} in group {1} needs an input of dimension {2} but received input of dimension {3}".format(
-                    agent_id, agent_group, expected_shape, action.shape
-                )
-            )
-        expected_type = np.float32 if spec.is_action_continuous() else np.int32
-        if action.dtype != expected_type:
-            action = action.astype(expected_type)
-
-        if agent_group not in self._env_actions:
-            self._env_actions[agent_group] = self._empty_action(
-                spec, self._env_state[agent_group].n_agents()
-            )
-        try:
-            index = np.where(self._env_state[agent_group].agent_id == agent_id)[0][0]
-        except IndexError as ie:
-            raise IndexError(
-                "agent_id {} is did not request a decision at the previous step".format(
-                    agent_id
-                )
-            ) from ie
-        self._env_actions[agent_group][index] = action
+        # TODO
+        return
 
     def get_step_result(self, agent_group: str) -> BatchedStepResult:
         self._assert_group_exists(agent_group)
-        return self._env_state[agent_group]
+        offsets = self.communicator.group_offsets[agent_group]
+        expected_n_agents = self.communicator.get_n_agents(agent_group)
+        obs_b_sizes = [(expected_n_agents,) + s for s in offsets.obs_shapes]
+        return BatchedStepResult(
+            obs=[
+                self.communicator.get_ndarray(off, obs_b_sizes[i], np.float32)
+                for i, off in enumerate(offsets.obs_offset)
+            ],
+            reward=self.communicator.get_ndarray(
+                offsets.rewards_offset, expected_n_agents, np.float32
+            ),
+            done=self.communicator.get_ndarray(
+                offsets.done_offset, expected_n_agents, np.bool
+            ),
+            max_step=self.communicator.get_ndarray(
+                offsets.max_step_offset, expected_n_agents, np.bool
+            ),
+            agent_id=self.communicator.get_ndarray(
+                offsets.agent_id_offset, expected_n_agents, np.int32
+            ),
+            action_mask=None,  # TODO
+        )
 
     def get_agent_group_spec(self, agent_group: str) -> AgentGroupSpec:
         self._assert_group_exists(agent_group)
@@ -279,7 +273,7 @@ class UnityEnvironment(BaseEnv):
             # Set to None so we don't try to close multiple times.
             self.proc1 = None
 
-    @staticmethod
+    @staticmethod  # TODO use most recent version
     def _parse_side_channel_message(
         side_channels: Dict[int, SideChannel], data: bytearray
     ) -> None:
@@ -310,7 +304,7 @@ class UnityEnvironment(BaseEnv):
                     ": {0}.".format(channel_type)
                 )
 
-    @staticmethod
+    @staticmethod  # TODO use most recent version
     def _generate_side_channel_data(side_channels: Dict[int, SideChannel]) -> bytearray:
         result = bytearray()
         for channel_type, channel in side_channels.items():
@@ -318,6 +312,21 @@ class UnityEnvironment(BaseEnv):
                 result += struct.pack("<ii", channel_type, len(message))
                 result += message
             channel.message_queue = []
+        return result
+
+    @staticmethod
+    def create_group_spec(
+        offsets: Dict[str, AgentGroupFileOffsets]
+    ) -> Dict[str, AgentGroupSpec]:
+        result: Dict[str, AgentGroupSpec] = {}
+        for k, v in offsets.items():
+            action_type = (
+                ActionType.CONTINUOUS if v.is_continuous else ActionType.DISCRETE
+            )
+            action_shape = v.a_size
+            if action_type == ActionType.DISCRETE:
+                action_shape = v.discrete_branches
+            result[k] = AgentGroupSpec(v.obs_shapes, action_type, action_shape)
         return result
 
     @staticmethod

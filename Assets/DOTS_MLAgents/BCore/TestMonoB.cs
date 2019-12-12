@@ -21,7 +21,7 @@ public class TestMonoB : JobComponentSystem
     private MLAgentsWorld world;
     private NativeArray<Entity> entities;
 
-    public const int N_Agents = 500;
+    public const int N_Agents = 5;
 
     // Start is called before the first frame update
     protected override void OnCreate()

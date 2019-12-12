@@ -429,6 +429,7 @@ namespace DOTS_MLAgents.Core
             WaitOnPython();
 
             PythonCommand commandReceived = (PythonCommand)accessor.ReadSByte(k_CommandOffset);
+            Debug.Log("COMMAND : " + commandReceived);
             switch (commandReceived)
             {
                 case PythonCommand.RESET:

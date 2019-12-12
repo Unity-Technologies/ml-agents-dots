@@ -65,11 +65,11 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
         protected override void OnCreate()
         {
             var sys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
-            world = new MLAgentsWorld(1000, ActionType.CONTINUOUS, new int3[] { new int3(3, 0, 0) }, 3);
+            world = new MLAgentsWorld(1001, ActionType.CONTINUOUS, new int3[] { new int3(3, 0, 0) }, 3);
             sys.SubscribeWorld("SpaceMagic", world);
 
-            // world = new MLAgentsWorld(10, ActionType.CONTINUOUS, new int3[] { new int3(5, 0, 0) }, 6);
-            // sys.SubscribeWorld("SpaceMagic2", world);
+            // var world2 = new MLAgentsWorld(10, ActionType.DISCRETE, new int3[] { new int3(5, 0, 0) }, 6, new int[6] { 2, 3, 4, 5, 6, 7 });
+            // sys.SubscribeWorld("SpaceMagic2", world2);
             timeBarrier = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
         }
 

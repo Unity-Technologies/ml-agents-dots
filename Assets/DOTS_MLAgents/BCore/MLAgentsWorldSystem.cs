@@ -117,12 +117,12 @@ namespace DOTS_MLAgents.Core
                     var world = val.Value;
                     com.WriteWorld(val.Key, world);
                 }
-                com.WriteSideChannelData(new byte[4]);
+                // com.WriteSideChannelData(new byte[4]);
                 com.SetUnityReady();
                 var command = com.Advance(); // Should be called only once, not per world as right now
 
                 Debug.Log(command);
-                Debug.Log(com.ReadAndClearSideChannelData()?.Length);
+                // Debug.Log(com.ReadAndClearSideChannelData()?.Length);
 
                 foreach (var val in WorldDict)
                 {
