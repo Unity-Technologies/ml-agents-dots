@@ -1,12 +1,10 @@
 using DOTS_MLAgents.Core;
-using DOTS_MLAgents.Core.Inference;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 using Random = UnityEngine.Random;
-using System.Runtime.InteropServices;
 
 namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
 {
@@ -52,7 +50,7 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
         /// <summary>
         /// The Neural Network models for the three IAgentDecision
         /// </summary>
-        public NNModel modelA;
+        // public NNModel modelA;
 
         System.Func<Translation, Acceleration> heuristic;
 
@@ -61,7 +59,7 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
             manager = World.Active.EntityManager;
 
             var sys = World.Active.GetExistingSystem<MLAgentsWorldSystem>();
-            sys.SetModel("SpaceMagic", modelA);
+            // sys.SetModel("SpaceMagic", modelA);
 
             heuristic = pos =>
             {

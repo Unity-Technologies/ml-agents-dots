@@ -9,8 +9,6 @@ using Unity.Collections;
 using System.IO;
 using System;
 using System.IO.MemoryMappedFiles;
-using System;
-using System.Threading;
 
 
 using DOTS_MLAgents.Core;

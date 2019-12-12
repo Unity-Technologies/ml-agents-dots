@@ -1,16 +1,9 @@
-using System.Linq;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
-using Unity.Burst;
 using System.Collections.Generic;
-using DOTS_MLAgents.Core.Inference;
-using Unity.Mathematics;
-using UnityEngine;
-using Unity.Transforms;
-using Barracuda;
-using System.IO;
+
+
 
 namespace DOTS_MLAgents.Core
 {
@@ -62,16 +55,6 @@ namespace DOTS_MLAgents.Core
             }
         }
 
-        public void SetModel(string policyId, NNModel model)
-        {
-            ModelStore.Add(policyId, new BarracudaWorldProcessor(model));
-        }
-
-        NNModel m_model;
-        public void GiveModel(NNModel model)
-        {
-            m_model = model;
-        }
         // constructor with camera or raw data collector ?
         public float GetMLAgentsProperty(string propertyName)
         {
@@ -88,7 +71,12 @@ namespace DOTS_MLAgents.Core
             FinalJobHandle = new JobHandle();
             if (MODE == Mode.COMMUNICATION)
             {
-                com = new SharedMemoryCom(Path.Combine(Path.GetTempPath(), "ml-agents", "default"));
+                var path = ArgParser.ReadSharedMemoryPathFromArgs();
+                if (path == null)
+                {
+                    throw new System.Exception("TODO : Path not present");
+                }
+                com = new SharedMemoryCom(path);
                 com.Advance();
             }
         }
@@ -108,7 +96,7 @@ namespace DOTS_MLAgents.Core
             dependencies.Complete();
 
 
-            Debug.Log("MODE : " + MODE);
+            UnityEngine.Debug.Log("MODE : " + MODE);
 
             if (MODE == Mode.COMMUNICATION)
             {
@@ -121,7 +109,7 @@ namespace DOTS_MLAgents.Core
                 com.SetUnityReady();
                 var command = com.Advance(); // Should be called only once, not per world as right now
 
-                Debug.Log(command);
+                UnityEngine.Debug.Log(command);
                 // Debug.Log(com.ReadAndClearSideChannelData()?.Length);
 
                 foreach (var val in WorldDict)

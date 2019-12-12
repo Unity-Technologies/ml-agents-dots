@@ -1,6 +1,4 @@
 using System;
-using Barracuda;
-using DOTS_MLAgents.Core.Inference;
 
 
 namespace DOTS_MLAgents.Core
@@ -8,26 +6,26 @@ namespace DOTS_MLAgents.Core
     public unsafe class BarracudaWorldProcessor : IDisposable
     {
 
-        private NNModel _model;
-        public InferenceDevice inferenceDevice = InferenceDevice.CPU;
-        private Model _barracudaModel;
-        private IWorker _engine;
-        private const bool _verbose = false;
+        // private NNModel _model;
+        // public InferenceDevice inferenceDevice = InferenceDevice.CPU;
+        // private Model _barracudaModel;
+        // private IWorker _engine;
+        // private const bool _verbose = false;
 
-        public BarracudaWorldProcessor(NNModel model)
-        {
-            _model = model;
-            D.logEnabled = _verbose;
-            _engine?.Dispose();
+        // public BarracudaWorldProcessor(NNModel model)
+        // {
+        // _model = model;
+        // D.logEnabled = _verbose;
+        // _engine?.Dispose();
 
-            _barracudaModel = ModelLoader.Load(model.Value);
-            var executionDevice = inferenceDevice == InferenceDevice.GPU
-                ? BarracudaWorkerFactory.Type.ComputeFast
-                : BarracudaWorkerFactory.Type.CSharpFast;
+        // // _barracudaModel = ModelLoader.Load(model.Value);
+        // var executionDevice = inferenceDevice == InferenceDevice.GPU
+        //     ? BarracudaWorkerFactory.Type.ComputeFast
+        //     : BarracudaWorkerFactory.Type.CSharpFast;
 
-            _engine = BarracudaWorkerFactory.CreateWorker(
-                executionDevice, _barracudaModel, _verbose);
-        }
+        // _engine = BarracudaWorkerFactory.CreateWorker(
+        //     executionDevice, _barracudaModel, _verbose);
+        // }
 
         public void ProcessWorld(MLAgentsWorld world)
         {
@@ -47,7 +45,7 @@ namespace DOTS_MLAgents.Core
 
         public void Dispose()
         {
-            _engine.Dispose();
+            // _engine.Dispose();
         }
     }
 }
