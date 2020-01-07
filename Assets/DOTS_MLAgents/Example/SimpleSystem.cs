@@ -70,9 +70,6 @@ public class SimpleSystem : JobComponentSystem
 
         // inputDeps.Complete();
 
-
-
-
         return inputDeps;
     }
 

@@ -1,5 +1,6 @@
 using System;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 
 
 namespace DOTS_MLAgents.Core
@@ -79,6 +80,11 @@ namespace DOTS_MLAgents.Core
         {
             this.world = world;
             this.heuristic = heuristic;
+            var structSize = UnsafeUtility.SizeOf<T>() / sizeof(float);
+            if (structSize != world.ActionSize)
+            {
+                throw new MLAgentsException("The heuristic provided does not match the action size");
+            }
         }
 
         public void WriteWorldData()

@@ -10,12 +10,6 @@ using UnityEditor;
 namespace DOTS_MLAgents.Core
 {
 
-    public enum Mode
-    {
-        COMMUNICATION,
-        BARRACUDA,
-        HEURISTIC
-    }
     // [UpdateInGroup(typeof(SimulationSystemGroup))]
     public class MLAgentsWorldSystem : JobComponentSystem // Should this be a ISimulation from Unity.Physics ?
     {
@@ -29,7 +23,7 @@ namespace DOTS_MLAgents.Core
         private HashSet<MLAgentsWorld> RegisteredWorlds;
         private HashSet<string> RegisteredWorldNames;
 
-        public void SubscribeWorld(string policyId, MLAgentsWorld world, /*Optional barracuda model*/)
+        public void SubscribeWorld(string policyId, MLAgentsWorld world /*Optional barracuda model*/)
         {
             CheckWorldNotPresent(policyId, world);
             if (com != null)
