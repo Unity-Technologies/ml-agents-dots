@@ -114,12 +114,12 @@ namespace DOTS_MLAgents.Core
         }
     }
 
-    public class CommunicatorWorldProcessor<T> : IWorldProcessor where T : struct
+    public class ExternalWorldProcessor : IWorldProcessor
     {
         private MLAgentsWorld world;
         SharedMemoryCom com;
         string name;
-        public CommunicatorWorldProcessor(string name, MLAgentsWorld world, SharedMemoryCom com)
+        public ExternalWorldProcessor(string name, MLAgentsWorld world, SharedMemoryCom com)
         {
             this.world = world;
             this.com = com;

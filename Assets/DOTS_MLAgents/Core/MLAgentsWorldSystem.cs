@@ -1,6 +1,7 @@
 using Unity.Entities;
 using Unity.Jobs;
 using System.Collections.Generic;
+using System;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -19,22 +20,35 @@ namespace DOTS_MLAgents.Core
     public class MLAgentsWorldSystem : JobComponentSystem // Should this be a ISimulation from Unity.Physics ?
     {
 
-        public Mode MODE = Mode.COMMUNICATION;
-
         private JobHandle dependencies;
         public JobHandle FinalJobHandle;
 
         private SharedMemoryCom com;
 
-        private Dictionary<string, MLAgentsWorld> WorldDict;
+        private List<IWorldProcessor> WorldProcessors;
+        private HashSet<MLAgentsWorld> RegisteredWorlds;
+        private HashSet<string> RegisteredWorldNames;
 
-        public void SubscribeWorld(string policyId, MLAgentsWorld world)
+        public void SubscribeWorld(string policyId, MLAgentsWorld world, /*Optional barracuda model*/)
         {
-            if (!WorldDict.ContainsKey(policyId))
+            CheckWorldNotPresent(policyId, world);
+            if (com != null)
             {
-                WorldDict[policyId] = world;
+                WorldProcessors.Add(new ExternalWorldProcessor(policyId, world, com));
             }
             else
+            {
+                // TODO   
+            }
+        }
+
+        private void CheckWorldNotPresent(string policyId, MLAgentsWorld world)
+        {
+            if (RegisteredWorlds.Contains(world))
+            {
+                throw new MLAgentsException("The MLAgentsWorld has already been subscribed ");
+            }
+            if (RegisteredWorldNames.Contains(policyId))
             {
                 throw new MLAgentsException(
                     string.Format(
@@ -42,27 +56,40 @@ namespace DOTS_MLAgents.Core
                         policyId)
                         );
             }
+            RegisteredWorlds.Add(world);
+            RegisteredWorldNames.Add(policyId);
+        }
+
+        public void SubscribeWorldWithHeuristic<T>(string policyId, MLAgentsWorld world, Func<T> lambda /*Optional barracuda model*/) where T : struct
+        {
+            CheckWorldNotPresent(policyId, world);
+            if (com != null)
+            {
+                WorldProcessors.Add(new ExternalWorldProcessor(policyId, world, com));
+                return;
+            }
+            WorldProcessors.Add(new HeuristicWorldProcessor<T>(world, lambda));
         }
 
         protected override void OnCreate()
         {
-            WorldDict = new Dictionary<string, MLAgentsWorld>();
+            WorldProcessors = new List<IWorldProcessor>();
+            RegisteredWorlds = new HashSet<MLAgentsWorld>();
+            RegisteredWorldNames = new HashSet<string>();
+
             dependencies = new JobHandle();
             FinalJobHandle = new JobHandle();
-            if (MODE == Mode.COMMUNICATION)
+
+            var path = ArgParser.ReadSharedMemoryPathFromArgs();
+            if (path == null)
             {
-                var path = ArgParser.ReadSharedMemoryPathFromArgs();
-                if (path == null)
-                {
-                    // throw new MLAgentsException("Could not connect.");
-                    UnityEngine.Debug.Log("Could not connect");
-                    MODE = Mode.BARRACUDA;
-                }
-                else
-                {
-                    com = new SharedMemoryCom(path);
-                    com.Advance();
-                }
+                // throw new MLAgentsException("Could not connect.");
+                UnityEngine.Debug.Log("Could not connect");
+            }
+            else
+            {
+                com = new SharedMemoryCom(path);
+                com.Advance();
             }
         }
 
@@ -82,13 +109,17 @@ namespace DOTS_MLAgents.Core
             // Need to complete here to ensure we have the right Agent Count
             dependencies.Complete();
 
-            if (MODE == Mode.COMMUNICATION)
+            foreach (var p in WorldProcessors)
             {
-                foreach (var val in WorldDict)
-                {
-                    var world = val.Value;
-                    com.WriteWorld(val.Key, world);
-                }
+                p.WriteWorldData();
+            }
+            foreach (var p in WorldProcessors)
+            {
+                p.ProcessWorldData();
+            }
+
+            if (com != null)
+            {
                 // com.WriteSideChannelData(new byte[4]);
                 com.SetUnityReady();
                 var command = com.Advance();
@@ -109,10 +140,9 @@ namespace DOTS_MLAgents.Core
                         break;
                     case SharedMemoryCom.PythonCommand.DEFAULT:
                         ProcessReceivedSideChannelData(com.ReadAndClearSideChannelData());
-                        foreach (var val in WorldDict)
+                        foreach (var p in WorldProcessors)
                         {
-                            var world = val.Value;
-                            com.LoadWorld(val.Key, world);
+                            p.RetrieveWorldData();
                         }
                         break;
                     default:
@@ -120,14 +150,14 @@ namespace DOTS_MLAgents.Core
 
                 }
             }
-            else if (MODE == Mode.HEURISTIC)
+            else
             {
+                foreach (var p in WorldProcessors)
+                {
+                    p.RetrieveWorldData();
+                }
+            }
 
-            }
-            else if (MODE == Mode.BARRACUDA)
-            {
-                // ModelStore[val.Key].ProcessWorld(world);
-            }
 
 
             inputDeps = JobHandle.CombineDependencies(inputDeps, FinalJobHandle);
@@ -145,7 +175,7 @@ namespace DOTS_MLAgents.Core
 
         protected override void OnDestroy()
         {
-            if (MODE == Mode.COMMUNICATION)
+            if (com != null)
             {
                 com.Dispose();
             }
