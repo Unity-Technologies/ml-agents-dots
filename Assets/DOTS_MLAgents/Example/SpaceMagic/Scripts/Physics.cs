@@ -13,6 +13,7 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
     /// velocity of the sphere, the velocity of the spheres is updated based on their acceleration,
     /// and the sphere that are too far off are reset to the center.
     /// </summary>
+    [DisableAutoCreation]
     public class SpaceMagicMovementSystem : JobComponentSystem
     {
 
@@ -100,6 +101,12 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
             inputDeps = moveJob.Schedule(this, inputDeps);
             inputDeps = resetJob.Schedule(this, inputDeps);
             return inputDeps;
+        }
+
+        protected override void OnDestroy()
+        {
+            world.Dispose();
+
         }
     }
 }

@@ -26,7 +26,7 @@ namespace DOTS_MLAgents.Core
             }
             return null;
 #else
-                // This is an executable, so we don't try to connect.
+                // This is an executable, so we don't try to connect if no argument was passed.
                 return null;
 #endif
         }

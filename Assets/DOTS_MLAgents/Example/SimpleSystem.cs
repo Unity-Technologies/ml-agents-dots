@@ -14,7 +14,7 @@ using DOTS_MLAgents.Core;
 
 // [UpdateInGroup(typeof(SimulationSystemGroup))]
 // [UpdateAfter(typeof(MLAgentsWorldSystem))]
-[DisableAutoCreation]
+// [DisableAutoCreation]
 public class SimpleSystem : JobComponentSystem
 {
     private MLAgentsWorldSystem sys;
@@ -29,7 +29,7 @@ public class SimpleSystem : JobComponentSystem
         Application.targetFrameRate = -1;
         sys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
 
-        world = new MLAgentsWorld(100, ActionType.CONTINUOUS, new int3[] { new int3(3, 0, 0) }, 3);
+        world = new MLAgentsWorld(100, ActionType.DISCRETE, new int3[] { new int3(3, 0, 0) }, 2, new int[] { 2, 3 });
         sys.SubscribeWorld("test", world);
 
         entities = new NativeArray<Entity>(N_Agents, Allocator.Persistent);
@@ -39,6 +39,12 @@ public class SimpleSystem : JobComponentSystem
             entities[i] = World.Active.EntityManager.CreateEntity();
         }
 
+    }
+
+    protected override void OnDestroy()
+    {
+        world.Dispose();
+        entities.Dispose();
     }
 
     // Update is called once per frame
@@ -57,7 +63,7 @@ public class SimpleSystem : JobComponentSystem
             entities = entities,
             world = world
         };
-        inputDeps = senseJob.Schedule(N_Agents, MLAgentsWorldSystem.n_threads, inputDeps);
+        inputDeps = senseJob.Schedule(N_Agents, 64, inputDeps);
         sys.RegisterDependency(inputDeps);
 
         // inputDeps = sys.ManualUpdate(inputDeps);
@@ -93,10 +99,21 @@ public class SimpleSystem : JobComponentSystem
         public int myNumber;
         public void Execute(ActuatorEvent data)
         {
-            var tmp = new float3();
-            data.GetContinuousAction(out tmp);
-            Debug.Log(data.Entity.Index + "  " + tmp.x);
+            var tmp = new testAction();
+            data.GetDiscreteAction(out tmp);
+            // Debug.Log(data.Entity.Index + "  " + tmp.x);
+            Debug.Log(data.Entity.Index + "  " + tmp.e1);
         }
+    }
+
+    public enum testEnum
+    {
+        A, B, C
+    }
+    public struct testAction
+    {
+        public testEnum e1;
+        public testEnum e2;
     }
 
 }

@@ -4,10 +4,6 @@ using Unity.Jobs;
 using System.IO.MemoryMappedFiles;
 using System.IO;
 using Unity.Collections.LowLevel.Unsafe;
-using UnityEngine;
-using UnityEngine.Profiling;
-using Unity.Entities;
-using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using System.Linq;
@@ -18,15 +14,15 @@ namespace DOTS_MLAgents.Core
     public unsafe class SharedMemoryCom : IDisposable
     {
         private const int k_ApiVersion = 0;
-        private const string k_Directory = "ml-agents";
-        private const string k_DefaultFile = "editor";
         private const int k_FileLengthOffset = 0;
         private const int k_VersionOffset = 4;
         private const int k_MutexOffset = 8; // Unity blocked = True, Python Blocked = False
         private const int k_CommandOffset = 9;
         private const int k_SideChannelOffset = 10;
 
-
+        /// <summary>
+        /// This struct is used to keep track of where in the shared memory file each section starts
+        /// </summary>
         private struct AgentGroupFileOffsets
         {
             public int NumberAgentsOffset;
@@ -60,29 +56,29 @@ namespace DOTS_MLAgents.Core
         {
             if (filePath == null)
             {
-                throw new Exception("TODO");
+                throw new MLAgentsException("filePath argument of SharedMemoryCom cannot be null.");
             }
             this.filePath = filePath;
             CreateAccessor(filePath);
-
-            Debug.Log("Is Ready to Communicate");
         }
 
         private void CreateAccessor(string path)
         {
             if (!File.Exists(path))
             {
-                // Error, the file should be here
+                throw new MLAgentsException("The requested file for shared memory communication does not exist.");
             }
 
             var mmf = MemoryMappedFile.CreateFromFile(path, FileMode.Open);
+            // This first file created should only contain the version id and the total file capacity
             accessor = mmf.CreateViewAccessor(0, 8, MemoryMappedFileAccess.ReadWrite);
             var capacity = accessor.ReadInt32(k_FileLengthOffset);
             var version = accessor.ReadInt32(k_VersionOffset);
             if (version != k_ApiVersion)
             {
-                throw new Exception("TODO");
+                throw new MLAgentsException(string.Format("API incompatible. Python version : {0}, Unity version : {1}", version, k_ApiVersion));
             }
+            // Now that we kow the current capacity of the file, we create a new accessor with the right capacity
             accessor.Dispose();
 
             accessor = mmf.CreateViewAccessor(0, capacity, MemoryMappedFileAccess.ReadWrite);
@@ -93,6 +89,9 @@ namespace DOTS_MLAgents.Core
             accessorPointer = new IntPtr(ptr);
         }
 
+        /// <summary>
+        /// Reads the current side channel capacity in the shared memory file
+        /// </summary>
         private int SideChannelCapacity()
         {
             return accessor.ReadInt32(k_SideChannelOffset);
@@ -124,6 +123,16 @@ namespace DOTS_MLAgents.Core
             accessor.WriteArray(k_SideChannelOffset + 8, data, 0, data.Length);
         }
 
+        /// <summary>
+        /// When the shared memory file is not large enough to sustain communication,
+        /// a new larger file is created (file name identical with _ appended). The old
+        /// file is marked as dirty (CHANGE_FILE Python command) and the data of the old
+        /// file is copied to the new.
+        /// Note that there are 2 sections with variable capacity: the side channel data
+        /// and the RL data.
+        /// </summary>
+        /// <param name="channelCapacity"> The new total capacity of the side channel</param>
+        /// <param name="additionalRLDataCapacity"> The extra capacity requested for the RL data section</param>
         public void ExtendFile(int channelCapacity, int additionalRLDataCapacity)
         {
             var newFilePath = filePath + "_";
@@ -178,6 +187,10 @@ namespace DOTS_MLAgents.Core
             filePath = newFilePath;
         }
 
+        /// <summary>
+        /// Computes the total number of bytes necessary in the shared memory file to
+        /// send and receive data for a specific MLAgentsWorld.
+        /// </summary>
         public static int GetRequiredCapacity(MLAgentsWorld world)
         {
             // # int : 4 bytes : maximum number of Agents
@@ -220,6 +233,12 @@ namespace DOTS_MLAgents.Core
             return capacity;
         }
 
+        /// <summary>
+        /// Writes to the shared memory file the Specs of a world (obs size, action size, etc...)
+        /// at the specified offset (this data will not change throughout the communication) and
+        /// returns an AgentGroupFileOffsets containing the offsets in the shared memory file for
+        /// specific sections of the RL data.
+        /// </summary>
         private AgentGroupFileOffsets WriteAgentGroupSpecs(string worldName, MLAgentsWorld world, int offset)
         {
             var startingOffsets = new AgentGroupFileOffsets();
@@ -228,7 +247,7 @@ namespace DOTS_MLAgents.Core
             sbyte len = (sbyte)bytesName.Length;
             if (len > 63)
             {
-                throw new Exception("TODO");
+                throw new Exception(string.Format("Name of the MLAgentsWorld {0} cannot be greater than 63 characters.", worldName));
             }
             accessor.Write(offset, len);
             accessor.WriteArray(offset + 1, bytesName, 0, len);
@@ -282,7 +301,7 @@ namespace DOTS_MLAgents.Core
             {
                 foreach (int branch_size in world.DiscreteActionBranches)
                 {
-                    offset += branch_size * offset;
+                    offset += branch_size * maxNAgents;
                 }
             }
 
@@ -292,10 +311,11 @@ namespace DOTS_MLAgents.Core
 
         }
 
+        /// <summary>
+        /// Writes the data of a world into the shared memory file.
+        /// </summary>
         public void WriteWorld(string worldName, MLAgentsWorld world)
         {
-
-
             if (!groupOffsets.ContainsKey(worldName))
             {
                 var numberGroupsOffset = k_SideChannelOffset + 4 + SideChannelCapacity();
@@ -376,6 +396,8 @@ namespace DOTS_MLAgents.Core
             File.Delete(filePath);
             filePath = filePath + "_";
             CreateAccessor(filePath);
+            // The side channel capacity has changed so all the offsets of the RL data
+            // must be increased.
             var delta = SideChannelCapacity() - oldChannelCapacity;
             MoveAllOffsets(delta);
         }
@@ -419,17 +441,22 @@ namespace DOTS_MLAgents.Core
 
         public void SetUnityReady()
         {
-            accessor.Write(k_CommandOffset, (sbyte)PythonCommand.DEFAULT);
-            accessor.Write(k_MutexOffset, false);
+            if (accessor.CanWrite)
+            {
+                accessor.Write(k_CommandOffset, (sbyte)PythonCommand.DEFAULT);
+                accessor.Write(k_MutexOffset, false);
+            }
+            else
+            {
+                throw new MLAgentsException("Communication has stopped.");
+            }
         }
 
         public PythonCommand Advance()
         {
-
             WaitOnPython();
 
             PythonCommand commandReceived = (PythonCommand)accessor.ReadSByte(k_CommandOffset);
-            Debug.Log("COMMAND : " + commandReceived);
             switch (commandReceived)
             {
                 case PythonCommand.RESET:
@@ -445,6 +472,9 @@ namespace DOTS_MLAgents.Core
             }
         }
 
+        /// <summary>
+        /// Loads the action data form the shared memory file to the world
+        /// </summary>
         public void LoadWorld(string worldName, MLAgentsWorld world)
         {
             var offsets = groupOffsets[worldName];
@@ -460,10 +490,13 @@ namespace DOTS_MLAgents.Core
 
         public void Dispose()
         {
-            accessor.Write(k_CommandOffset, (sbyte)PythonCommand.CLOSE);
-            accessor.Write(k_MutexOffset, false);
-            accessor.SafeMemoryMappedViewHandle.ReleasePointer();
-            accessor.Dispose();
+            if (accessor.CanWrite)
+            {
+                accessor.Write(k_CommandOffset, (sbyte)PythonCommand.CLOSE);
+                accessor.Write(k_MutexOffset, false);
+                accessor.SafeMemoryMappedViewHandle.ReleasePointer();
+                accessor.Dispose();
+            }
         }
     }
 }

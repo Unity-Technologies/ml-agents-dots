@@ -3,7 +3,6 @@ using Unity.Mathematics;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using System;
-using UnityEngine;
 
 
 namespace DOTS_MLAgents.Core
@@ -73,17 +72,12 @@ namespace DOTS_MLAgents.Core
                 int expectedInputSize = s.x * math.max(1, s.y) * math.max(1, s.z);
                 if (inputSize != expectedInputSize)
                 {
-                    throw new Exception("Error");
+                    throw new MLAgentsException(
+                        "Cannot set observation due to incompatible size of the input. Expected size : " + expectedInputSize + ", received size : " + inputSize);
                     // Need to handle safety but it is not possible to store System.Type (class) in a struct
-                    //Debug.Log("Error in the type of sensor"); No strings in burst
                 }
                 int start = world.ObservationOffsets[sensorNumber];
                 start += inputSize * index;
-                if (start > 30000)
-                {
-                    Debug.Log(sensorNumber + "  " + world.ObservationOffsets[sensorNumber] + "  " + index + "  " + inputSize);
-
-                }
                 var tmp = world.Sensors.Slice(start, inputSize).SliceConvert<T>();
                 tmp[0] = sensor;
                 return this;
@@ -104,7 +98,12 @@ namespace DOTS_MLAgents.Core
             {
                 if (discreteActionBranches == null)
                 {
-                    throw new Exception("TODO");
+                    throw new MLAgentsException("For Discrete control, the number of possible actions for each branch must be specified.");
+                }
+                if (discreteActionBranches.Length != actionSize)
+                {
+                    throw new MLAgentsException("For Discrete control, the number of branches must be equal to the action size.");
+
                 }
             }
             if (discreteActionBranches == null)
@@ -151,10 +150,9 @@ namespace DOTS_MLAgents.Core
 
             ContinuousActuators = new NativeArray<float>(maximumNumberAgents * caSize, Allocator.Persistent);
             DiscreteActuators = new NativeArray<int>(maximumNumberAgents * daSize, Allocator.Persistent);
-
             AgentCounter = new NativeCounter(Allocator.Persistent);
-            // FinalJobHandle = new JobHandle();
         }
+
         public void Dispose()
         {
             SensorShapes.Dispose();
@@ -165,6 +163,7 @@ namespace DOTS_MLAgents.Core
             DoneFlags.Dispose();
             MaxStepFlags.Dispose();
             AgentIds.Dispose();
+            ActionMasks.Dispose();
             ContinuousActuators.Dispose();
             DiscreteActuators.Dispose();
             AgentCounter.Dispose();
@@ -175,7 +174,7 @@ namespace DOTS_MLAgents.Core
             var index = AgentCounter.ToConcurrent().Increment() - 1;
             if (index > AgentIds.Length)
             {
-                throw new Exception("ERROR TODO");
+                throw new MLAgentsException("Number of decisions requested exceeds the set maximum of " + AgentIds.Length);
             }
             AgentIds[index] = entity;
             return new DecisionRequest(index, this);
