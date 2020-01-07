@@ -42,6 +42,17 @@ namespace DOTS_MLAgents.Core
             }
         }
 
+        public void SubscribeWorldWithHeuristic<T>(string policyId, MLAgentsWorld world, Func<T> lambda /*Optional barracuda model*/) where T : struct
+        {
+            CheckWorldNotPresent(policyId, world);
+            if (com != null)
+            {
+                WorldProcessors.Add(new ExternalWorldProcessor(policyId, world, com));
+                return;
+            }
+            WorldProcessors.Add(new HeuristicWorldProcessor<T>(world, lambda));
+        }
+
         private void CheckWorldNotPresent(string policyId, MLAgentsWorld world)
         {
             if (RegisteredWorlds.Contains(world))
@@ -58,17 +69,6 @@ namespace DOTS_MLAgents.Core
             }
             RegisteredWorlds.Add(world);
             RegisteredWorldNames.Add(policyId);
-        }
-
-        public void SubscribeWorldWithHeuristic<T>(string policyId, MLAgentsWorld world, Func<T> lambda /*Optional barracuda model*/) where T : struct
-        {
-            CheckWorldNotPresent(policyId, world);
-            if (com != null)
-            {
-                WorldProcessors.Add(new ExternalWorldProcessor(policyId, world, com));
-                return;
-            }
-            WorldProcessors.Add(new HeuristicWorldProcessor<T>(world, lambda));
         }
 
         protected override void OnCreate()
