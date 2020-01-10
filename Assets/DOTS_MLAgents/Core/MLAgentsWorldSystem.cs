@@ -19,6 +19,14 @@ namespace DOTS_MLAgents.Core
 
         private SharedMemoryCom com;
 
+        private struct IdWorldPair
+        {
+            public string name;
+            public MLAgentsWorld world;
+        }
+
+        private bool FirstMessageReceived;
+        private List<IdWorldPair> ExternalWorlds;
         private List<IWorldProcessor> WorldProcessors;
         private HashSet<MLAgentsWorld> RegisteredWorlds;
         private HashSet<string> RegisteredWorldNames;
@@ -28,11 +36,11 @@ namespace DOTS_MLAgents.Core
             CheckWorldNotPresent(policyId, world);
             if (com != null)
             {
-                WorldProcessors.Add(new ExternalWorldProcessor(policyId, world, com));
+                ExternalWorlds.Add(new IdWorldPair { name = policyId, world = world });
             }
             else
             {
-                // TODO   
+                WorldProcessors.Add(new BarracudaWorldProcessor(world));
             }
         }
 
@@ -41,7 +49,7 @@ namespace DOTS_MLAgents.Core
             CheckWorldNotPresent(policyId, world);
             if (com != null)
             {
-                WorldProcessors.Add(new ExternalWorldProcessor(policyId, world, com));
+                ExternalWorlds.Add(new IdWorldPair { name = policyId, world = world });
                 return;
             }
             WorldProcessors.Add(new HeuristicWorldProcessor<T>(world, lambda));
@@ -67,6 +75,7 @@ namespace DOTS_MLAgents.Core
 
         protected override void OnCreate()
         {
+
             WorldProcessors = new List<IWorldProcessor>();
             RegisteredWorlds = new HashSet<MLAgentsWorld>();
             RegisteredWorldNames = new HashSet<string>();
@@ -83,6 +92,7 @@ namespace DOTS_MLAgents.Core
             else
             {
                 com = new SharedMemoryCom(path);
+                ExternalWorlds = new List<IdWorldPair>();
                 com.Advance();
             }
         }
@@ -105,58 +115,81 @@ namespace DOTS_MLAgents.Core
 
             foreach (var p in WorldProcessors)
             {
-                p.WriteWorldData();
-            }
-            foreach (var p in WorldProcessors)
-            {
-                p.ProcessWorldData();
+                p.ProcessWorld();
             }
 
             if (com != null)
             {
-                // com.WriteSideChannelData(new byte[4]);
-                com.SetUnityReady();
-                var command = com.Advance();
 
 
-                switch (command)
+                bool anyWorldChanged = false;
+                foreach (var idWorldPair in ExternalWorlds)
                 {
-                    case SharedMemoryCom.PythonCommand.RESET:
-                        ProcessReceivedSideChannelData(com.ReadAndClearSideChannelData());
-                        // TODO : RESET
-                        break;
-                    case SharedMemoryCom.PythonCommand.CLOSE:
+                    anyWorldChanged = anyWorldChanged || idWorldPair.world.AgentCounter.Count > 0;
+                }
+                if (anyWorldChanged)
+                {
+                    if (!FirstMessageReceived)
+                    {
+                        com.Advance();
+                        FirstMessageReceived = true;
+                    }
+
+                    foreach (var idWorldPair in ExternalWorlds)
+                    {
+                        com.WriteWorld(idWorldPair.name, idWorldPair.world);
+                    }
+
+                    // com.WriteSideChannelData(new byte[4]);
+                    // TODO : Write side channel data
+                    com.SetUnityReady();
+                    var command = com.Advance();
+                    ProcessReceivedSideChannelData(com.ReadAndClearSideChannelData());
+
+                    switch (command)
+                    {
+                        case SharedMemoryCom.PythonCommand.RESET:
+                            ResetAllWorlds();
+                            // TODO : RESET logic
+                            break;
+                        case SharedMemoryCom.PythonCommand.CLOSE:
 #if UNITY_EDITOR
-                        EditorApplication.isPlaying = false;
+                            EditorApplication.isPlaying = false;
 #else
                         Application.Quit();
 #endif
-                        break;
-                    case SharedMemoryCom.PythonCommand.DEFAULT:
-                        ProcessReceivedSideChannelData(com.ReadAndClearSideChannelData());
-                        foreach (var p in WorldProcessors)
-                        {
-                            p.RetrieveWorldData();
-                        }
-                        break;
-                    default:
-                        break;
+                            break;
+                        case SharedMemoryCom.PythonCommand.DEFAULT:
+                            foreach (var idWorldPair in ExternalWorlds)
+                            {
+                                com.LoadWorld(idWorldPair.name, idWorldPair.world);
+                                idWorldPair.world.SetActionReady();
+                                idWorldPair.world.ResetDecisionsCounter();
+                            }
+                            break;
+                        default:
+                            break;
 
+                    }
                 }
             }
-            else
-            {
-                foreach (var p in WorldProcessors)
-                {
-                    p.RetrieveWorldData();
-                }
-            }
-
-
 
             inputDeps = JobHandle.CombineDependencies(inputDeps, FinalJobHandle);
             inputDeps.Complete();
             return inputDeps;
+        }
+
+        private void ResetAllWorlds()
+        {
+            foreach (var p in WorldProcessors)
+            {
+                p.ResetWorld();
+            }
+            foreach (var IdWorldPair in ExternalWorlds)
+            {
+                IdWorldPair.world.ResetActionsCounter();
+                IdWorldPair.world.ResetDecisionsCounter();
+            }
         }
 
         private void ProcessReceivedSideChannelData(byte[] data)

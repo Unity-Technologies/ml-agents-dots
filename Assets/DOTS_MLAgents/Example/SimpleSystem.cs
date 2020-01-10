@@ -22,6 +22,7 @@ public class SimpleSystem : JobComponentSystem
     private NativeArray<Entity> entities;
 
     public const int N_Agents = 5;
+    int counter;
 
     // Start is called before the first frame update
     protected override void OnCreate()
@@ -30,7 +31,7 @@ public class SimpleSystem : JobComponentSystem
         sys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
 
         world = new MLAgentsWorld(100, ActionType.DISCRETE, new int3[] { new int3(3, 0, 0) }, 2, new int[] { 2, 3 });
-        sys.SubscribeWorld("test", world);
+        sys.SubscribeWorldWithHeuristic("test", world, () => new int2(1, 1));
 
         entities = new NativeArray<Entity>(N_Agents, Allocator.Persistent);
         // World.Active.EntityManager.CreateEntity(entities);
@@ -51,7 +52,6 @@ public class SimpleSystem : JobComponentSystem
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
         // inputDeps.Complete();
-
         var reactiveJob = new UserCreatedActionEventJob
         {
             myNumber = 666
@@ -63,7 +63,11 @@ public class SimpleSystem : JobComponentSystem
             entities = entities,
             world = world
         };
-        inputDeps = senseJob.Schedule(N_Agents, 64, inputDeps);
+        if (counter % 5 == 0)
+        {
+            inputDeps = senseJob.Schedule(N_Agents, 64, inputDeps);
+        }
+        counter++;
         sys.RegisterDependency(inputDeps);
 
         // inputDeps = sys.ManualUpdate(inputDeps);
@@ -73,7 +77,7 @@ public class SimpleSystem : JobComponentSystem
         return inputDeps;
     }
 
-    [BurstCompile]
+    // [BurstCompile]
     public struct UserCreateSensingJob : IJobParallelFor
     {
         public NativeArray<Entity> entities;

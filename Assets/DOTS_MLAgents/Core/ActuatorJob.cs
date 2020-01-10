@@ -90,8 +90,9 @@ namespace DOTS_MLAgents.Core
                 // Continuous case
                 if (jobData.world.ActionType == ActionType.CONTINUOUS)
                 {
-                    for (int i = 0; i < jobData.world.AgentCounter.Count; i++)
+                    for (int i = 0; i < jobData.world.ActionCounter.Count; i++)
                     {
+                        // TODO : Check if the Agent was done. If it was, there is no need to execute an action
                         jobData.UserJobData.Execute(new ActuatorEvent
                         {
                             Entity = jobData.world.AgentIds[i],
@@ -102,7 +103,7 @@ namespace DOTS_MLAgents.Core
                 // Discrete Case
                 else
                 {
-                    for (int i = 0; i < jobData.world.AgentCounter.Count; i++)
+                    for (int i = 0; i < jobData.world.ActionCounter.Count; i++)
                     {
                         jobData.UserJobData.Execute(new ActuatorEvent
                         {
@@ -112,7 +113,8 @@ namespace DOTS_MLAgents.Core
                         });
                     }
                 }
-                jobData.world.AgentCounter.Count = 0;
+                jobData.world.ResetActionsCounter();
+                // TODO : There is a risk here that the user would consume a action twice if they request a decision before the System creates new ones
             }
         }
     }

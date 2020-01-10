@@ -34,6 +34,7 @@ namespace DOTS_MLAgents.Core
 
         //https://forum.unity.com/threads/is-it-okay-to-read-a-nativecounter-concurrents-value-in-a-parallel-job.533037/
         [NativeDisableParallelForRestriction] public NativeCounter AgentCounter;
+        [NativeDisableParallelForRestriction] public NativeCounter ActionCounter;
 
         public struct DecisionRequest
         {
@@ -151,6 +152,22 @@ namespace DOTS_MLAgents.Core
             ContinuousActuators = new NativeArray<float>(maximumNumberAgents * caSize, Allocator.Persistent);
             DiscreteActuators = new NativeArray<int>(maximumNumberAgents * daSize, Allocator.Persistent);
             AgentCounter = new NativeCounter(Allocator.Persistent);
+            ActionCounter = new NativeCounter(Allocator.Persistent);
+        }
+
+        public void ResetActionsCounter()
+        {
+            ActionCounter.Count = 0;
+        }
+
+        public void ResetDecisionsCounter()
+        {
+            AgentCounter.Count = 0;
+        }
+
+        public void SetActionReady()
+        {
+            ActionCounter.Count = AgentCounter.Count;
         }
 
         public void Dispose()
@@ -167,6 +184,7 @@ namespace DOTS_MLAgents.Core
             ContinuousActuators.Dispose();
             DiscreteActuators.Dispose();
             AgentCounter.Dispose();
+            ActionCounter.Dispose();
         }
 
         public DecisionRequest RequestDecision(Entity entity)

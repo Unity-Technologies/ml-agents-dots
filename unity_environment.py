@@ -207,7 +207,9 @@ class UnityEnvironment(BaseEnv):
         offsets = self.communicator.group_offsets[agent_group]
         expected_n_agents = self.communicator.get_n_agents(agent_group)
         if expected_n_agents == 0:
-            return
+            raise UnityActionException(
+                "The group {0} does not need an input this step".format(agent_group)
+            )
         spec = self._env_specs[agent_group]
         expected_type = np.float32 if spec.is_action_continuous() else np.int32
         expected_shape = (expected_n_agents, spec.action_size)

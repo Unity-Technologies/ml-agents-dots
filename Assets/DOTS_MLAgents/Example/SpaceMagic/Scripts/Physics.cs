@@ -13,6 +13,7 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
     /// velocity of the sphere, the velocity of the spheres is updated based on their acceleration,
     /// and the sphere that are too far off are reset to the center.
     /// </summary>
+    // [DisableAutoCreation]
     public class SpaceMagicMovementSystem : JobComponentSystem
     {
 
@@ -66,7 +67,7 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
         {
             var sys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
             world = new MLAgentsWorld(1001, ActionType.CONTINUOUS, new int3[] { new int3(3, 0, 0) }, 3);
-            sys.SubscribeWorldWithHeuristic<float4>("SpaceMagic", world, () => new float4(0, -10, -10, -10));
+            sys.SubscribeWorldWithHeuristic("SpaceMagic", world, () => new float3(-10, -10, -10));
 
             // var world2 = new MLAgentsWorld(10, ActionType.DISCRETE, new int3[] { new int3(5, 0, 0) }, 6, new int[6] { 2, 3, 4, 5, 6, 7 });
             // sys.SubscribeWorld("SpaceMagic2", world2);
