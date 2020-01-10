@@ -8,6 +8,20 @@ using System;
 namespace DOTS_MLAgents.Core
 {
 
+    public struct MLAgentsWorldWrapper
+    {
+        // A wrapper to expose only the methods useful to the user
+        private MLAgentsWorld world;
+        public MLAgentsWorld.DecisionRequest RequestDecision(Entity ent)
+        {
+            return world.RequestDecision(ent);
+        }
+        public MLAgentsWorld UnsafeGetMLAgentsWorld()
+        {
+            return world;
+        }
+    }
+
     public enum ActionType : int
     {
         DISCRETE = 0,
