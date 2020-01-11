@@ -5,6 +5,7 @@ using Unity.Transforms;
 using UnityEngine;
 using Random = UnityEngine.Random;
 using DOTS_MLAgents.Core;
+using Unity.Burst;
 
 namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
 {
@@ -17,6 +18,7 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
     public class SpaceMagicMovementSystem : JobComponentSystem
     {
 
+        // [BurstCompile]
         private struct AccelerateJob : IActuatorJob
         {
             public EntityCommandBuffer ECB;
@@ -27,6 +29,7 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
                 ECB.SetComponent(ev.Entity, a);
             }
         }
+        [BurstCompile]
         private struct MovementJob : IJobForEachWithEntity<Translation, Speed, Acceleration>
         {
             public float deltaTime;
@@ -45,6 +48,7 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
             }
         }
 
+        [BurstCompile]
         private struct ResetPositionsJob : IJobForEach<Translation, Speed>
         {
             public float3 initialPosition;

@@ -77,7 +77,7 @@ public class SimpleSystem : JobComponentSystem
         return inputDeps;
     }
 
-    // [BurstCompile]
+    [BurstCompile]
     public struct UserCreateSensingJob : IJobParallelFor
     {
         public NativeArray<Entity> entities;
@@ -89,7 +89,6 @@ public class SimpleSystem : JobComponentSystem
             world.RequestDecision(entities[i])
                 .SetReward(1.0f)
                 .SetObservation(0, new float3(entities[i].Index, 0, 0));
-            // Debug.Log("REQUESTING DECISION");
 
         }
     }

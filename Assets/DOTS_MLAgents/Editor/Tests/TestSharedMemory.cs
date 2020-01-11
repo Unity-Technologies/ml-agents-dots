@@ -1,11 +1,6 @@
 ﻿using NUnit.Framework;
-using DOTS_MLAgents;
-using DOTS_MLAgents.Data;
-using System.Runtime.InteropServices;
 using UnityEngine;
-using Unity.Entities;
 using Unity.Mathematics;
-using Unity.Collections;
 using System.IO;
 using System;
 using System.IO.MemoryMappedFiles;
