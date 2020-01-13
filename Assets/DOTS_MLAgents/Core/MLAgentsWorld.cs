@@ -76,7 +76,16 @@ namespace DOTS_MLAgents.Core
 
             public DecisionRequest SetDiscreteActionMask(int branch, int actionIndex)
             {
-                // TODO
+                if (branch > world.DiscreteActionBranches.Length)
+                {
+                    throw new MLAgentsException("Unknown action branch used when setting mask.");
+                }
+                if (actionIndex > world.DiscreteActionBranches[branch])
+                {
+                    throw new MLAgentsException("Index is out of bounds for requested action mask.");
+                }
+                var trueMaskIndex = world.DiscreteActionBranches.CumSumAt(branch) + actionIndex;
+                world.ActionMasks[trueMaskIndex + world.DiscreteActionBranches.Sum() * index] = true;
                 return this;
             }
 
@@ -89,12 +98,27 @@ namespace DOTS_MLAgents.Core
                 {
                     throw new MLAgentsException(
                         "Cannot set observation due to incompatible size of the input. Expected size : " + expectedInputSize + ", received size : " + inputSize);
-                    // Need to handle safety but it is not possible to store System.Type (class) in a struct
                 }
                 int start = world.ObservationOffsets[sensorNumber];
                 start += inputSize * index;
                 var tmp = world.Sensors.Slice(start, inputSize).SliceConvert<T>();
                 tmp[0] = sensor;
+                return this;
+            }
+
+            public DecisionRequest SetObservationFromSlice(int sensorNumber, [ReadOnly] NativeSlice<float> obs)
+            {
+                int inputSize = obs.Length;
+                int3 s = world.SensorShapes[sensorNumber];
+                int expectedInputSize = s.x * math.max(1, s.y) * math.max(1, s.z);
+                if (inputSize != expectedInputSize)
+                {
+                    throw new MLAgentsException(
+                        "Cannot set observation due to incompatible size of the input. Expected size : " + expectedInputSize + ", received size : " + inputSize);
+                }
+                int start = world.ObservationOffsets[sensorNumber];
+                start += inputSize * index;
+                world.Sensors.Slice(start, inputSize).CopyFrom(obs);
                 return this;
             }
         }
@@ -145,10 +169,7 @@ namespace DOTS_MLAgents.Core
             int nMasks = 0;
             if (ActionType == ActionType.DISCRETE)
             {
-                foreach (int branchSize in DiscreteActionBranches)
-                {
-                    nMasks += branchSize;
-                }
+                nMasks = DiscreteActionBranches.Sum();
             }
             ActionMasks = new NativeArray<bool>(maximumNumberAgents * nMasks, Allocator.Persistent);
 

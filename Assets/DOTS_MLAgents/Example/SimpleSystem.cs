@@ -20,6 +20,7 @@ public class SimpleSystem : JobComponentSystem
     private MLAgentsWorldSystem sys;
     private MLAgentsWorld world;
     private NativeArray<Entity> entities;
+    private Camera camera;
 
     public const int N_Agents = 5;
     int counter;
@@ -30,7 +31,7 @@ public class SimpleSystem : JobComponentSystem
         Application.targetFrameRate = -1;
         sys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
 
-        world = new MLAgentsWorld(100, ActionType.DISCRETE, new int3[] { new int3(3, 0, 0) }, 2, new int[] { 2, 3 });
+        world = new MLAgentsWorld(100, ActionType.DISCRETE, new int3[] { new int3(3, 0, 0), new int3(64, 84, 3) }, 2, new int[] { 2, 3 });
         sys.SubscribeWorldWithHeuristic("test", world, () => new int2(1, 1));
 
         entities = new NativeArray<Entity>(N_Agents, Allocator.Persistent);
@@ -51,6 +52,11 @@ public class SimpleSystem : JobComponentSystem
     // Update is called once per frame
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
+        if (camera == null)
+        {
+            camera = Camera.main;
+            camera = GameObject.FindObjectOfType<Camera>();
+        }
         // inputDeps.Complete();
         var reactiveJob = new UserCreatedActionEventJob
         {
@@ -58,13 +64,15 @@ public class SimpleSystem : JobComponentSystem
         };
         inputDeps = reactiveJob.Schedule(world, inputDeps);
 
-        var senseJob = new UserCreateSensingJob
-        {
-            entities = entities,
-            world = world
-        };
         if (counter % 5 == 0)
         {
+            var visObs = VisualObservationUtility.GetVisObs(camera, 64, 84);
+            var senseJob = new UserCreateSensingJob
+            {
+                cameraObservation = visObs,
+                entities = entities,
+                world = world
+            };
             inputDeps = senseJob.Schedule(N_Agents, 64, inputDeps);
         }
         counter++;
@@ -80,6 +88,7 @@ public class SimpleSystem : JobComponentSystem
     [BurstCompile]
     public struct UserCreateSensingJob : IJobParallelFor
     {
+        [ReadOnly] public NativeArray<float> cameraObservation;
         public NativeArray<Entity> entities;
         public MLAgentsWorld world;
 
@@ -88,7 +97,8 @@ public class SimpleSystem : JobComponentSystem
             // world.CollectData(entities[i], new float3(entities[i].Index, 0, 0));
             world.RequestDecision(entities[i])
                 .SetReward(1.0f)
-                .SetObservation(0, new float3(entities[i].Index, 0, 0));
+                .SetObservation(0, new float3(entities[i].Index, 0, 0))
+                .SetObservationFromSlice(1, cameraObservation.Slice());
 
         }
     }

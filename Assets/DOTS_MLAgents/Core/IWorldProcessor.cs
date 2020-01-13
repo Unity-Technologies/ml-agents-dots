@@ -67,8 +67,36 @@ namespace DOTS_MLAgents.Core
         }
     }
 
+
+    public static class HeristicWorldProcessorRegistringExtension
+    {
+        public static void RegisterWorldWithHeuristic<TH>(
+            this MLAgentsWorldSystem system,
+            string policyId,
+            MLAgentsWorld world,
+            Func<TH> heuristic
+            ) where TH : struct
+        {
+            //TODO : Register to the system using public methods
+            // Give the system a public RegisterProcessor(processor, world) and a RegisterWorldToCommunicator(world)
+        }
+
+        public static void RegisterWorldWithHeuristicAndBypassCommunication<TH>(
+            this MLAgentsWorldSystem system,
+            string policyId,
+            MLAgentsWorld world,
+            Func<TH> heuristic
+            ) where TH : struct
+        {
+            //TODO : Register to the system using public methods
+            // Give the system a public RegisterProcessor(processor, world) and a RegisterWorldToCommunicator(world)
+        }
+    }
+
     public class HeuristicWorldProcessor<T> : IWorldProcessor where T : struct
     {
+
+
 
         private Func<T> heuristic;
         private MLAgentsWorld world;
