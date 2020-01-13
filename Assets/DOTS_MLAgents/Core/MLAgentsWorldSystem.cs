@@ -31,46 +31,17 @@ namespace DOTS_MLAgents.Core
         private HashSet<MLAgentsWorld> RegisteredWorlds;
         private HashSet<string> RegisteredWorldNames;
 
-        public void SubscribeWorld(string policyId, MLAgentsWorld world /*Optional barracuda model*/)
+        public void SubscribeWorld(string policyId, MLAgentsWorld world, IWorldProcessor fallbackWorldProcessor = null, bool communicate = true)
         {
             CheckWorldNotPresent(policyId, world);
-            if (com != null)
+            if (com != null && communicate)
             {
                 ExternalWorlds.Add(new IdWorldPair { name = policyId, world = world });
             }
-            else
+            else if (fallbackWorldProcessor != null)
             {
-                WorldProcessors.Add(new BarracudaWorldProcessor(world));
+                WorldProcessors.Add(fallbackWorldProcessor);
             }
-        }
-
-        public void SubscribeWorldWithHeuristic<T>(string policyId, MLAgentsWorld world, Func<T> lambda /*Optional barracuda model*/) where T : struct
-        {
-            CheckWorldNotPresent(policyId, world);
-            if (com != null)
-            {
-                ExternalWorlds.Add(new IdWorldPair { name = policyId, world = world });
-                return;
-            }
-            WorldProcessors.Add(new HeuristicWorldProcessor<T>(world, lambda));
-        }
-
-        private void CheckWorldNotPresent(string policyId, MLAgentsWorld world)
-        {
-            if (RegisteredWorlds.Contains(world))
-            {
-                throw new MLAgentsException("The MLAgentsWorld has already been subscribed ");
-            }
-            if (RegisteredWorldNames.Contains(policyId))
-            {
-                throw new MLAgentsException(
-                    string.Format(
-                        "An MLAgentsWorld has already been subscribed using the key {0}",
-                        policyId)
-                        );
-            }
-            RegisteredWorlds.Add(world);
-            RegisteredWorldNames.Add(policyId);
         }
 
         protected override void OnCreate()
@@ -177,6 +148,24 @@ namespace DOTS_MLAgents.Core
             inputDeps = JobHandle.CombineDependencies(inputDeps, FinalJobHandle);
             inputDeps.Complete();
             return inputDeps;
+        }
+
+        private void CheckWorldNotPresent(string policyId, MLAgentsWorld world)
+        {
+            if (RegisteredWorlds.Contains(world))
+            {
+                throw new MLAgentsException("The MLAgentsWorld has already been subscribed ");
+            }
+            if (RegisteredWorldNames.Contains(policyId))
+            {
+                throw new MLAgentsException(
+                    string.Format(
+                        "An MLAgentsWorld has already been subscribed using the key {0}",
+                        policyId)
+                        );
+            }
+            RegisteredWorlds.Add(world);
+            RegisteredWorldNames.Add(policyId);
         }
 
         private void ResetAllWorlds()
