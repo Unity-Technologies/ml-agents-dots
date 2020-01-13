@@ -24,7 +24,6 @@ namespace DOTS_MLAgents.Core
             public string name;
             public MLAgentsWorld world;
         }
-
         private bool FirstMessageReceived;
         private List<IdWorldPair> ExternalWorlds;
         private List<IWorldProcessor> WorldProcessors;
@@ -46,27 +45,29 @@ namespace DOTS_MLAgents.Core
 
         protected override void OnCreate()
         {
-
+            ExternalWorlds = new List<IdWorldPair>();
             WorldProcessors = new List<IWorldProcessor>();
             RegisteredWorlds = new HashSet<MLAgentsWorld>();
             RegisteredWorldNames = new HashSet<string>();
 
             dependencies = new JobHandle();
             FinalJobHandle = new JobHandle();
+            TryInitializeCommunicator();
+        }
 
+        private void TryInitializeCommunicator()
+        {
             var path = ArgParser.ReadSharedMemoryPathFromArgs();
             if (path == null)
             {
-                // throw new MLAgentsException("Could not connect.");
                 UnityEngine.Debug.Log("Could not connect");
             }
             else
             {
                 com = new SharedMemoryCom(path);
-                ExternalWorlds = new List<IdWorldPair>();
-                com.Advance();
             }
         }
+
 
 
         /// <summary>
@@ -92,7 +93,6 @@ namespace DOTS_MLAgents.Core
             if (com != null)
             {
 
-
                 bool anyWorldChanged = false;
                 foreach (var idWorldPair in ExternalWorlds)
                 {
@@ -102,6 +102,8 @@ namespace DOTS_MLAgents.Core
                 {
                     if (!FirstMessageReceived)
                     {
+                        // Unity must call advance to read the first message of Python.
+                        // We do this only if there is already something to send 
                         com.Advance();
                         FirstMessageReceived = true;
                     }

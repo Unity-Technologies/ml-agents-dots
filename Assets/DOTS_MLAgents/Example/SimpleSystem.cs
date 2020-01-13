@@ -33,7 +33,6 @@ public class SimpleSystem : JobComponentSystem
 
         world = new MLAgentsWorld(100, ActionType.DISCRETE, new int3[] { new int3(3, 0, 0), new int3(84, 84, 3) }, 2, new int[] { 2, 3 });
         sys.SubscribeWorldWithHeuristic("test", world, () => new int2(1, 1));
-
         entities = new NativeArray<Entity>(N_Agents, Allocator.Persistent);
         // World.Active.EntityManager.CreateEntity(entities);
         for (int i = 0; i < N_Agents; i++)
