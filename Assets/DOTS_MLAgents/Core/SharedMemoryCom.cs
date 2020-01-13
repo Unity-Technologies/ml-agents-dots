@@ -97,28 +97,38 @@ namespace DOTS_MLAgents.Core
 
         public byte[] ReadAndClearSideChannelData()
         {
-            var messageSize = accessor.ReadInt32(k_SideChannelOffset + 4);
-            if (messageSize == 0)
+            if (accessor.CanWrite)
+            {
+                var messageSize = accessor.ReadInt32(k_SideChannelOffset + 4);
+                if (messageSize == 0)
+                {
+                    return null;
+                }
+                var result = new byte[messageSize];
+                accessor.ReadArray(k_SideChannelOffset + 8, result, 0, messageSize);
+                accessor.WriteArray(k_SideChannelOffset + 4, new byte[SideChannelCapacity()], 0, SideChannelCapacity());
+                return result;
+            }
+            else
             {
                 return null;
             }
-            var result = new byte[messageSize];
-            accessor.ReadArray(k_SideChannelOffset + 8, result, 0, messageSize);
-            accessor.WriteArray(k_SideChannelOffset + 4, new byte[SideChannelCapacity()], 0, SideChannelCapacity());
-            return result;
         }
 
         public void WriteSideChannelData(byte[] data)
         {
-            int oldCapacity = SideChannelCapacity();
-            if (data.Length > oldCapacity - 4)
-            { // 4 is the int for the size of the data
-                int newCapacity = data.Length * 2 + 20;
-                ExtendFile(newCapacity, 0);
-                MoveAllOffsets(newCapacity - oldCapacity);
+            if (accessor.CanWrite)
+            {
+                int oldCapacity = SideChannelCapacity();
+                if (data.Length > oldCapacity - 4)
+                { // 4 is the int for the size of the data
+                    int newCapacity = data.Length * 2 + 20;
+                    ExtendFile(newCapacity, 0);
+                    MoveAllOffsets(newCapacity - oldCapacity);
+                }
+                accessor.Write(k_SideChannelOffset + 4, data.Length);
+                accessor.WriteArray(k_SideChannelOffset + 8, data, 0, data.Length);
             }
-            accessor.Write(k_SideChannelOffset + 4, data.Length);
-            accessor.WriteArray(k_SideChannelOffset + 8, data, 0, data.Length);
         }
 
         /// <summary>

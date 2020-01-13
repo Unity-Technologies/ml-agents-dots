@@ -157,10 +157,10 @@ namespace DOTS_MLAgents.Core
             {
                 ObservationOffsets[i] = currentOffset;
                 int3 s = SensorShapes[i];
-                currentOffset += s.x * math.max(1, s.y) * math.max(1, s.z);
+                currentOffset += s.x * math.max(1, s.y) * math.max(1, s.z) * maximumNumberAgents;
             }
 
-            Sensors = new NativeArray<float>(maximumNumberAgents * currentOffset, Allocator.Persistent);
+            Sensors = new NativeArray<float>(currentOffset, Allocator.Persistent);
             Rewards = new NativeArray<float>(maximumNumberAgents, Allocator.Persistent);
             DoneFlags = new NativeArray<bool>(maximumNumberAgents, Allocator.Persistent);
             MaxStepFlags = new NativeArray<bool>(maximumNumberAgents, Allocator.Persistent);

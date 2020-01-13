@@ -31,7 +31,7 @@ public class SimpleSystem : JobComponentSystem
         Application.targetFrameRate = -1;
         sys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
 
-        world = new MLAgentsWorld(100, ActionType.DISCRETE, new int3[] { new int3(3, 0, 0), new int3(64, 84, 3) }, 2, new int[] { 2, 3 });
+        world = new MLAgentsWorld(100, ActionType.DISCRETE, new int3[] { new int3(3, 0, 0), new int3(84, 84, 3) }, 2, new int[] { 2, 3 });
         sys.SubscribeWorldWithHeuristic("test", world, () => new int2(1, 1));
 
         entities = new NativeArray<Entity>(N_Agents, Allocator.Persistent);
@@ -66,7 +66,7 @@ public class SimpleSystem : JobComponentSystem
 
         if (counter % 5 == 0)
         {
-            var visObs = VisualObservationUtility.GetVisObs(camera, 64, 84);
+            var visObs = VisualObservationUtility.GetVisObs(camera, 84, 84);
             var senseJob = new UserCreateSensingJob
             {
                 cameraObservation = visObs,
@@ -74,6 +74,9 @@ public class SimpleSystem : JobComponentSystem
                 world = world
             };
             inputDeps = senseJob.Schedule(N_Agents, 64, inputDeps);
+
+            inputDeps.Complete();
+            visObs.Dispose();
         }
         counter++;
         sys.RegisterDependency(inputDeps);
@@ -85,7 +88,7 @@ public class SimpleSystem : JobComponentSystem
         return inputDeps;
     }
 
-    [BurstCompile]
+    // [BurstCompile]
     public struct UserCreateSensingJob : IJobParallelFor
     {
         [ReadOnly] public NativeArray<float> cameraObservation;
