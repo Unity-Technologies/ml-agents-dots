@@ -18,15 +18,15 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
     public class SpaceMagicMovementSystem : JobComponentSystem
     {
 
-        // [BurstCompile]
+        [BurstCompile]
         private struct AccelerateJob : IActuatorJob
         {
-            public EntityCommandBuffer ECB;
+            public ComponentDataFromEntity<Acceleration> ComponentDataFromEntity;
             public void Execute(ActuatorEvent ev)
             {
                 var a = new Acceleration();
                 ev.GetContinuousAction(out a);
-                ECB.SetComponent(ev.Entity, a);
+                ComponentDataFromEntity[ev.Entity] = a;
             }
         }
         [BurstCompile]
@@ -75,14 +75,14 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
 
             // var world2 = new MLAgentsWorld(10, ActionType.DISCRETE, new int3[] { new int3(5, 0, 0) }, 6, new int[6] { 2, 3, 4, 5, 6, 7 });
             // sys.SubscribeWorld("SpaceMagic2", world2);
-            timeBarrier = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
+
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
             var accJob = new AccelerateJob
             {
-                ECB = timeBarrier.CreateCommandBuffer()
+                ComponentDataFromEntity = GetComponentDataFromEntity<Acceleration>(isReadOnly: false)
             };
 
 

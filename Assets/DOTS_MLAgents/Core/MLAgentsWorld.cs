@@ -43,12 +43,16 @@ namespace DOTS_MLAgents.Core
         [NativeDisableParallelForRestriction] public NativeArray<Entity> AgentIds;
         [NativeDisableParallelForRestriction] public NativeArray<bool> ActionMasks;
 
-        [NativeDisableParallelForRestriction] public NativeArray<float> ContinuousActuators;
-        [NativeDisableParallelForRestriction] public NativeArray<int> DiscreteActuators;
-
         //https://forum.unity.com/threads/is-it-okay-to-read-a-nativecounter-concurrents-value-in-a-parallel-job.533037/
         [NativeDisableParallelForRestriction] public NativeCounter AgentCounter;
         [NativeDisableParallelForRestriction] public NativeCounter ActionCounter;
+
+        [NativeDisableParallelForRestriction] public NativeArray<float> ContinuousActuators;
+        [NativeDisableParallelForRestriction] public NativeArray<int> DiscreteActuators;
+        [NativeDisableParallelForRestriction] public NativeArray<Entity> ActionAgentIds; // Keep track of the Ids for the next action step
+        [NativeDisableParallelForRestriction] public NativeArray<bool> ActionDoneFlags; // Keep track of the Done flags for the next action step
+
+
 
         public struct DecisionRequest
         {
@@ -184,10 +188,13 @@ namespace DOTS_MLAgents.Core
                 caSize = ActionSize;
             }
 
-            ContinuousActuators = new NativeArray<float>(maximumNumberAgents * caSize, Allocator.Persistent);
-            DiscreteActuators = new NativeArray<int>(maximumNumberAgents * daSize, Allocator.Persistent);
             AgentCounter = new NativeCounter(Allocator.Persistent);
             ActionCounter = new NativeCounter(Allocator.Persistent);
+
+            ContinuousActuators = new NativeArray<float>(maximumNumberAgents * caSize, Allocator.Persistent);
+            DiscreteActuators = new NativeArray<int>(maximumNumberAgents * daSize, Allocator.Persistent);
+            ActionDoneFlags = new NativeArray<bool>(maximumNumberAgents, Allocator.Persistent);
+            ActionAgentIds = new NativeArray<Entity>(maximumNumberAgents, Allocator.Persistent);
         }
 
         public void ResetActionsCounter()
@@ -203,6 +210,8 @@ namespace DOTS_MLAgents.Core
         public void SetActionReady()
         {
             ActionCounter.Count = AgentCounter.Count;
+            ActionDoneFlags.CopyFrom(DoneFlags);
+            ActionAgentIds.CopyFrom(AgentIds);
         }
 
         public void Dispose()
@@ -216,10 +225,12 @@ namespace DOTS_MLAgents.Core
             MaxStepFlags.Dispose();
             AgentIds.Dispose();
             ActionMasks.Dispose();
-            ContinuousActuators.Dispose();
-            DiscreteActuators.Dispose();
             AgentCounter.Dispose();
             ActionCounter.Dispose();
+            ContinuousActuators.Dispose();
+            DiscreteActuators.Dispose();
+            ActionDoneFlags.Dispose();
+            ActionAgentIds.Dispose();
         }
 
         public DecisionRequest RequestDecision(Entity entity)

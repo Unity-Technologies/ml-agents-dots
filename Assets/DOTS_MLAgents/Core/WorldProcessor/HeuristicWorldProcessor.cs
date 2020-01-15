@@ -19,7 +19,7 @@ namespace DOTS_MLAgents.Core
             system.SubscribeWorld(policyId, world, worldProcessor, true);
         }
 
-        public static void SubscribeWorldWithHeuristicAndBypassCommunication<TH>(
+        public static void SubscribeWorldWithHeuristicForceNoCommunication<TH>(
             this MLAgentsWorldSystem system,
             string policyId,
             MLAgentsWorld world,

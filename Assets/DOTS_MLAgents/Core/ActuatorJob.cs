@@ -92,12 +92,14 @@ namespace DOTS_MLAgents.Core
                 {
                     for (int i = 0; i < jobData.world.ActionCounter.Count; i++)
                     {
-                        // TODO : Check if the Agent was done. If it was, there is no need to execute an action
-                        jobData.UserJobData.Execute(new ActuatorEvent
+                        if (!jobData.world.ActionDoneFlags[i])
                         {
-                            Entity = jobData.world.AgentIds[i],
-                            ContinuousActionSlice = jobData.world.ContinuousActuators.Slice(i * size, size)
-                        });
+                            jobData.UserJobData.Execute(new ActuatorEvent
+                            {
+                                Entity = jobData.world.ActionAgentIds[i],
+                                ContinuousActionSlice = jobData.world.ContinuousActuators.Slice(i * size, size)
+                            });
+                        }
                     }
                 }
                 // Discrete Case
@@ -105,12 +107,15 @@ namespace DOTS_MLAgents.Core
                 {
                     for (int i = 0; i < jobData.world.ActionCounter.Count; i++)
                     {
-                        jobData.UserJobData.Execute(new ActuatorEvent
+                        if (!jobData.world.ActionDoneFlags[i])
                         {
-                            Entity = jobData.world.AgentIds[i],
-                            DiscreteActionSlice = jobData.world.DiscreteActuators.Slice(i * size, size)
+                            jobData.UserJobData.Execute(new ActuatorEvent
+                            {
+                                Entity = jobData.world.ActionAgentIds[i],
+                                DiscreteActionSlice = jobData.world.DiscreteActuators.Slice(i * size, size)
 
-                        });
+                            });
+                        }
                     }
                 }
                 jobData.world.ResetActionsCounter();

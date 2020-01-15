@@ -114,7 +114,7 @@ public class SimpleSystem : JobComponentSystem
             var tmp = new testAction();
             data.GetDiscreteAction(out tmp);
             // Debug.Log(data.Entity.Index + "  " + tmp.x);
-            Debug.Log(data.Entity.Index + "  " + tmp.e1);
+            // Debug.Log(data.Entity.Index + "  " + tmp.e1);
         }
     }
 
