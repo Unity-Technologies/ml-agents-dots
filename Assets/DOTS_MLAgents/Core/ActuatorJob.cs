@@ -74,8 +74,8 @@ namespace DOTS_MLAgents.Core
 
             public static IntPtr Initialize()
             {
-                // if (jobReflectionData == IntPtr.Zero)
-                jobReflectionData = JobsUtility.CreateJobReflectionData(typeof(ActionEventJobData<T>), typeof(T), JobType.Single, (ExecuteJobFunction)Execute);
+                if (jobReflectionData == IntPtr.Zero)
+                    jobReflectionData = JobsUtility.CreateJobReflectionData(typeof(ActionEventJobData<T>), typeof(T), JobType.Single, (ExecuteJobFunction)Execute);
                 return jobReflectionData;
             }
             #endregion

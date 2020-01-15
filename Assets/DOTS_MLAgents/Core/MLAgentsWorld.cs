@@ -4,7 +4,6 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using System;
 
-
 namespace DOTS_MLAgents.Core
 {
 
@@ -27,6 +26,7 @@ namespace DOTS_MLAgents.Core
         DISCRETE = 0,
         CONTINUOUS = 1,
     }
+
     public struct MLAgentsWorld : IDisposable
     {
         [ReadOnly] public NativeArray<int3> SensorShapes;
@@ -80,6 +80,7 @@ namespace DOTS_MLAgents.Core
 
             public DecisionRequest SetDiscreteActionMask(int branch, int actionIndex)
             {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
                 if (branch > world.DiscreteActionBranches.Length)
                 {
                     throw new MLAgentsException("Unknown action branch used when setting mask.");
@@ -88,6 +89,7 @@ namespace DOTS_MLAgents.Core
                 {
                     throw new MLAgentsException("Index is out of bounds for requested action mask.");
                 }
+#endif
                 var trueMaskIndex = world.DiscreteActionBranches.CumSumAt(branch) + actionIndex;
                 world.ActionMasks[trueMaskIndex + world.DiscreteActionBranches.Sum() * index] = true;
                 return this;
@@ -96,6 +98,7 @@ namespace DOTS_MLAgents.Core
             public DecisionRequest SetObservation<T>(int sensorNumber, T sensor) where T : struct
             {
                 int inputSize = UnsafeUtility.SizeOf<T>() / sizeof(float);
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
                 int3 s = world.SensorShapes[sensorNumber];
                 int expectedInputSize = s.x * math.max(1, s.y) * math.max(1, s.z);
                 if (inputSize != expectedInputSize)
@@ -103,6 +106,7 @@ namespace DOTS_MLAgents.Core
                     throw new MLAgentsException(
                         "Cannot set observation due to incompatible size of the input. Expected size : " + expectedInputSize + ", received size : " + inputSize);
                 }
+#endif
                 int start = world.ObservationOffsets[sensorNumber];
                 start += inputSize * index;
                 var tmp = world.Sensors.Slice(start, inputSize).SliceConvert<T>();
@@ -113,6 +117,7 @@ namespace DOTS_MLAgents.Core
             public DecisionRequest SetObservationFromSlice(int sensorNumber, [ReadOnly] NativeSlice<float> obs)
             {
                 int inputSize = obs.Length;
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
                 int3 s = world.SensorShapes[sensorNumber];
                 int expectedInputSize = s.x * math.max(1, s.y) * math.max(1, s.z);
                 if (inputSize != expectedInputSize)
@@ -120,6 +125,7 @@ namespace DOTS_MLAgents.Core
                     throw new MLAgentsException(
                         "Cannot set observation due to incompatible size of the input. Expected size : " + expectedInputSize + ", received size : " + inputSize);
                 }
+#endif
                 int start = world.ObservationOffsets[sensorNumber];
                 start += inputSize * index;
                 world.Sensors.Slice(start, inputSize).CopyFrom(obs);
@@ -137,6 +143,7 @@ namespace DOTS_MLAgents.Core
             SensorShapes = new NativeArray<int3>(obsShapes, Allocator.Persistent);
             ActionSize = actionSize;
             ActionType = actionType;
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (ActionType == ActionType.DISCRETE)
             {
                 if (discreteActionBranches == null)
@@ -149,6 +156,7 @@ namespace DOTS_MLAgents.Core
 
                 }
             }
+#endif
             if (discreteActionBranches == null)
             {
                 discreteActionBranches = new int[0];
@@ -209,9 +217,10 @@ namespace DOTS_MLAgents.Core
 
         public void SetActionReady()
         {
-            ActionCounter.Count = AgentCounter.Count;
-            ActionDoneFlags.CopyFrom(DoneFlags);
-            ActionAgentIds.CopyFrom(AgentIds);
+            int count = AgentCounter.Count;
+            ActionCounter.Count = count;
+            ActionDoneFlags.Slice(0, count).CopyFrom(DoneFlags.Slice(0, count));
+            ActionAgentIds.Slice(0, count).CopyFrom(AgentIds.Slice(0, count));
         }
 
         public void Dispose()
@@ -236,10 +245,12 @@ namespace DOTS_MLAgents.Core
         public DecisionRequest RequestDecision(Entity entity)
         {
             var index = AgentCounter.ToConcurrent().Increment() - 1;
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (index > AgentIds.Length)
             {
                 throw new MLAgentsException("Number of decisions requested exceeds the set maximum of " + AgentIds.Length);
             }
+#endif
             AgentIds[index] = entity;
             return new DecisionRequest(index, this);
         }

@@ -51,17 +51,23 @@ namespace DOTS_MLAgents.Core
         public void ProcessWorld()
         {
             T action = heuristic.Invoke();
-            for (int i = 0; i < world.AgentCounter.Count; i++)
-            {
-                if (world.ActionType == ActionType.CONTINUOUS)
-                {
+            var totalCount = world.AgentCounter.Count;
 
-                    var s = world.ContinuousActuators.Slice(0, world.AgentCounter.Count * world.ActionSize).SliceConvert<T>();
+
+            // TODO : This can be parallelized
+            if (world.ActionType == ActionType.CONTINUOUS)
+            {
+                var s = world.ContinuousActuators.Slice(0, totalCount * world.ActionSize).SliceConvert<T>();
+                for (int i = 0; i < totalCount; i++)
+                {
                     s[i] = action;
                 }
-                else
+            }
+            else
+            {
+                var s = world.DiscreteActuators.Slice(0, totalCount * world.ActionSize).SliceConvert<T>();
+                for (int i = 0; i < totalCount; i++)
                 {
-                    var s = world.DiscreteActuators.Slice(0, world.AgentCounter.Count * world.ActionSize).SliceConvert<T>();
                     s[i] = action;
                 }
             }

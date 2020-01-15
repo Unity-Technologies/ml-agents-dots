@@ -18,7 +18,7 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
     public class SpaceMagicMovementSystem : JobComponentSystem
     {
 
-        [BurstCompile]
+        // [BurstCompile]
         private struct AccelerateJob : IActuatorJob
         {
             public ComponentDataFromEntity<Acceleration> ComponentDataFromEntity;
@@ -29,7 +29,7 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
                 ComponentDataFromEntity[ev.Entity] = a;
             }
         }
-        [BurstCompile]
+        // [BurstCompile]
         private struct MovementJob : IJobForEachWithEntity<Translation, Speed, Acceleration>
         {
             public float deltaTime;
@@ -45,6 +45,7 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
                 position.Value += deltaTime * speed.Value;
                 speed.Value += deltaTime * (acceleration.Value - 0.05f * speed.Value);
                 w.RequestDecision(entity).SetObservation(0, position);
+                // Debug.Log("RequestDecision");
             }
         }
 
@@ -65,13 +66,23 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
         }
 
         MLAgentsWorld world;
-        private EndSimulationEntityCommandBufferSystem timeBarrier;
 
         protected override void OnCreate()
         {
             var sys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
-            world = new MLAgentsWorld(1001, ActionType.CONTINUOUS, new int3[] { new int3(3, 0, 0) }, 3);
-            sys.SubscribeWorldWithHeuristic("SpaceMagic", world, () => new float3(-10, -10, -10));
+            world = new MLAgentsWorld(10001, ActionType.CONTINUOUS, new int3[] { new int3(3, 0, 0) }, 3);
+            sys.SubscribeWorldWithHeuristic("SpaceMagic", world, () =>
+            {
+                if (Input.GetKey(KeyCode.Space))
+                {
+                    return new float3(-10, -10, -10);
+                }
+                else
+                {
+                    return new float3();
+                }
+            }
+            );
 
             // var world2 = new MLAgentsWorld(10, ActionType.DISCRETE, new int3[] { new int3(5, 0, 0) }, 6, new int[6] { 2, 3, 4, 5, 6, 7 });
             // sys.SubscribeWorld("SpaceMagic2", world2);
@@ -84,7 +95,6 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
             {
                 ComponentDataFromEntity = GetComponentDataFromEntity<Acceleration>(isReadOnly: false)
             };
-
 
             var moveJob = new MovementJob
             {
