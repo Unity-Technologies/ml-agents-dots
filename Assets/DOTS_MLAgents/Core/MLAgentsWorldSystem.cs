@@ -126,6 +126,7 @@ namespace DOTS_MLAgents.Core
                             // TODO : RESET logic
                             break;
                         case SharedMemoryCom.PythonCommand.CLOSE:
+                            ResetAllWorlds();
 #if UNITY_EDITOR
                             EditorApplication.isPlaying = false;
 #else
