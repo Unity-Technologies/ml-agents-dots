@@ -31,12 +31,12 @@ namespace DOTS_MLAgents.Core
         }
     }
 
-    public class HeuristicWorldProcessor<T> : IWorldProcessor where T : struct
+    internal class HeuristicWorldProcessor<T> : IWorldProcessor where T : struct
     {
 
         private Func<T> heuristic;
         private MLAgentsWorld world;
-        public HeuristicWorldProcessor(MLAgentsWorld world, Func<T> heuristic)
+        internal HeuristicWorldProcessor(MLAgentsWorld world, Func<T> heuristic)
         {
             this.world = world;
             this.heuristic = heuristic;

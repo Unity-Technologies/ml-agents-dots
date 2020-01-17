@@ -6,7 +6,7 @@ using Unity.Collections.LowLevel.Unsafe;
 namespace DOTS_MLAgents.Core
 {
 
-    public unsafe class BarracudaWorldProcessor : IWorldProcessor
+    internal unsafe class BarracudaWorldProcessor : IWorldProcessor
     {
         MLAgentsWorld world;
         // private NNModel _model;
@@ -15,7 +15,7 @@ namespace DOTS_MLAgents.Core
         // private IWorker _engine;
         // private const bool _verbose = false;
 
-        public BarracudaWorldProcessor(MLAgentsWorld world/* Barracuda model*/)
+        internal BarracudaWorldProcessor(MLAgentsWorld world/* Barracuda model*/)
         {
             this.world = world;
             // _model = model;

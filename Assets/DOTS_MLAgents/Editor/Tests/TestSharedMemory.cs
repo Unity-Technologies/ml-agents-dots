@@ -1,6 +1,7 @@
 ﻿using NUnit.Framework;
 using UnityEngine;
 using Unity.Mathematics;
+using Unity.Entities;
 using System.IO;
 using System;
 using System.IO.MemoryMappedFiles;
@@ -94,7 +95,8 @@ namespace DOTS_MLAgents.Editor.Tests
             var w = new MLAgentsWorld(10, ActionType.CONTINUOUS, new int3[1] { new int3(3, 0, 0) }, 3, null);
             for (int i = 0; i < 10; i++)
             {
-                w.Rewards[i] = i;
+                // w.Rewards[i] = i;
+                w.RequestDecision(Entity.Null).SetReward(i);
             }
             sm.WriteWorld("test", w);
 
@@ -119,6 +121,7 @@ namespace DOTS_MLAgents.Editor.Tests
             sm.Dispose();
             File.Delete(path1);
             File.Delete(path2);
+            w.Dispose();
 
         }
 
@@ -139,11 +142,6 @@ namespace DOTS_MLAgents.Editor.Tests
         {
 
         }
-
-
-
-
-
 
     }
 }

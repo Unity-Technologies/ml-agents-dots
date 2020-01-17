@@ -12,8 +12,6 @@ GameObject:
   - component: {fileID: 7329952648618696081}
   - component: {fileID: 7175794993082824140}
   - component: {fileID: 4931620525958682511}
-  - component: {fileID: 9208578237387885132}
-  - component: {fileID: 3511010848622024065}
   m_Layer: 0
   m_Name: Sphere
   m_TagString: Untagged
@@ -63,6 +61,7 @@ MonoBehaviour:
     mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
     material: {fileID: 10302, guid: 0000000000000000f000000000000000, type: 0}
     subMesh: 0
+    layer: 0
     castShadows: 0
     receiveShadows: 0
 --- !u!114 &4931620525958682511
@@ -75,40 +74,6 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0af0db853e732453799566a0e597993c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_SerializedData:
-    Value:
-      x: 0
-      y: 0
-      z: 0
---- !u!114 &9208578237387885132
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8480657802093770681}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 950225b98b4a438b843c2442cab09add, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_SerializedData:
-    Value:
-      x: 0
-      y: 0
-      z: 0
---- !u!114 &3511010848622024065
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8480657802093770681}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d4fe5e52c44e4e2097302ddf66e78272, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_SerializedData:

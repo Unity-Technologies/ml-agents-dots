@@ -68,8 +68,6 @@ namespace DOTS_MLAgents.Core
             }
         }
 
-
-
         /// <summary>
         /// TODO : Need help on handling dependencies
         /// </summary>

@@ -2,7 +2,7 @@ using Unity.Collections;
 
 namespace DOTS_MLAgents.Core
 {
-    public static class ArrayUtils
+    internal static class ArrayUtils
     {
         public static int Sum(this NativeArray<int> array)
         {
@@ -24,5 +24,4 @@ namespace DOTS_MLAgents.Core
             return result;
         }
     }
-
 }

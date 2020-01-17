@@ -4,7 +4,7 @@ namespace DOTS_MLAgents.Core
 {
     /// Contains exceptions specific to ML-Agents.
     [Serializable]
-    public class MLAgentsException : Exception
+    internal class MLAgentsException : Exception
     {
 
         public MLAgentsException(string message) : base(message)

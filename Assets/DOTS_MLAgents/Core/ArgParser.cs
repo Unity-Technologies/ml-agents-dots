@@ -4,7 +4,7 @@ using System.IO;
 namespace DOTS_MLAgents.Core
 {
 
-    public static class ArgParser
+    internal static class ArgParser
     {
         // Used to read Python-provided environment parameters
         public static string ReadSharedMemoryPathFromArgs()

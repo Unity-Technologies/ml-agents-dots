@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace DOTS_MLAgents.Core
 {
-    public unsafe class SharedMemoryCom : IDisposable
+    internal unsafe class SharedMemoryCom : IDisposable
     {
         private const int k_ApiVersion = 0;
         private const int k_FileLengthOffset = 0;

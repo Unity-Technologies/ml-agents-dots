@@ -151,7 +151,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxDistance: 2
   prefab: {fileID: 8480657802093770681, guid: 9002bbfd4ae214a8fb609aeacaa0de4d, type: 3}
-  modelA: {fileID: -589297107861187629, guid: c16aa6693b8834a58855a5592bb4f5f8, type: 3}
 --- !u!4 &883511626
 Transform:
   m_ObjectHideFlags: 0

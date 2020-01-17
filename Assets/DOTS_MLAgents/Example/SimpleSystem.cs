@@ -31,7 +31,7 @@ public class SimpleSystem : JobComponentSystem
         Application.targetFrameRate = -1;
         sys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
 
-        world = new MLAgentsWorld(100, ActionType.DISCRETE, new int3[] { new int3(3, 0, 0), new int3(84, 84, 3) }, 2, new int[] { 2, 3 });
+        world = new MLAgentsWorld(N_Agents, ActionType.DISCRETE, new int3[] { new int3(3, 0, 0), new int3(84, 84, 3) }, 2, new int[] { 2, 3 });
         sys.SubscribeWorldWithHeuristic("test", world, () => new int2(1, 1));
         entities = new NativeArray<Entity>(N_Agents, Allocator.Persistent);
         // World.Active.EntityManager.CreateEntity(entities);
@@ -101,7 +101,6 @@ public class SimpleSystem : JobComponentSystem
                 .SetReward(1.0f)
                 .SetObservation(0, new float3(entities[i].Index, 0, 0))
                 .SetObservationFromSlice(1, cameraObservation.Slice());
-
         }
     }
 
