@@ -1,5 +1,6 @@
 
 # ML-Agents DOTS
+[ML-Agents on DOTS Proposal](https://docs.google.com/document/d/1QnGSjOfLpwaRopbMf9ZDC89oZJuG0Ii6ORA22a5TWzE/edit#heading=h.py1zfmz3396x)
 
 # Proposed API
 Another approach to designing ml-agents-dots would be to mimic typical API used for example in [Unity.Physics](https://github.com/Unity-Technologies/Unity.Physics) where a "MLAgents World" holds data, processes it and the data can then be retrieved. An example of a simple world is given [here](Assets/DOTS_MLAgents/BCore/MLAgentsWorld.cs)
