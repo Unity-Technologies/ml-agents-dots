@@ -14,6 +14,12 @@ namespace DOTS_MLAgents.Core
             return result;
         }
 
+        /// <summary>
+        /// Returns the sum of all the values of an integer NativeArray that are strictly before
+        /// a certain index.
+        /// For example, if index is 0, then the output is always 0 
+        /// If index it 2, then the result is the sum of the first 2 values in the array
+        /// </summary>
         public static int CumSumAt(this NativeArray<int> array, int index)
         {
             int result = 0;

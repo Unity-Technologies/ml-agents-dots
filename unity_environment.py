@@ -173,6 +173,8 @@ class UnityEnvironment(BaseEnv):
         self._step(PythonCommand.RESET)
 
     def _step(self, command: PythonCommand) -> None:
+        if not self.communicator.active:
+            raise UnityCommunicationException("Communicator has stopped.")
         channel_data = self._generate_side_channel_data(self.side_channels)
         self.communicator.write_side_channel_data(channel_data)
         self.communicator.give_unity_control(command)

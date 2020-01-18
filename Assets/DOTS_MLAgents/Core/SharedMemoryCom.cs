@@ -17,6 +17,7 @@ namespace DOTS_MLAgents.Core
         private const int k_MutexOffset = 8; // Unity blocked = True, Python Blocked = False
         private const int k_CommandOffset = 9;
         private const int k_SideChannelOffset = 10;
+        private const float k_TimeOutInSeconds = 30;
 
         /// <summary>
         /// This struct is used to keep track of where in the shared memory file each section starts
@@ -122,7 +123,7 @@ namespace DOTS_MLAgents.Core
                 int oldCapacity = SideChannelCapacity();
                 if (data.Length > oldCapacity - 4)
                 { // 4 is the int for the size of the data
-                    int newCapacity = data.Length * 2 + 20;
+                    int newCapacity = data.Length * 2 + 20; // Add extra capacity with a simple heuristic
                     ExtendFile(newCapacity, 0);
                     MoveAllOffsets(newCapacity - oldCapacity);
                 }
@@ -428,23 +429,28 @@ namespace DOTS_MLAgents.Core
             }
         }
 
-        private void WaitOnPython()
+        /// <summary>
+        /// True if Python is ready and False if Python timed out.
+        /// </summary>
+        private bool WaitOnPython()
         {
-            // int max_loop = 20000000;
-            int max_loop = 200000000;
+            var startTick = DateTime.Now.Ticks;
+            int max_loop = 20000000;
             var readyToContinue = false;
             int loopIter = 0;
             while (!readyToContinue)
             {
                 loopIter++;
                 readyToContinue = accessor.ReadBoolean(k_MutexOffset);
-                readyToContinue = readyToContinue || loopIter > max_loop;
-                if (loopIter > max_loop)
+                if (loopIter % max_loop == 0)
                 {
-
-                    throw new Exception("Missed Communication");
+                    if (1e-7 * (DateTime.Now.Ticks - startTick) > k_TimeOutInSeconds)
+                    {
+                        return false;
+                    }
                 }
             }
+            return true;
         }
 
         public void SetUnityReady()
@@ -462,9 +468,14 @@ namespace DOTS_MLAgents.Core
 
         public PythonCommand Advance()
         {
-            WaitOnPython();
-
+            var pythonAlive = WaitOnPython();
             PythonCommand commandReceived = (PythonCommand)accessor.ReadSByte(k_CommandOffset);
+            if (!pythonAlive)
+            {
+                // commandReceived = PythonCommand.CLOSE;
+                return PythonCommand.CLOSE;
+            }
+
             switch (commandReceived)
             {
                 case PythonCommand.RESET:

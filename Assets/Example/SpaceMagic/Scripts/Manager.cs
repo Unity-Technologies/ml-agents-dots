@@ -31,7 +31,7 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
             // sys.SetModel("SpaceMagic", modelA);
             _prefabEntity = GameObjectConversionUtility.ConvertGameObjectHierarchy(prefab, World.Active);
 
-            Spawn(10000);
+            Spawn(100);
         }
 
 

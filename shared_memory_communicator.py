@@ -3,6 +3,7 @@ import struct
 import numpy as np
 import tempfile
 import os
+import time
 from datetime import datetime
 import string
 from enum import IntEnum
@@ -47,6 +48,7 @@ class SharedMemoryCom:
     MUTEXT_OFFSET = 8  # Unity blocked = True, Python Blocked = False
     COMMAND_OFFSET = 9
     SIDE_CHANNEL_CAPACITY_OFFSET = 10
+    MAX_TIMEOUT_IN_SECONDS = 30
 
     def __init__(self, use_default: bool = False):
         directory = os.path.join(tempfile.gettempdir(), self.DIRECTORY)
@@ -139,8 +141,15 @@ class SharedMemoryCom:
         ).reshape(shape)
 
     def _wait_for_unity_helper(self):
+        iteration = 0
+        max_loop = 1000000
+        t0 = time.time()
         while struct.unpack_from("<?", self.accessor, self.MUTEXT_OFFSET)[0]:
-            continue
+            if iteration % max_loop == 0:
+                if time.time() - t0 > self.MAX_TIMEOUT_IN_SECONDS:
+                    self.close()
+                    raise TimeoutError("The Unity Environment took too long to respond")
+            iteration += 1
         self._apply_unity_command()
 
     def _create_file(self, file_name: str, data: bytearray) -> None:
@@ -153,7 +162,10 @@ class SharedMemoryCom:
             # CLOSE COMMAND
             self.accessor.close()
             self.accessor = None
-            os.remove(self.file_name)
+            try:
+                os.remove(self.file_name)
+            except:
+                pass
             self.file_name = None
         elif command == PythonCommand.CHANGE_FILE:
             self._delete_file_and_move_to_new_file()

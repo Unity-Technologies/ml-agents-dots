@@ -130,6 +130,7 @@ namespace DOTS_MLAgents.Core
 #else
                         Application.Quit();
 #endif
+                            com = null;
                             break;
                         case SharedMemoryCom.PythonCommand.DEFAULT:
                             foreach (var idWorldPair in ExternalWorlds)
