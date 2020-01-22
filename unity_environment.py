@@ -209,7 +209,6 @@ class UnityEnvironment(BaseEnv):
         offsets = self.communicator.group_offsets[agent_group]
         expected_n_agents = self.communicator.get_n_agents(agent_group)
         if expected_n_agents == 0 and len(action) != 0:
-            print(len(action))
             raise UnityActionException(
                 "The group {0} does not need an input this step".format(agent_group)
             )
