@@ -6,7 +6,7 @@ using System.IO;
 using System;
 using System.IO.MemoryMappedFiles;
 
-namespace Unity.AI.MLAgents.Editor.Tests
+namespace Unity.AI.MLAgents.Tests.Editor
 {
     public class TestSharedMemory
     {

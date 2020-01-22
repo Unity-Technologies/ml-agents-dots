@@ -1,5 +1,5 @@
 {
-    "name": "Unity.AI.MLAgents.Editor.Tests",
+    "name": "Unity.AI.MLAgents.Tests",
     "references": [
         "Unity.Entities",
         "Unity.Jobs",
