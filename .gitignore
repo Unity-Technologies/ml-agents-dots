@@ -4,8 +4,8 @@
 *.csproj
 *.sln
 *.user
-Library
-Logs
-Temp
-obj
+*Library
+*Logs
+*Temp
+*obj
 
