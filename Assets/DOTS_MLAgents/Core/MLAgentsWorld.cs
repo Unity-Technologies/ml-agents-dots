@@ -26,7 +26,8 @@ namespace DOTS_MLAgents.Core
         [NativeDisableParallelForRestriction] [WriteOnly] internal NativeArray<float> Rewards;
         [NativeDisableParallelForRestriction] [WriteOnly] internal NativeArray<bool> DoneFlags;
         [NativeDisableParallelForRestriction] [WriteOnly] internal NativeArray<bool> MaxStepFlags;
-        [NativeDisableParallelForRestriction] internal NativeArray<Entity> AgentIds;
+        [NativeDisableParallelForRestriction] internal NativeArray<Entity> AgentEntityIds;
+        [NativeDisableParallelForRestriction] internal NativeArray<int> AgentIds;
         [NativeDisableParallelForRestriction] internal NativeArray<bool> ActionMasks;
 
         //https://forum.unity.com/threads/is-it-okay-to-read-a-nativecounter-concurrents-value-in-a-parallel-job.533037/
@@ -83,7 +84,8 @@ namespace DOTS_MLAgents.Core
             Rewards = new NativeArray<float>(maximumNumberAgents, Allocator.Persistent);
             DoneFlags = new NativeArray<bool>(maximumNumberAgents, Allocator.Persistent);
             MaxStepFlags = new NativeArray<bool>(maximumNumberAgents, Allocator.Persistent);
-            AgentIds = new NativeArray<Entity>(maximumNumberAgents, Allocator.Persistent);
+            AgentEntityIds = new NativeArray<Entity>(maximumNumberAgents, Allocator.Persistent);
+            AgentIds = new NativeArray<int>(maximumNumberAgents, Allocator.Persistent);
 
             int nMasks = 0;
             if (ActionType == ActionType.DISCRETE)
@@ -127,7 +129,7 @@ namespace DOTS_MLAgents.Core
             int count = AgentCounter.Count;
             ActionCounter.Count = count;
             ActionDoneFlags.Slice(0, count).CopyFrom(DoneFlags.Slice(0, count));
-            ActionAgentIds.Slice(0, count).CopyFrom(AgentIds.Slice(0, count));
+            ActionAgentIds.Slice(0, count).CopyFrom(AgentEntityIds.Slice(0, count));
         }
 
         public void Dispose()
@@ -139,6 +141,7 @@ namespace DOTS_MLAgents.Core
             Rewards.Dispose();
             DoneFlags.Dispose();
             MaxStepFlags.Dispose();
+            AgentEntityIds.Dispose();
             AgentIds.Dispose();
             ActionMasks.Dispose();
             AgentCounter.Dispose();
@@ -153,12 +156,13 @@ namespace DOTS_MLAgents.Core
         {
             var index = AgentCounter.ToConcurrent().Increment() - 1;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            if (index > AgentIds.Length)
+            if (index > AgentEntityIds.Length)
             {
-                throw new MLAgentsException("Number of decisions requested exceeds the set maximum of " + AgentIds.Length);
+                throw new MLAgentsException("Number of decisions requested exceeds the set maximum of " + AgentEntityIds.Length);
             }
 #endif
-            AgentIds[index] = entity;
+            AgentEntityIds[index] = entity;
+            AgentIds[index] = entity.Index;
             return new DecisionRequest(index, this);
         }
 

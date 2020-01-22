@@ -14,7 +14,7 @@ using DOTS_MLAgents.Core;
 
 // [UpdateInGroup(typeof(SimulationSystemGroup))]
 // [UpdateAfter(typeof(MLAgentsWorldSystem))]
-// [DisableAutoCreation]
+[DisableAutoCreation]
 public class SimpleSystem : JobComponentSystem
 {
     private MLAgentsWorldSystem sys;

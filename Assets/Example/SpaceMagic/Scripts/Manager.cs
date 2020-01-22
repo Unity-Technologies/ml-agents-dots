@@ -27,6 +27,7 @@ namespace DOTS_MLAgents.Example.SpaceMagic.Scripts
 
         void Start()
         {
+            World.Active.GetOrCreateSystem<SpaceMagicMovementSystem>();
             manager = World.Active.EntityManager;
             // sys.SetModel("SpaceMagic", modelA);
             _prefabEntity = GameObjectConversionUtility.ConvertGameObjectHierarchy(prefab, World.Active);
