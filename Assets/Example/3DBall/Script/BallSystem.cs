@@ -4,7 +4,7 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 using Random = UnityEngine.Random;
-using DOTS_MLAgents.Core;
+using Unity.AI.MLAgents;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Physics;

@@ -146,10 +146,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 883511624}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8bc729803b874b188632e9d135d5ddec, type: 3}
+  m_Script: {fileID: 11500000, guid: 2f65e22d6ec204265808c510712e57da, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxDistance: 2
+  maxDistance: 100
   prefab: {fileID: 8480657802093770681, guid: 9002bbfd4ae214a8fb609aeacaa0de4d, type: 3}
 --- !u!4 &883511626
 Transform:
