@@ -1,6 +1,6 @@
 using Unity.Entities;
 using Unity.Jobs;
-using System.Collections.Generic;
+using Unity.Collections;
 using System;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -21,34 +21,43 @@ namespace Unity.AI.MLAgents
 
         private struct IdWorldPair
         {
-            public string name;
+            public NativeString64 name;
             public MLAgentsWorld world;
         }
         private bool FirstMessageReceived;
-        private List<IdWorldPair> ExternalWorlds;
-        private List<IWorldProcessor> WorldProcessors;
-        private HashSet<MLAgentsWorld> RegisteredWorlds;
-        private HashSet<string> RegisteredWorldNames;
+        private IdWorldPair[] ExternalWorlds; // TODO : We use an array to avoid System.Collections.Generic but there should be more efficient
+        private IWorldProcessor[] WorldProcessors;
+        private NativeList<int> RegisteredWorldHashes;
+        private NativeList<NativeString64> RegisteredWorldNames;
 
         public void SubscribeWorld(string policyId, MLAgentsWorld world, IWorldProcessor fallbackWorldProcessor = null, bool communicate = true)
         {
-            CheckWorldNotPresent(policyId, world);
+
+            var nativePolicyId = new NativeString64(policyId);
+            CheckWorldNotPresent(nativePolicyId, world.GetHashCode());
             if (com != null && communicate)
             {
-                ExternalWorlds.Add(new IdWorldPair { name = policyId, world = world });
+                Array.Resize<IdWorldPair>(ref ExternalWorlds, ExternalWorlds.Length + 1);
+                ExternalWorlds[ExternalWorlds.Length - 1] = new IdWorldPair { name = nativePolicyId, world = world };
             }
             else if (fallbackWorldProcessor != null)
             {
-                WorldProcessors.Add(fallbackWorldProcessor);
+                Array.Resize<IWorldProcessor>(ref WorldProcessors, WorldProcessors.Length + 1);
+                WorldProcessors[WorldProcessors.Length - 1] = fallbackWorldProcessor;
+            }
+            else
+            {
+                Array.Resize<IWorldProcessor>(ref WorldProcessors, WorldProcessors.Length + 1);
+                WorldProcessors[WorldProcessors.Length - 1] = new NullWorldProcessor(world);
             }
         }
 
         protected override void OnCreate()
         {
-            ExternalWorlds = new List<IdWorldPair>();
-            WorldProcessors = new List<IWorldProcessor>();
-            RegisteredWorlds = new HashSet<MLAgentsWorld>();
-            RegisteredWorldNames = new HashSet<string>();
+            ExternalWorlds = new IdWorldPair[0];
+            WorldProcessors = new IWorldProcessor[0];
+            RegisteredWorldHashes = new NativeList<int>(Allocator.Persistent);
+            RegisteredWorldNames = new NativeList<NativeString64>(Allocator.Persistent);
 
             dependencies = new JobHandle();
             FinalJobHandle = new JobHandle();
@@ -77,8 +86,8 @@ namespace Unity.AI.MLAgents
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
-        // { return inputDeps; }
-        // public JobHandle ManualUpdate(JobHandle inputDeps)
+        { return ManualUpdate(inputDeps); }
+        public JobHandle ManualUpdate(JobHandle inputDeps)
         {
             // Need to complete here to ensure we have the right Agent Count
             dependencies.Complete();
@@ -104,6 +113,9 @@ namespace Unity.AI.MLAgents
                         // We do this only if there is already something to send 
                         com.Advance();
                         FirstMessageReceived = true;
+
+                        UnityEngine.Time.captureFramerate = 60;
+                        UnityEngine.Application.targetFrameRate = -1;
                     }
 
                     foreach (var idWorldPair in ExternalWorlds)
@@ -128,7 +140,7 @@ namespace Unity.AI.MLAgents
 #if UNITY_EDITOR
                             EditorApplication.isPlaying = false;
 #else
-                        Application.Quit();
+                            Application.Quit();
 #endif
                             com = null;
                             break;
@@ -152,9 +164,9 @@ namespace Unity.AI.MLAgents
             return inputDeps;
         }
 
-        private void CheckWorldNotPresent(string policyId, MLAgentsWorld world)
+        private void CheckWorldNotPresent(NativeString64 policyId, int worldHash)
         {
-            if (RegisteredWorlds.Contains(world))
+            if (RegisteredWorldHashes.Contains(worldHash))
             {
                 throw new MLAgentsException("The MLAgentsWorld has already been subscribed ");
             }
@@ -166,7 +178,7 @@ namespace Unity.AI.MLAgents
                         policyId)
                         );
             }
-            RegisteredWorlds.Add(world);
+            RegisteredWorldHashes.Add(worldHash);
             RegisteredWorldNames.Add(policyId);
         }
 
@@ -198,6 +210,8 @@ namespace Unity.AI.MLAgents
                 com.Dispose();
             }
             // We do not dispose the world since this is not where they are created
+            RegisteredWorldHashes.Dispose();
+            RegisteredWorldNames.Dispose();
         }
     }
 

@@ -2,9 +2,9 @@ using System;
 using System.IO.MemoryMappedFiles;
 using System.IO;
 using Unity.Collections.LowLevel.Unsafe;
-using System.Collections.Generic;
 using Unity.Mathematics;
-using System.Linq;
+using Unity.Collections;
+using Unity.Entities;
 
 
 namespace Unity.AI.MLAgents
@@ -43,9 +43,7 @@ namespace Unity.AI.MLAgents
         }
 
 
-
-        private Dictionary<string, AgentGroupFileOffsets> groupOffsets =
-            new Dictionary<string, AgentGroupFileOffsets>();
+        private NativeHashMap<NativeString64, AgentGroupFileOffsets> groupOffsets;
         private string filePath;
         private MemoryMappedViewAccessor accessor;
         private IntPtr accessorPointer;
@@ -86,6 +84,7 @@ namespace Unity.AI.MLAgents
             byte* ptr = (byte*)0;
             accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref ptr);
             accessorPointer = new IntPtr(ptr);
+            groupOffsets = new NativeHashMap<NativeString64, AgentGroupFileOffsets>(10, Allocator.Persistent);
         }
 
         /// <summary>
@@ -323,9 +322,10 @@ namespace Unity.AI.MLAgents
         /// <summary>
         /// Writes the data of a world into the shared memory file.
         /// </summary>
-        public void WriteWorld(string worldName, MLAgentsWorld world)
+        public void WriteWorld(NativeString64 worldName, MLAgentsWorld world)
         {
-            if (!groupOffsets.ContainsKey(worldName))
+            var offsets = new AgentGroupFileOffsets();
+            if (!groupOffsets.TryGetValue(worldName, out offsets))
             {
                 var numberGroupsOffset = k_SideChannelOffset + 4 + SideChannelCapacity();
                 var nGroups = accessor.ReadInt32(numberGroupsOffset);
@@ -335,11 +335,10 @@ namespace Unity.AI.MLAgents
                 var requiredCapacity = GetRequiredCapacity(world);
                 var oldEndOffset = accessor.ReadInt32(k_FileLengthOffset);
                 ExtendFile(SideChannelCapacity(), requiredCapacity);
-                groupOffsets[worldName] = WriteAgentGroupSpecs(worldName, world, oldEndOffset);
+                offsets = WriteAgentGroupSpecs(worldName.ToString(), world, oldEndOffset);
+                groupOffsets[worldName] = offsets;
 
             }
-
-            var offsets = groupOffsets[worldName];
 
             // N Agents
             var NAgents = world.AgentCounter.Count;
@@ -413,7 +412,7 @@ namespace Unity.AI.MLAgents
 
         private void MoveAllOffsets(int delta)
         {
-            var keys = groupOffsets.Keys.ToList();
+            var keys = groupOffsets.GetKeyArray(Allocator.Temp);
             foreach (var k in keys)
             {
                 var newOffset = new AgentGroupFileOffsets();
@@ -494,7 +493,7 @@ namespace Unity.AI.MLAgents
         /// <summary>
         /// Loads the action data form the shared memory file to the world
         /// </summary>
-        public void LoadWorld(string worldName, MLAgentsWorld world)
+        public void LoadWorld(NativeString64 worldName, MLAgentsWorld world)
         {
             var offsets = groupOffsets[worldName];
             IntPtr src = IntPtr.Add(accessorPointer, offsets.ActionOffset);
@@ -515,6 +514,7 @@ namespace Unity.AI.MLAgents
                 accessor.Write(k_MutexOffset, false);
                 accessor.SafeMemoryMappedViewHandle.ReleasePointer();
                 accessor.Dispose();
+                groupOffsets.Dispose();
             }
         }
     }
