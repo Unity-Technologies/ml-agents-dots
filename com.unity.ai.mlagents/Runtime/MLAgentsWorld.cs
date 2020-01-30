@@ -61,7 +61,6 @@ namespace Unity.AI.MLAgents
                 if (discreteActionBranches.Length != actionSize)
                 {
                     throw new MLAgentsException("For Discrete control, the number of branches must be equal to the action size.");
-
                 }
             }
 #endif

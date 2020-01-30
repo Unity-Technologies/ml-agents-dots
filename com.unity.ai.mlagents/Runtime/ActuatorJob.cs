@@ -10,18 +10,29 @@ namespace Unity.AI.MLAgents
     // This struct will be provided to the user in a custom job inheriting from IActuatorJob
     public struct ActuatorEvent
     {
-        public Entity Entity;
-        public NativeSlice<float> ContinuousActionSlice;
-        public NativeSlice<int> DiscreteActionSlice;
+        [ReadOnly] public int ActionSize;
+        [ReadOnly] public Entity Entity;
+        [ReadOnly] public NativeSlice<float> ContinuousActionSlice;
+        [ReadOnly] public NativeSlice<int> DiscreteActionSlice;
 
         public void GetDiscreteAction<T>(out T action) where T : struct
         {
-            // TODO : Do some check
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (ActionSize != UnsafeUtility.SizeOf<T>()/ sizeof(float))
+            {
+                throw new MLAgentsException("Action space does not match for Discrete action. Expected " + ActionSize);
+            }
+#endif
             action = DiscreteActionSlice.SliceConvert<T>()[0];
         }
         public void GetContinuousAction<T>(out T action) where T : struct
         {
-            // TODO :  Do some check
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (ActionSize != UnsafeUtility.SizeOf<T>()/ sizeof(float))
+            {
+                throw new MLAgentsException("Action space does not match for Continuous action. Expected " + ActionSize);
+            }
+#endif
             action = ContinuousActionSlice.SliceConvert<T>()[0];
         }
     }
@@ -96,6 +107,7 @@ namespace Unity.AI.MLAgents
                         {
                             jobData.UserJobData.Execute(new ActuatorEvent
                             {
+                                ActionSize = size,
                                 Entity = jobData.world.ActionAgentIds[i],
                                 ContinuousActionSlice = jobData.world.ContinuousActuators.Slice(i * size, size)
                             });
@@ -111,6 +123,7 @@ namespace Unity.AI.MLAgents
                         {
                             jobData.UserJobData.Execute(new ActuatorEvent
                             {
+                                ActionSize = size,
                                 Entity = jobData.world.ActionAgentIds[i],
                                 DiscreteActionSlice = jobData.world.DiscreteActuators.Slice(i * size, size)
 
