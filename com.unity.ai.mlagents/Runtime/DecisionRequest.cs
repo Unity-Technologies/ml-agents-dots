@@ -6,6 +6,11 @@ using System;
 
 namespace Unity.AI.MLAgents
 {
+    /// <summary>
+    /// A DecisionRequest is a struct used to provide data about an Agent to a MLAgentsWorld.
+    /// This data will be used to generate a decision after the world is processed.
+    /// Adding data is done through a builder pattern.
+    /// </summary>
     public struct DecisionRequest
     {
         private int index;
@@ -17,22 +22,45 @@ namespace Unity.AI.MLAgents
             this.world = world;
         }
 
+        /// <summary>
+        /// Sets the reward that the Agent has accumulated since the last decision request.
+        /// </summary>
+        /// <param name="r"> The reward value </param>
+        /// <returns> The DecisionRequest struct </returns>
         public DecisionRequest SetReward(float r)
         {
             world.Rewards[index] = r;
             return this;
         }
 
-        public DecisionRequest HasTerminated(bool done, bool maxStepReached)
+        /// <summary>
+        /// Specifies if the Agent terminated after the last decision request.
+        /// Note : If the Agent timed out, the doneStatus will be set to true.
+        /// </summary>
+        /// <param name="doneStatus"> Wether the Agent has terminated (either succeeded or failed at its task) </param>
+        /// <param name="maxStepReached"> Wether the Agent took too long to complete to terminate </param>
+        /// <returns> The DecisionRequest struct </returns>
+        public DecisionRequest HasTerminated(bool doneStatus, bool timedOut)
         {
-            world.DoneFlags[index] = done;
-            world.MaxStepFlags[index] = maxStepReached;
+            doneStatus = doneStatus || timedOut;
+            world.DoneFlags[index] = doneStatus;
+            world.MaxStepFlags[index] = timedOut;
             return this;
         }
 
+        /// <summary>
+        /// Specifies that a discrete action is not available for the next decision.
+        /// Note : This is only available is discrete action spaces.
+        /// </summary>
+        /// <param name="branch"> The branch of the action to be masked </param>
+        /// <param name="actionIndex"> The index of the action to be masked </param>
+        /// <returns> The DecisionRequest struct </returns>
         public DecisionRequest SetDiscreteActionMask(int branch, int actionIndex)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
+                if (world.ActionType == ActionType.CONTINUOUS){
+                    throw new MLAgentsException("SetDiscreteActionMask can only be used with discrete acton space.");
+                }
                 if (branch > world.DiscreteActionBranches.Length)
                 {
                     throw new MLAgentsException("Unknown action branch used when setting mask.");
@@ -47,6 +75,12 @@ namespace Unity.AI.MLAgents
             return this;
         }
 
+        /// <summary>
+        /// Sets the observation for a decision request.
+        /// </summary>
+        /// <param name="sensorNumber"> The index of the observation as provided when creating the associated MLAgentsWorld </param>
+        /// <param name="sensor"> A struct strictly containing floats used as observation data </param>
+        /// <returns> The DecisionRequest struct </returns>
         public DecisionRequest SetObservation<T>(int sensorNumber, T sensor) where T : struct
         {
             int inputSize = UnsafeUtility.SizeOf<T>() / sizeof(float);
@@ -66,6 +100,12 @@ namespace Unity.AI.MLAgents
             return this;
         }
 
+        /// <summary>
+        /// Sets the observation for a decision request.
+        /// </summary>
+        /// <param name="sensorNumber"> The index of the observation as provided when creating the associated MLAgentsWorld </param>
+        /// <param name="obs"> A NativeSlice of floats containing the observation data </param>
+        /// <returns> The DecisionRequest struct </returns>
         public DecisionRequest SetObservationFromSlice(int sensorNumber, [ReadOnly] NativeSlice<float> obs)
         {
             int inputSize = obs.Length;

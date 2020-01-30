@@ -6,21 +6,32 @@ namespace Unity.AI.MLAgents
     public class VisualObservationUtility
     {
 
-        public static NativeArray<float> GetVisObs(Camera camera, int width, int height)
+        /// <summary>
+        /// Generates a NativeArray of floats corresponding to the camera's visual input. 
+        /// The Array will be of total size ( height x width x 3 )
+        /// Each pixel will correspond to three consecutive floats in the order [red, green, blue]
+        /// </summary>
+        /// <param name="camera"> The camera used to collect the visual data</param>
+        /// <param name="width"> The width of the generated image </param>
+        /// <param name="height"> The height of the generated image </param>
+        /// <param name="allocator"> the Allocator for the Native array </param>
+        /// <returns> A native array of floats containing the image data from the camera </returns>
+        public static NativeArray<float> GetVisObs(Camera camera, int width, int height, Allocator allocator = Allocator.Temp)
         {
             if (camera != null)
             {
-                return TextureToNativeArray(ObservationToTexture(camera, width, height));
+                var texture = ObservationToTexture(camera, width, height);
+                return TextureToNativeArray(texture, allocator);
             }
-            return new NativeArray<float>(0, Allocator.Persistent);
+            return new NativeArray<float>(0, allocator, NativeArrayOptions.ClearMemory);
         }
 
-        public static NativeArray<float> TextureToNativeArray(Texture2D texture)
+        private static NativeArray<float> TextureToNativeArray(Texture2D texture, Allocator allocator)
         {
 
             var width = texture.width;
             var height = texture.height;
-            var arr = new NativeArray<float>(width * height * 3, Allocator.TempJob);
+            var arr = new NativeArray<float>(width * height * 3, allocator, NativeArrayOptions.UninitializedMemory);
 
             var texturePixels = texture.GetPixels32();
             for (var h = height - 1; h >= 0; h--)
@@ -37,7 +48,7 @@ namespace Unity.AI.MLAgents
             return arr;
         }
 
-        public static Texture2D ObservationToTexture(Camera obsCamera, int width, int height)
+        private static Texture2D ObservationToTexture(Camera obsCamera, int width, int height)
         {
             var texture2D = new Texture2D(width, height, TextureFormat.RGB24, false);
             var oldRec = obsCamera.rect;

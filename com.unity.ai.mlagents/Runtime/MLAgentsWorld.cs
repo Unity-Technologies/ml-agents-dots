@@ -40,7 +40,17 @@ namespace Unity.AI.MLAgents
         [NativeDisableParallelForRestriction] internal NativeArray<bool> ActionDoneFlags; // Keep track of the Done flags for the next action step
 
 
-
+        /// <summary>
+        /// Creates a data container used to write data needed for decisions and retrieve action data.
+        /// </summary>
+        /// <param name="maximumNumberAgents"> The maximum number of decisions that can be requested between each MLAgentsSystem update </param>
+        /// <param name="actionType"> An ActionType enum (DISCRETE / CONTINUOUS) specifying the type of actions the MLAgentsWorld will produce </param>
+        /// <param name="obsShapes"> An array of int3 corresponding to the shape of the expected observations (one int3 per observation) </param>
+        /// <param name="actionSize"> The number of actions the MLAgentsWorld is expected to generate for each decision. 
+        ///  - If CONTINUOUS ActionType : The number of floats the action contains 
+        ///  - If DISCRETE ActionType : The number of branches (integer actions) the action contains </param>
+        /// <param name="discreteActionBranches"> For DISCRETE ActionType only : an array of int specifying the number of possible int values each
+        /// action branch has. (Must be of the same length as actionSize </param>
         public MLAgentsWorld(
             int maximumNumberAgents,
             ActionType actionType,
@@ -79,12 +89,12 @@ namespace Unity.AI.MLAgents
                 currentOffset += s.x * math.max(1, s.y) * math.max(1, s.z) * maximumNumberAgents;
             }
 
-            Sensors = new NativeArray<float>(currentOffset, Allocator.Persistent);
-            Rewards = new NativeArray<float>(maximumNumberAgents, Allocator.Persistent);
-            DoneFlags = new NativeArray<bool>(maximumNumberAgents, Allocator.Persistent);
-            MaxStepFlags = new NativeArray<bool>(maximumNumberAgents, Allocator.Persistent);
-            AgentEntityIds = new NativeArray<Entity>(maximumNumberAgents, Allocator.Persistent);
-            AgentIds = new NativeArray<int>(maximumNumberAgents, Allocator.Persistent);
+            Sensors = new NativeArray<float>(currentOffset, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            Rewards = new NativeArray<float>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            DoneFlags = new NativeArray<bool>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            MaxStepFlags = new NativeArray<bool>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            AgentEntityIds = new NativeArray<Entity>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            AgentIds = new NativeArray<int>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
 
             int nMasks = 0;
             if (ActionType == ActionType.DISCRETE)
@@ -107,10 +117,10 @@ namespace Unity.AI.MLAgents
             AgentCounter = new NativeCounter(Allocator.Persistent);
             ActionCounter = new NativeCounter(Allocator.Persistent);
 
-            ContinuousActuators = new NativeArray<float>(maximumNumberAgents * caSize, Allocator.Persistent);
-            DiscreteActuators = new NativeArray<int>(maximumNumberAgents * daSize, Allocator.Persistent);
-            ActionDoneFlags = new NativeArray<bool>(maximumNumberAgents, Allocator.Persistent);
-            ActionAgentIds = new NativeArray<Entity>(maximumNumberAgents, Allocator.Persistent);
+            ContinuousActuators = new NativeArray<float>(maximumNumberAgents * caSize, Allocator.Persistent, NativeArrayOptions.ClearMemory);
+            DiscreteActuators = new NativeArray<int>(maximumNumberAgents * daSize, Allocator.Persistent, NativeArrayOptions.ClearMemory);
+            ActionDoneFlags = new NativeArray<bool>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            ActionAgentIds = new NativeArray<Entity>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
         }
 
         internal void ResetActionsCounter()
@@ -151,6 +161,14 @@ namespace Unity.AI.MLAgents
             ActionAgentIds.Dispose();
         }
 
+        /// <summary>
+        /// Requests a decision for a specific Entity to the MLAgentsWorld. The DecisionRequest
+        /// struct this method returns can be used to provide data necessary for the Agent to 
+        /// take a decision for the Entity.
+        /// </summary>
+        /// <param name="entity"> The Entity the decision is tied to. The Entity is used to track
+        /// sequences of actions of an Agent.</param>
+        /// <returns></returns>
         public DecisionRequest RequestDecision(Entity entity)
         {
             var index = AgentCounter.ToConcurrent().Increment() - 1;

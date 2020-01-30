@@ -15,7 +15,7 @@ namespace Unity.AI.MLAgents
     {
 
         private JobHandle dependencies;
-        public JobHandle FinalJobHandle;
+        private JobHandle FinalJobHandle;
 
         private SharedMemoryCom com;
 
