@@ -1,10 +1,14 @@
 {
-    "name": "com.unity.ai.mlagents",
-    "displayName": "DOTS ML-Agents",
-    "version": "0.2.0-preview",
-    "unity": "2019.1",
-    "description": "Add interactivity to your game with ML-Agents trained using Deep Reinforcement Learning.",
-    "dependencies": {
-        "com.unity.barracuda": "0.3.2-preview"
-    }
+  "name": "com.unity.ai.mlagents",
+  "displayName": "DOTS ML-Agents",
+  "version": "0.2.0-preview",
+  "unity": "2019.3",
+  "description": "Add interactivity to your game with ML-Agents trained using Deep Reinforcement Learning.",
+  "dependencies": {
+    "com.unity.barracuda": "0.4.0-preview",
+    "com.unity.entities": "0.5.1-preview.11",
+    "com.unity.jobs": "0.2.4-preview.11",
+    "com.unity.mathematics": "1.1.0",
+    "com.unity.collections": "0.5.1-preview.11"
+  }
 }
