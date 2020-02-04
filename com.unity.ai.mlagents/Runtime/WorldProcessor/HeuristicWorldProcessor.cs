@@ -53,7 +53,6 @@ namespace Unity.AI.MLAgents
             T action = heuristic.Invoke();
             var totalCount = world.AgentCounter.Count;
 
-
             // TODO : This can be parallelized
             if (world.ActionType == ActionType.CONTINUOUS)
             {

@@ -122,7 +122,7 @@ namespace Unity.AI.MLAgents
                 int oldCapacity = SideChannelCapacity();
                 if (data.Length > oldCapacity - 4)
                 { // 4 is the int for the size of the data
-                    int newCapacity = data.Length * 2 + 20; // Add extra capacity with a simple heuristic
+                    int newCapacity = ArrayUtils.IncreaseArraySizeHeuristic(data.Length); // Add extra capacity with a simple heuristic
                     ExtendFile(newCapacity, 0);
                     MoveAllOffsets(newCapacity - oldCapacity);
                 }

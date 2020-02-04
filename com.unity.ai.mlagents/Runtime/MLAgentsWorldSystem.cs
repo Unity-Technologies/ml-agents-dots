@@ -91,7 +91,6 @@ namespace Unity.AI.MLAgents
         {
             // Need to complete here to ensure we have the right Agent Count
             dependencies.Complete();
-
             foreach (var p in WorldProcessors)
             {
                 p.ProcessWorld();
@@ -156,6 +155,14 @@ namespace Unity.AI.MLAgents
                             break;
 
                     }
+                }
+            }
+            else
+            {
+                foreach (var idWorldPair in ExternalWorlds)
+                {
+                    idWorldPair.world.SetActionReady();
+                    idWorldPair.world.ResetDecisionsCounter();
                 }
             }
 

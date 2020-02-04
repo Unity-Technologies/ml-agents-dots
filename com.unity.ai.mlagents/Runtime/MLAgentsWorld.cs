@@ -89,10 +89,10 @@ namespace Unity.AI.MLAgents
                 currentOffset += s.x * math.max(1, s.y) * math.max(1, s.z) * maximumNumberAgents;
             }
 
-            Sensors = new NativeArray<float>(currentOffset, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-            Rewards = new NativeArray<float>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-            DoneFlags = new NativeArray<bool>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-            MaxStepFlags = new NativeArray<bool>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            Sensors = new NativeArray<float>(currentOffset, Allocator.Persistent, NativeArrayOptions.ClearMemory);
+            Rewards = new NativeArray<float>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.ClearMemory);
+            DoneFlags = new NativeArray<bool>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.ClearMemory);
+            MaxStepFlags = new NativeArray<bool>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.ClearMemory);
             AgentEntityIds = new NativeArray<Entity>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             AgentIds = new NativeArray<int>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
 

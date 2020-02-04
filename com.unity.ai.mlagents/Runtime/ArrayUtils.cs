@@ -29,5 +29,10 @@ namespace Unity.AI.MLAgents
             }
             return result;
         }
+
+        public static int IncreaseArraySizeHeuristic(int newSize)
+        {
+            return newSize * 2 + 20;
+        }
     }
 }

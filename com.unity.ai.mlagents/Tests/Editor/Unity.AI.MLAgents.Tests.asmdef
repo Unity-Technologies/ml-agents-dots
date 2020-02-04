@@ -7,7 +7,9 @@
         "Unity.Mathematics",
         "Unity.Transforms",
         "Unity.Collections",
-        "Unity.AI.MLAgents"
+        "Unity.AI.MLAgents",
+        "Unity.Entities.Tests",
+        "Unity.Entities.Editor.Tests"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

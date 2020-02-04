@@ -44,5 +44,8 @@
     "com.unity.modules.wind": "1.0.0",
     "com.unity.modules.xr": "1.0.0",
     "com.unity.ai.mlagents" : "file:../../com.unity.ai.mlagents"
-  }
+  },
+  "testables" : [
+    "com.unity.ai.mlagents"
+  ]
 }

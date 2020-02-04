@@ -1,5 +1,4 @@
 ﻿using NUnit.Framework;
-using UnityEngine;
 using Unity.Mathematics;
 using Unity.Entities;
 using System.IO;
@@ -10,7 +9,7 @@ namespace Unity.AI.MLAgents.Tests.Editor
 {
     public class TestSharedMemory
     {
-
+        public const int INITIAL_FILE_CAPACITY = 18;
         public string GenerateSMFile(string fileId = "TEST", byte[] sideChannelData = null, sbyte command = 0)
         {
             if (!Directory.Exists(Path.Combine(Path.GetTempPath(), "ml-agents")))
@@ -20,13 +19,13 @@ namespace Unity.AI.MLAgents.Tests.Editor
             var path = Path.Combine(Path.GetTempPath(), "ml-agents", fileId);
             using (var fs = new FileStream(path, FileMode.Create, FileAccess.ReadWrite))
             {
-                var datalen = 0;
+                int datalen = 0;
                 if (sideChannelData != null)
                 {
                     datalen = sideChannelData.Length;
                 }
 
-                fs.Write(BitConverter.GetBytes(18 + datalen), 0, 4);
+                fs.Write(BitConverter.GetBytes(INITIAL_FILE_CAPACITY + datalen), 0, 4);
                 fs.Write(BitConverter.GetBytes(0), 0, 4);
                 fs.Write(BitConverter.GetBytes(true), 0, 1);
                 fs.Write(BitConverter.GetBytes(command), 0, 1);
@@ -63,8 +62,7 @@ namespace Unity.AI.MLAgents.Tests.Editor
             var path2 = GenerateSMFile("TEST_", BitConverter.GetBytes(2020), 0); //default
 
             var mmf = MemoryMappedFile.CreateFromFile(path1, FileMode.Open);
-            var accessor = mmf.CreateViewAccessor(0, 18, MemoryMappedFileAccess.ReadWrite);
-            Debug.Log(accessor.ReadSByte(9));
+            var accessor = mmf.CreateViewAccessor(0, INITIAL_FILE_CAPACITY, MemoryMappedFileAccess.ReadWrite);
 
             var sm = new SharedMemoryCom(path1);
             sm.Advance();
@@ -94,10 +92,10 @@ namespace Unity.AI.MLAgents.Tests.Editor
                 // w.Rewards[i] = i;
                 w.RequestDecision(Entity.Null).SetReward(i);
             }
-            sm.WriteWorld("test", w);
+            sm.WriteWorld(new NativeString64("test"), w);
 
             var mmf = MemoryMappedFile.CreateFromFile(path1, FileMode.Open);
-            var accessor = mmf.CreateViewAccessor(0, 18, MemoryMappedFileAccess.ReadWrite);
+            var accessor = mmf.CreateViewAccessor(0, INITIAL_FILE_CAPACITY, MemoryMappedFileAccess.ReadWrite);
             Assert.AreEqual((sbyte)SharedMemoryCom.PythonCommand.CHANGE_FILE, accessor.ReadSByte(9));
             Assert.False(accessor.ReadBoolean(8));
             accessor.Dispose();
@@ -108,11 +106,11 @@ namespace Unity.AI.MLAgents.Tests.Editor
 
 
             mmf = MemoryMappedFile.CreateFromFile(path2, FileMode.Open);
-            accessor = mmf.CreateViewAccessor(0, 18, MemoryMappedFileAccess.ReadWrite);
+            accessor = mmf.CreateViewAccessor(0, INITIAL_FILE_CAPACITY, MemoryMappedFileAccess.ReadWrite);
             var capacity = accessor.ReadInt32(0);
             accessor.Dispose();
             accessor = mmf.CreateViewAccessor(0, capacity, MemoryMappedFileAccess.ReadWrite);
-            Assert.Greater(capacity, 18 + 3 * 4 * 10); // File was extended
+            Assert.Greater(capacity, INITIAL_FILE_CAPACITY + 3 * 4 * 10); // File was extended
 
             sm.Dispose();
             File.Delete(path1);
@@ -124,20 +122,47 @@ namespace Unity.AI.MLAgents.Tests.Editor
         [Test]
         public void TestCloseCommand()
         {
+            var path1 = GenerateSMFile("TEST", null, 3);
 
+            var sm = new SharedMemoryCom(path1);
+
+            var uCommand = sm.Advance();
+            Assert.AreEqual(SharedMemoryCom.PythonCommand.CLOSE, uCommand);
+            sm.Dispose();
+            File.Delete(path1);
+        }
+
+        [Test]
+        public void TestResetCommand()
+        {
+            var path1 = GenerateSMFile("TEST", null, 1);
+
+            var sm = new SharedMemoryCom(path1);
+            var uCommand = sm.Advance();
+            Assert.AreEqual(SharedMemoryCom.PythonCommand.RESET, uCommand);
+            sm.Dispose();
+            File.Delete(path1);
         }
 
         [Test]
         public void TestExtendSideChannel()
         {
+            int dataLen = 20;
+            var path1 = GenerateSMFile("TEST", null, 0);
+            var sm = new SharedMemoryCom(path1);
 
+            var newSideChannelData = new byte[dataLen]; // bytes of empty data
+            sm.WriteSideChannelData(newSideChannelData);
+
+            var unityCreatedFile = path1 + "_";
+            Assert.True(File.Exists(unityCreatedFile));
+
+            var length = new FileInfo(unityCreatedFile).Length;
+            Assert.AreEqual(INITIAL_FILE_CAPACITY + ArrayUtils.IncreaseArraySizeHeuristic(dataLen), length);
+
+            sm.Dispose();
+            File.Delete(path1);
+            File.Delete(unityCreatedFile);
         }
-
-        [Test]
-        public void TestLoadWorld()
-        {
-
-        }
-
     }
 }
