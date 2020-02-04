@@ -81,6 +81,7 @@ class SharedMemoryCom:
 
     def close(self):
         if self.accessor is not None:
+            self.wait_for_unity()
             self.give_unity_control(PythonCommand.CLOSE)
             self.accessor.close()
             self.accessor = None
