@@ -1,0 +1,27 @@
+{
+    "name": "Unity.AI.MLAgents.Tests",
+    "references": [
+        "Unity.Entities",
+        "Unity.Jobs",
+        "Unity.Burst",
+        "Unity.Mathematics",
+        "Unity.Transforms",
+        "Unity.Collections",
+        "Unity.AI.MLAgents",
+        "Unity.Entities.Tests",
+        "Unity.Entities.Editor.Tests"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": []
+}
