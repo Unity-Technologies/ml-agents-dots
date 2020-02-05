@@ -114,7 +114,7 @@ public class SpaceMagicMovementSystem : JobComponentSystem
         var moveJob = new MovementJob
         {
             w = world,
-            deltaTime = Time.deltaTime
+            deltaTime = Time.DeltaTime
         };
 
         var resetJob = new ResetPositionsJob

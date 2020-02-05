@@ -1,4 +1,5 @@
 using Unity.Collections;
+using Unity.Mathematics;
 
 namespace Unity.AI.MLAgents
 {
@@ -34,5 +35,24 @@ namespace Unity.AI.MLAgents
         {
             return newSize * 2 + 20;
         }
+
+        public static int GetTotalTensorSize(this int3 tensorShape)
+        {
+            return tensorShape.x * math.max(1, tensorShape.y) * math.max(1, tensorShape.z);
+        }
+
+        public static int GetDimensions(this int3 tensorShape)
+        {
+            if (tensorShape.y == 0)
+            {
+                return 1;
+            }
+            if (tensorShape.z == 0)
+            {
+                return 2;
+            }
+            return 3;
+        }
+
     }
 }

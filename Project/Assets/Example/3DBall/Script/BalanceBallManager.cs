@@ -4,6 +4,8 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 using Random = UnityEngine.Random;
+using Barracuda;
+using Unity.AI.MLAgents;
 
 public class BalanceBallManager : MonoBehaviour
 {
@@ -14,13 +16,28 @@ public class BalanceBallManager : MonoBehaviour
     private Entity _prefabEntityBall;
     int currentIndex;
     // Start is called before the first frame update
-    void Start()
+
+    public NNModel model;
+
+    void Awake()
     {
+        var ballSystem = World.Active.GetOrCreateSystem<BallSystem>();
+        var world = new MLAgentsWorld(100, ActionType.CONTINUOUS, new int3[] { new int3(4, 0, 0), new int3(3, 0, 0) }, 2);
+        ballSystem.world = world;
+        var mlsys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
+        mlsys.SubscribeWorldWithBarracudaModel("3DBallDOTS", world, model);
+
+
         manager = World.Active.EntityManager;
-        _prefabEntityPlatform = GameObjectConversionUtility.ConvertGameObjectHierarchy(prefabPlatform, World.Active);
-        _prefabEntityBall = GameObjectConversionUtility.ConvertGameObjectHierarchy(prefabBall, World.Active);
+
+        BlobAssetStore blob = new BlobAssetStore();
+        GameObjectConversionSettings settings = GameObjectConversionSettings.FromWorld(World.DefaultGameObjectInjectionWorld, blob);
+        _prefabEntityPlatform = GameObjectConversionUtility.ConvertGameObjectHierarchy(prefabPlatform, settings);
+        _prefabEntityBall = GameObjectConversionUtility.ConvertGameObjectHierarchy(prefabBall, settings);
+
         Time.captureFramerate = 60;
         Spawn(100);
+        blob.Dispose();
     }
 
     void Spawn(int amount)

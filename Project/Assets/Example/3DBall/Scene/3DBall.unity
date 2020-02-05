@@ -236,6 +236,7 @@ MonoBehaviour:
     type: 3}
   prefabBall: {fileID: 759326202301257407, guid: 4acbf7e3ef6a042a0a2dbac834c2f1d5,
     type: 3}
+  model: {fileID: 5022602860645237092, guid: c8a63f5244bd341c6a933daeadc365f0, type: 3}
 --- !u!4 &1996448684
 Transform:
   m_ObjectHideFlags: 0

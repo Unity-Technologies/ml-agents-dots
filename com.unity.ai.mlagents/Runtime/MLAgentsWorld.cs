@@ -86,7 +86,7 @@ namespace Unity.AI.MLAgents
             {
                 ObservationOffsets[i] = currentOffset;
                 int3 s = SensorShapes[i];
-                currentOffset += s.x * math.max(1, s.y) * math.max(1, s.z) * maximumNumberAgents;
+                currentOffset += s.GetTotalTensorSize() * maximumNumberAgents;
             }
 
             Sensors = new NativeArray<float>(currentOffset, Allocator.Persistent, NativeArrayOptions.ClearMemory);

@@ -1,6 +1,7 @@
 ﻿using NUnit.Framework;
 using Unity.Mathematics;
 using Unity.Entities;
+using Unity.Collections;
 using System.IO;
 using System;
 using System.IO.MemoryMappedFiles;

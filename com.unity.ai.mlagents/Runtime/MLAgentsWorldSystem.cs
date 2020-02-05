@@ -32,7 +32,6 @@ namespace Unity.AI.MLAgents
 
         public void SubscribeWorld(string policyId, MLAgentsWorld world, IWorldProcessor fallbackWorldProcessor = null, bool communicate = true)
         {
-
             var nativePolicyId = new NativeString64(policyId);
             CheckWorldNotPresent(nativePolicyId, world.GetHashCode());
             if (com != null && communicate)
