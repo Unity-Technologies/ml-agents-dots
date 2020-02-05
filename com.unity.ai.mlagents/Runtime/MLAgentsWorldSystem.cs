@@ -72,6 +72,8 @@ namespace Unity.AI.MLAgents
             }
             else
             {
+                // TODO : Re-implement side channels
+                World.Active.GetOrCreateSystem<SimulationSystemGroup>().SetFixedTimeStep(1 / 60f, 20f);
                 com = new SharedMemoryCom(path);
             }
         }

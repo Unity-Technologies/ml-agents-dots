@@ -22,7 +22,7 @@ public class BalanceBallManager : MonoBehaviour
     void Awake()
     {
         var ballSystem = World.Active.GetOrCreateSystem<BallSystem>();
-        var world = new MLAgentsWorld(100, ActionType.CONTINUOUS, new int3[] { new int3(4, 0, 0), new int3(3, 0, 0) }, 2);
+        var world = new MLAgentsWorld(1000, ActionType.CONTINUOUS, new int3[] { new int3(4, 0, 0), new int3(3, 0, 0) }, 2);
         ballSystem.world = world;
         var mlsys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
         mlsys.SubscribeWorldWithBarracudaModel("3DBallDOTS", world, model);
@@ -36,7 +36,7 @@ public class BalanceBallManager : MonoBehaviour
         _prefabEntityBall = GameObjectConversionUtility.ConvertGameObjectHierarchy(prefabBall, settings);
 
         Time.captureFramerate = 60;
-        Spawn(100);
+        Spawn(1000);
         blob.Dispose();
     }
 
@@ -48,17 +48,18 @@ public class BalanceBallManager : MonoBehaviour
         manager.Instantiate(_prefabEntityBall, entitiesB);
         for (int i = 0; i < amount; i++)
         {
+            float3 position = new float3((currentIndex % 10) - 5, (currentIndex / 10 % 10) - 5, currentIndex / 100) * 2f;
             float valX = Random.Range(-0.1f, 0.1f);
             float valZ = Random.Range(-0.1f, 0.1f);
             manager.SetComponentData(entitiesP[i],
                 new Translation
                 {
-                    Value = new float3(currentIndex * 2f, 0, 0)
+                    Value = position
                 });
             manager.SetComponentData(entitiesB[i],
                 new Translation
                 {
-                    Value = new float3(currentIndex * 2f, 0.2f, 0)
+                    Value = position + new float3(0, 0.2f, 0)
                 });
 
             manager.SetComponentData(entitiesP[i],
@@ -69,7 +70,7 @@ public class BalanceBallManager : MonoBehaviour
             manager.AddComponent<RefToPlatform>(entitiesB[i]);
             manager.SetComponentData(entitiesB[i], new RefToPlatform { Value = entitiesP[i] });
             manager.AddComponent<BallResetData>(entitiesB[i]);
-            manager.SetComponentData(entitiesB[i], new BallResetData { ResetPosition = new float3(currentIndex * 2f, 0.2f, 0) });
+            manager.SetComponentData(entitiesB[i], new BallResetData { ResetPosition = position + new float3(0, 0.2f, 0) });
             manager.AddComponent<BallData>(entitiesP[i]);
             manager.AddComponent<AngularAcceleration>(entitiesP[i]);
             currentIndex++;

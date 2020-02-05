@@ -1,8 +1,9 @@
 {
   "dependencies": {
-    "com.unity.ai.mlagents": "file:/Users/vincentpierre/Documents/ml-agents-dots/com.unity.ai.mlagents",
+    "com.unity.ai.mlagents": "file:../../com.unity.ai.mlagents",
+    "com.unity.burst": "1.2.1",
     "com.unity.collab-proxy": "1.2.16",
-    "com.unity.entities": "0.5.1-preview.11",
+    "com.unity.entities": "file:../../../dots/Samples/Packages/com.unity.entities",
     "com.unity.ide.rider": "1.1.4",
     "com.unity.ide.vscode": "1.1.3",
     "com.unity.physics": "0.2.4-preview",

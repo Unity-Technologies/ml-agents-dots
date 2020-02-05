@@ -83,15 +83,35 @@ namespace Unity.AI.MLAgents
             }
 
             var input = new System.Collections.Generic.Dictionary<string, Tensor>();
+
+            var vectorObsArr = new float[world.AgentCounter.Count * obsSize];
+            var sensorData = world.Sensors.ToArray();
+            int sensorOffset = 0;
+            int vecObsOffset = 0;
+            foreach (var shape in world.SensorShapes)
+            {
+                if (shape.GetDimensions() == 1)
+                {
+                    for (int i = 0; i < world.AgentCounter.Count; i++)
+                    {
+                        Array.Copy(sensorData, sensorOffset + i * shape.GetTotalTensorSize(), vectorObsArr, i * obsSize + vecObsOffset, shape.GetTotalTensorSize());
+                    }
+                    sensorOffset += world.AgentIds.Length * shape.GetTotalTensorSize();
+                    vecObsOffset += shape.GetTotalTensorSize();
+                }
+
+            }
+
             input["vector_observation"] = new Tensor(
                 new TensorShape(world.AgentCounter.Count, obsSize),
-                world.Sensors.Slice(0, world.AgentCounter.Count * obsSize).ToArray(),
+                vectorObsArr,
                 "vector_observation");
 
             input["epsilon"] = new Tensor(
             new TensorShape(world.AgentCounter.Count, world.ActionSize),
             new float[world.AgentCounter.Count * world.ActionSize],
             "epsilon");
+
             _engine.ExecuteAndWaitForCompletion(input);
 
             var actuatorT = _engine.Fetch("action");
@@ -102,7 +122,7 @@ namespace Unity.AI.MLAgents
                     int count = world.AgentCounter.Count * world.ActionSize;
                     var wholeData = actuatorT.data.Download(count);
                     var dest = new float[count];
-                    Array.Copy(wholeData, 0, dest, 0, count);
+                    Array.Copy(wholeData, dest, count);
                     world.ContinuousActuators.Slice(0, count).CopyFrom(dest);
                     break;
                 case ActionType.DISCRETE:

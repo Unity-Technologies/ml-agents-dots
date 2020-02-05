@@ -49,7 +49,7 @@ public class BallSystem : JobComponentSystem
         [NativeDisableParallelForRestriction] public ComponentDataFromEntity<BallData> ComponentDataFromEntity;
         public void Execute(ref RefToPlatform platform, ref Translation translation, ref BallResetData resetData, ref PhysicsVelocity vel)
         {
-            var dropped = (translation.Value.y < -0.5f);
+            var dropped = (translation.Value.y < resetData.ResetPosition.y - 0.7f);
             ComponentDataFromEntity[platform.Value] = new BallData
             {
                 WasDropped = ComponentDataFromEntity[platform.Value].WasDropped || dropped,
