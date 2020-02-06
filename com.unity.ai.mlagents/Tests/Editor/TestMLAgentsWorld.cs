@@ -91,8 +91,6 @@ namespace Unity.AI.MLAgents.Tests.Editor
             world.RequestDecision(entity);
             system.ManualUpdate(new JobHandle()).Complete();
 
-            UnityEngine.Debug.Log(world.ActionCounter.Count);
-
             var entities = new NativeArray<Entity>(1, Allocator.Persistent);
             var actions = new NativeArray<DiscreteAction_TWO_THREE>(1, Allocator.Persistent);
 

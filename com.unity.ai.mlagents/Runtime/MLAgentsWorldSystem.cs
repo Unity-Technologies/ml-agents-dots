@@ -2,6 +2,7 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Collections;
 using System;
+using Unity.AI.MLAgents.SideChannels;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -30,6 +31,9 @@ namespace Unity.AI.MLAgents
         private NativeList<int> RegisteredWorldHashes;
         private NativeList<NativeString64> RegisteredWorldNames;
 
+        public IFloatProperties FloatProperties;
+        private SideChannel[] m_SideChannels;
+
         public void SubscribeWorld(string policyId, MLAgentsWorld world, IWorldProcessor fallbackWorldProcessor = null, bool communicate = true)
         {
             var nativePolicyId = new NativeString64(policyId);
@@ -49,6 +53,20 @@ namespace Unity.AI.MLAgents
                 Array.Resize<IWorldProcessor>(ref WorldProcessors, WorldProcessors.Length + 1);
                 WorldProcessors[WorldProcessors.Length - 1] = new NullWorldProcessor(world);
             }
+        }
+
+        public void SubscribeSideChannel(SideChannel channel)
+        {
+            foreach (var registeredChannel in m_SideChannels)
+            {
+                if (registeredChannel.ChannelType() == channel.ChannelType())
+                {
+                    // TODO Error
+                    return;
+                }
+            }
+            Array.Resize<SideChannel>(ref m_SideChannels, m_SideChannels.Length + 1);
+            m_SideChannels[m_SideChannels.Length - 1] = channel;
         }
 
         protected override void OnCreate()
@@ -72,9 +90,12 @@ namespace Unity.AI.MLAgents
             }
             else
             {
-                // TODO : Re-implement side channels
-                World.Active.GetOrCreateSystem<SimulationSystemGroup>().SetFixedTimeStep(1 / 60f, 20f);
                 com = new SharedMemoryCom(path);
+                m_SideChannels = new SideChannel[2];
+                m_SideChannels[0] = new EngineConfigurationChannel(); ;
+                var FloatPropertiesChannel = new FloatPropertiesChannel();
+                m_SideChannels[1] = FloatPropertiesChannel;
+                FloatProperties = FloatPropertiesChannel;
             }
         }
 
@@ -112,10 +133,9 @@ namespace Unity.AI.MLAgents
                         // Unity must call advance to read the first message of Python.
                         // We do this only if there is already something to send 
                         com.Advance();
+                        SideChannelUtils.ProcessSideChannelData(m_SideChannels, com.ReadAndClearSideChannelData());
                         FirstMessageReceived = true;
 
-                        UnityEngine.Time.captureFramerate = 60;
-                        UnityEngine.Application.targetFrameRate = -1;
                     }
 
                     foreach (var idWorldPair in ExternalWorlds)
@@ -123,11 +143,13 @@ namespace Unity.AI.MLAgents
                         com.WriteWorld(idWorldPair.name, idWorldPair.world);
                     }
 
+                    com.WriteSideChannelData(SideChannelUtils.GetSideChannelMessage(m_SideChannels));
+
                     // com.WriteSideChannelData(new byte[4]);
                     // TODO : Write side channel data
                     com.SetUnityReady();
                     var command = com.Advance();
-                    ProcessReceivedSideChannelData(com.ReadAndClearSideChannelData());
+                    SideChannelUtils.ProcessSideChannelData(m_SideChannels, com.ReadAndClearSideChannelData());
 
                     switch (command)
                     {
@@ -203,13 +225,7 @@ namespace Unity.AI.MLAgents
             }
         }
 
-        private void ProcessReceivedSideChannelData(byte[] data)
-        {
-            if (data != null)
-            {
-                UnityEngine.Debug.Log("Received side channel data : " + data.Length);
-            }
-        }
+
 
         protected override void OnDestroy()
         {

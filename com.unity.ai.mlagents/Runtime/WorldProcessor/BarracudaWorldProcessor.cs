@@ -75,6 +75,8 @@ namespace Unity.AI.MLAgents
         public void ProcessWorld()
         {
             // FOR VECTOR OBS ONLY
+            // For Continuois control only
+            // No LSTM
             int obsSize = 0;
             for (int i = 0; i < world.SensorShapes.Length; i++)
             {
