@@ -3,10 +3,8 @@ using System;
 
 namespace Unity.AI.MLAgents.SideChannels
 {
-
     internal static class SideChannelUtils
     {
-
         /// <summary>
         /// Separates the data received from Python into individual messages for each registered side channel.
         /// </summary>
@@ -58,7 +56,6 @@ namespace Unity.AI.MLAgents.SideChannels
                                 "Unknown side channel data received. Channel type "
                                 + ": {0}", channelType));
                         }
-
                     }
                 }
             }
@@ -93,5 +90,3 @@ namespace Unity.AI.MLAgents.SideChannels
         }
     }
 }
-
-

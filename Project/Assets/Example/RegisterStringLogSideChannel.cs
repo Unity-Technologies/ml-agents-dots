@@ -5,18 +5,15 @@ using Unity.Entities;
 
 public class RegisterStringLogSideChannel : MonoBehaviour
 {
-
     StringLogSideChannel stringChannel;
     public void Awake()
     {
-
         stringChannel = new StringLogSideChannel();
 
         var sys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
         sys.SubscribeSideChannel(stringChannel);
 
         Application.logMessageReceived += stringChannel.SendDebugStatementToPython;
-
     }
 
     public void OnDestroy()

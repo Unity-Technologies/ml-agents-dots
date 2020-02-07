@@ -1,4 +1,4 @@
-﻿using Unity.Entities;
+using Unity.Entities;
 using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Transforms;
@@ -78,7 +78,5 @@ public class BalanceBallManager : MonoBehaviour
 
         entitiesP.Dispose();
         entitiesB.Dispose();
-
     }
-
 }

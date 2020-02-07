@@ -5,7 +5,6 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace Unity.AI.MLAgents
 {
-
     public static class HeristicWorldProcessorRegistringExtension
     {
         public static void SubscribeWorldWithHeuristic<TH>(
@@ -13,7 +12,7 @@ namespace Unity.AI.MLAgents
             string policyId,
             MLAgentsWorld world,
             Func<TH> heuristic
-            ) where TH : struct
+        ) where TH : struct
         {
             var worldProcessor = new HeuristicWorldProcessor<TH>(world, heuristic);
             system.SubscribeWorld(policyId, world, worldProcessor, true);
@@ -24,7 +23,7 @@ namespace Unity.AI.MLAgents
             string policyId,
             MLAgentsWorld world,
             Func<TH> heuristic
-            ) where TH : struct
+        ) where TH : struct
         {
             var worldProcessor = new HeuristicWorldProcessor<TH>(world, heuristic);
             system.SubscribeWorld(policyId, world, worldProcessor, false);
@@ -33,7 +32,6 @@ namespace Unity.AI.MLAgents
 
     internal class HeuristicWorldProcessor<T> : IWorldProcessor where T : struct
     {
-
         private Func<T> heuristic;
         private MLAgentsWorld world;
         internal HeuristicWorldProcessor(MLAgentsWorld world, Func<T> heuristic)
@@ -80,11 +78,8 @@ namespace Unity.AI.MLAgents
             world.ResetDecisionsCounter();
         }
 
-
         public void Dispose()
         {
-
         }
     }
-
 }

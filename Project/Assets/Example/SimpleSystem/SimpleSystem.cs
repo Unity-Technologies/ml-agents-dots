@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -9,7 +9,6 @@ using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
 using Unity.AI.MLAgents;
-
 
 
 // [UpdateInGroup(typeof(SimulationSystemGroup))]
@@ -39,7 +38,6 @@ public class SimpleSystem : JobComponentSystem
         {
             entities[i] = World.Active.EntityManager.CreateEntity();
         }
-
     }
 
     protected override void OnDestroy()
@@ -126,5 +124,4 @@ public class SimpleSystem : JobComponentSystem
         public testEnum e1;
         public testEnum e2;
     }
-
 }

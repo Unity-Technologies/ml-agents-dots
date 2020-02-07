@@ -1,4 +1,4 @@
-﻿using Unity.Entities;
+using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
@@ -107,7 +107,6 @@ public class BallSystem : JobComponentSystem
         //     return new float2(Input.GetAxis("Vertical"), -Input.GetAxis("Horizontal"));
         // }
         // );
-
     }
 
     // Update is called once per frame
@@ -142,7 +141,5 @@ public class BallSystem : JobComponentSystem
     protected override void OnDestroy()
     {
         world.Dispose();
-
     }
-
 }

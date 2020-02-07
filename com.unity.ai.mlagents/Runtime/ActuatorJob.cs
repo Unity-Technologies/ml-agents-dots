@@ -15,20 +15,22 @@ namespace Unity.AI.MLAgents
         [ReadOnly] public NativeSlice<float> ContinuousActionSlice;
         [ReadOnly] public NativeSlice<int> DiscreteActionSlice;
 
+
         public void GetDiscreteAction<T>(out T action) where T : struct
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            if (ActionSize != UnsafeUtility.SizeOf<T>()/ sizeof(float))
+            if (ActionSize != UnsafeUtility.SizeOf<T>() / sizeof(float))
             {
                 throw new MLAgentsException("Action space does not match for Discrete action. Expected " + ActionSize);
             }
 #endif
             action = DiscreteActionSlice.SliceConvert<T>()[0];
         }
+
         public void GetContinuousAction<T>(out T action) where T : struct
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            if (ActionSize != UnsafeUtility.SizeOf<T>()/ sizeof(float))
+            if (ActionSize != UnsafeUtility.SizeOf<T>() / sizeof(float))
             {
                 throw new MLAgentsException("Action space does not match for Continuous action. Expected " + ActionSize);
             }
@@ -55,7 +57,7 @@ namespace Unity.AI.MLAgents
 
         // Passing this along
         internal static unsafe JobHandle ScheduleImpl<T>(this T jobData, MLAgentsWorld mlagentsWorld, JobHandle inputDeps)
-         where T : struct, IActuatorJob
+            where T : struct, IActuatorJob
         {
             // inputDeps.Complete();
             // Creating a data struct that contains the data the user passed into the job (This is what T is here)
@@ -68,7 +70,6 @@ namespace Unity.AI.MLAgents
             // Scheduling a Job out of thin air by using a pointer called jobReflectionData in the ActuatorSystemJobStruct
             var parameters = new JobsUtility.JobScheduleParameters(UnsafeUtility.AddressOf(ref data), ActuatorDataJobProcess<T>.Initialize(), inputDeps, ScheduleMode.Batched);
             return JobsUtility.Schedule(ref parameters);
-
         }
 
         // This is the struct containing all the data needed from both the user and the MLAgents world
@@ -89,6 +90,7 @@ namespace Unity.AI.MLAgents
                     jobReflectionData = JobsUtility.CreateJobReflectionData(typeof(ActionEventJobData<T>), typeof(T), JobType.Single, (ExecuteJobFunction)Execute);
                 return jobReflectionData;
             }
+
             #endregion
 
 
@@ -126,7 +128,6 @@ namespace Unity.AI.MLAgents
                                 ActionSize = size,
                                 Entity = jobData.world.ActionAgentIds[i],
                                 DiscreteActionSlice = jobData.world.DiscreteActuators.Slice(i * size, size)
-
                             });
                         }
                     }

@@ -59,7 +59,6 @@ namespace Unity.AI.MLAgents.Tests.Editor
 
             Assert.Throws<System.IndexOutOfRangeException>(() => testArray.CumSumAt(capacity * 2));
             testArray.Dispose();
-
         }
 
         [Test]
@@ -71,6 +70,5 @@ namespace Unity.AI.MLAgents.Tests.Editor
                 Assert.Greater(actualCapacity, reqCapacity);
             }
         }
-
     }
 }

@@ -34,7 +34,6 @@ namespace Unity.AI.MLAgents.SideChannels
 
                     // TODO : Need a better way to do this
                     World.Active.GetOrCreateSystem<SimulationSystemGroup>().SetFixedTimeStep(1 / 60f, timeScale);
-
                 }
             }
         }

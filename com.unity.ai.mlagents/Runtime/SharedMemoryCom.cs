@@ -152,7 +152,6 @@ namespace Unity.AI.MLAgents
                 var old_size = accessor.ReadInt32(k_FileLengthOffset);
                 newTotalCapacity = old_size + (channelCapacity - oldChannelCapacity) + additionalRLDataCapacity;
                 fs.Write(new byte[newTotalCapacity], 0, newTotalCapacity);
-
             }
 
             var mmf = MemoryMappedFile.CreateFromFile(newFilePath, FileMode.Open);
@@ -182,7 +181,7 @@ namespace Unity.AI.MLAgents
             newAccessor.Write(k_SideChannelOffset, channelCapacity);
             currentRLDataCapacity += additionalRLDataCapacity;
 
-            // Mark file as dirty : 
+            // Mark file as dirty :
             accessor.Write(k_CommandOffset, (sbyte)PythonCommand.CHANGE_FILE);
             accessor.Write(k_MutexOffset, false);
 
@@ -316,7 +315,6 @@ namespace Unity.AI.MLAgents
             startingOffsets.ActionOffset = offset;
 
             return startingOffsets;
-
         }
 
         /// <summary>
@@ -337,7 +335,6 @@ namespace Unity.AI.MLAgents
                 ExtendFile(SideChannelCapacity(), requiredCapacity);
                 offsets = WriteAgentGroupSpecs(worldName.ToString(), world, oldEndOffset);
                 groupOffsets[worldName] = offsets;
-
             }
 
             // N Agents
@@ -388,7 +385,6 @@ namespace Unity.AI.MLAgents
 
                 Buffer.MemoryCopy(src.ToPointer(), dst.ToPointer(), length, length);
             }
-
         }
 
         private void OnCloseCommand()

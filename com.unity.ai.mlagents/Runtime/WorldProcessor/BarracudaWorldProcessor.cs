@@ -6,7 +6,6 @@ using Barracuda;
 
 namespace Unity.AI.MLAgents
 {
-
     public enum InferenceDevice
     {
         CPU,
@@ -21,7 +20,7 @@ namespace Unity.AI.MLAgents
             MLAgentsWorld world,
             NNModel model,
             InferenceDevice inferenceDevice = InferenceDevice.CPU
-            )
+        )
         {
             if (model != null)
             {
@@ -40,7 +39,7 @@ namespace Unity.AI.MLAgents
             MLAgentsWorld world,
             NNModel model,
             InferenceDevice inferenceDevice = InferenceDevice.CPU
-            )
+        )
         {
             var worldProcessor = new BarracudaWorldProcessor(world, model, inferenceDevice);
             system.SubscribeWorld(policyId, world, worldProcessor, false);
@@ -71,7 +70,6 @@ namespace Unity.AI.MLAgents
                 executionDevice, _barracudaModel, _verbose);
         }
 
-
         public void ProcessWorld()
         {
             // FOR VECTOR OBS ONLY
@@ -101,7 +99,6 @@ namespace Unity.AI.MLAgents
                     sensorOffset += world.AgentIds.Length * shape.GetTotalTensorSize();
                     vecObsOffset += shape.GetTotalTensorSize();
                 }
-
             }
 
             input["vector_observation"] = new Tensor(
@@ -110,9 +107,9 @@ namespace Unity.AI.MLAgents
                 "vector_observation");
 
             input["epsilon"] = new Tensor(
-            new TensorShape(world.AgentCounter.Count, world.ActionSize),
-            new float[world.AgentCounter.Count * world.ActionSize],
-            "epsilon");
+                new TensorShape(world.AgentCounter.Count, world.ActionSize),
+                new float[world.AgentCounter.Count * world.ActionSize],
+                "epsilon");
 
             _engine.ExecuteAndWaitForCompletion(input);
 
@@ -138,7 +135,7 @@ namespace Unity.AI.MLAgents
             actuatorT.Dispose();
 
 
-            // Mark the world as done processing 
+            // Mark the world as done processing
             world.SetActionReady();
             world.ResetDecisionsCounter();
         }
@@ -149,12 +146,9 @@ namespace Unity.AI.MLAgents
             world.ResetDecisionsCounter();
         }
 
-
-
         public void Dispose()
         {
             _engine.Dispose();
         }
     }
-
 }

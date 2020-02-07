@@ -112,6 +112,5 @@ namespace Unity.AI.MLAgents.Tests.Editor
             entities.Dispose();
             actions.Dispose();
         }
-
     }
 }

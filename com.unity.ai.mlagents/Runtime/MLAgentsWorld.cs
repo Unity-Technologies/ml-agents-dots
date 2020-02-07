@@ -6,7 +6,6 @@ using System;
 
 namespace Unity.AI.MLAgents
 {
-
     public enum ActionType : int
     {
         DISCRETE = 0,
@@ -22,10 +21,10 @@ namespace Unity.AI.MLAgents
 
         [ReadOnly] internal NativeArray<int> ObservationOffsets;
 
-        [NativeDisableParallelForRestriction] [WriteOnly] internal NativeArray<float> Sensors;
-        [NativeDisableParallelForRestriction] [WriteOnly] internal NativeArray<float> Rewards;
-        [NativeDisableParallelForRestriction] [WriteOnly] internal NativeArray<bool> DoneFlags;
-        [NativeDisableParallelForRestriction] [WriteOnly] internal NativeArray<bool> MaxStepFlags;
+        [NativeDisableParallelForRestriction][WriteOnly] internal NativeArray<float> Sensors;
+        [NativeDisableParallelForRestriction][WriteOnly] internal NativeArray<float> Rewards;
+        [NativeDisableParallelForRestriction][WriteOnly] internal NativeArray<bool> DoneFlags;
+        [NativeDisableParallelForRestriction][WriteOnly] internal NativeArray<bool> MaxStepFlags;
         [NativeDisableParallelForRestriction] internal NativeArray<Entity> AgentEntityIds;
         [NativeDisableParallelForRestriction] internal NativeArray<int> AgentIds;
         [NativeDisableParallelForRestriction] internal NativeArray<bool> ActionMasks;
@@ -46,8 +45,8 @@ namespace Unity.AI.MLAgents
         /// <param name="maximumNumberAgents"> The maximum number of decisions that can be requested between each MLAgentsSystem update </param>
         /// <param name="actionType"> An ActionType enum (DISCRETE / CONTINUOUS) specifying the type of actions the MLAgentsWorld will produce </param>
         /// <param name="obsShapes"> An array of int3 corresponding to the shape of the expected observations (one int3 per observation) </param>
-        /// <param name="actionSize"> The number of actions the MLAgentsWorld is expected to generate for each decision. 
-        ///  - If CONTINUOUS ActionType : The number of floats the action contains 
+        /// <param name="actionSize"> The number of actions the MLAgentsWorld is expected to generate for each decision.
+        ///  - If CONTINUOUS ActionType : The number of floats the action contains
         ///  - If DISCRETE ActionType : The number of branches (integer actions) the action contains </param>
         /// <param name="discreteActionBranches"> For DISCRETE ActionType only : an array of int specifying the number of possible int values each
         /// action branch has. (Must be of the same length as actionSize </param>
@@ -163,7 +162,7 @@ namespace Unity.AI.MLAgents
 
         /// <summary>
         /// Requests a decision for a specific Entity to the MLAgentsWorld. The DecisionRequest
-        /// struct this method returns can be used to provide data necessary for the Agent to 
+        /// struct this method returns can be used to provide data necessary for the Agent to
         /// take a decision for the Entity.
         /// </summary>
         /// <param name="entity"> The Entity the decision is tied to. The Entity is used to track

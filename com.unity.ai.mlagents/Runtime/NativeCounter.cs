@@ -45,7 +45,7 @@ namespace Unity.AI.MLAgents
 #if UNITY_2018_3_OR_NEWER
             DisposeSentinel.Create(out m_Safety, out m_DisposeSentinel, 0, label);
 #else
-        DisposeSentinel.Create(out m_Safety, out m_DisposeSentinel, 0);
+            DisposeSentinel.Create(out m_Safety, out m_DisposeSentinel, 0);
 #endif
 #endif
             // Initialize the count to 0 to avoid uninitialized data
@@ -95,7 +95,7 @@ namespace Unity.AI.MLAgents
 #if UNITY_2018_3_OR_NEWER
             DisposeSentinel.Dispose(ref m_Safety, ref m_DisposeSentinel);
 #else
-        DisposeSentinel.Dispose(m_Safety, ref m_DisposeSentinel);
+            DisposeSentinel.Dispose(m_Safety, ref m_DisposeSentinel);
 #endif
 #endif
 
@@ -132,7 +132,7 @@ namespace Unity.AI.MLAgents
 #endif
 
 
-            // This was modified here according to 
+            // This was modified here according to
             //https://forum.unity.com/threads/is-it-okay-to-read-a-nativecounter-concurrents-value-in-a-parallel-job.533037/
             public int Increment()
             {

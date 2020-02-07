@@ -34,7 +34,6 @@ public class SpaceMagicManager : MonoBehaviour
         Spawn(100);
     }
 
-
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.A))
@@ -51,7 +50,6 @@ public class SpaceMagicManager : MonoBehaviour
         {
             Spawn(1000);
         }
-
     }
 
     void Spawn(int amount)
@@ -81,8 +79,5 @@ public class SpaceMagicManager : MonoBehaviour
         }
 
         entities.Dispose();
-
     }
-
 }
-

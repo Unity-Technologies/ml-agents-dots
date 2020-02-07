@@ -3,11 +3,10 @@ using UnityEngine;
 
 namespace Unity.AI.MLAgents
 {
-    public class VisualObservationUtility
+    public static class VisualObservationUtility
     {
-
         /// <summary>
-        /// Generates a NativeArray of floats corresponding to the camera's visual input. 
+        /// Generates a NativeArray of floats corresponding to the camera's visual input.
         /// The Array will be of total size ( height x width x 3 )
         /// Each pixel will correspond to three consecutive floats in the order [red, green, blue]
         /// </summary>
@@ -28,7 +27,6 @@ namespace Unity.AI.MLAgents
 
         private static NativeArray<float> TextureToNativeArray(Texture2D texture, Allocator allocator)
         {
-
             var width = texture.width;
             var height = texture.height;
             var arr = new NativeArray<float>(width * height * 3, allocator, NativeArrayOptions.UninitializedMemory);
@@ -76,7 +74,6 @@ namespace Unity.AI.MLAgents
             RenderTexture.active = prevActiveRt;
             RenderTexture.ReleaseTemporary(tempRt);
             return texture2D;
-
         }
     }
 }

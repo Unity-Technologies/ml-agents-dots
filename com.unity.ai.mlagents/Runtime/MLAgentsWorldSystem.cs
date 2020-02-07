@@ -10,11 +10,9 @@ using UnityEditor;
 
 namespace Unity.AI.MLAgents
 {
-
     // [UpdateInGroup(typeof(SimulationSystemGroup))]
     public class MLAgentsWorldSystem : JobComponentSystem // Should this be a ISimulation from Unity.Physics ?
     {
-
         private JobHandle dependencies;
         private JobHandle FinalJobHandle;
 
@@ -92,7 +90,7 @@ namespace Unity.AI.MLAgents
             {
                 com = new SharedMemoryCom(path);
                 m_SideChannels = new SideChannel[2];
-                m_SideChannels[0] = new EngineConfigurationChannel(); ;
+                m_SideChannels[0] = new EngineConfigurationChannel();;
                 var FloatPropertiesChannel = new FloatPropertiesChannel();
                 m_SideChannels[1] = FloatPropertiesChannel;
                 FloatProperties = FloatPropertiesChannel;
@@ -120,7 +118,6 @@ namespace Unity.AI.MLAgents
 
             if (com != null)
             {
-
                 bool anyWorldChanged = false;
                 foreach (var idWorldPair in ExternalWorlds)
                 {
@@ -131,11 +128,10 @@ namespace Unity.AI.MLAgents
                     if (!FirstMessageReceived)
                     {
                         // Unity must call advance to read the first message of Python.
-                        // We do this only if there is already something to send 
+                        // We do this only if there is already something to send
                         com.Advance();
                         SideChannelUtils.ProcessSideChannelData(m_SideChannels, com.ReadAndClearSideChannelData());
                         FirstMessageReceived = true;
-
                     }
 
                     foreach (var idWorldPair in ExternalWorlds)
@@ -176,7 +172,6 @@ namespace Unity.AI.MLAgents
                             break;
                         default:
                             break;
-
                     }
                 }
             }
@@ -206,7 +201,7 @@ namespace Unity.AI.MLAgents
                     string.Format(
                         "An MLAgentsWorld has already been subscribed using the key {0}",
                         policyId)
-                        );
+                );
             }
             RegisteredWorldHashes.Add(worldHash);
             RegisteredWorldNames.Add(policyId);
@@ -225,8 +220,6 @@ namespace Unity.AI.MLAgents
             }
         }
 
-
-
         protected override void OnDestroy()
         {
             if (com != null)
@@ -238,5 +231,4 @@ namespace Unity.AI.MLAgents
             RegisteredWorldNames.Dispose();
         }
     }
-
 }

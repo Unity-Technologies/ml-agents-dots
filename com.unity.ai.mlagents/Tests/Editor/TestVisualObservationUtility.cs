@@ -19,7 +19,6 @@ namespace Unity.AI.MLAgents.Tests.Editor
 
             Assert.AreEqual(array.Length, width * height * 3);
             array.Dispose();
-
         }
     }
 }

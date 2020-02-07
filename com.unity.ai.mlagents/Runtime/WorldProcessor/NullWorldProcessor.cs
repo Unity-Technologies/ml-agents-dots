@@ -25,11 +25,8 @@ namespace Unity.AI.MLAgents
             world.ResetDecisionsCounter();
         }
 
-
         public void Dispose()
         {
-
         }
     }
-
 }

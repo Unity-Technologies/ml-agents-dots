@@ -32,7 +32,6 @@ public struct Acceleration : IComponentData
 // [DisableAutoCreation]
 public class SpaceMagicMovementSystem : JobComponentSystem
 {
-
     // [BurstCompile]
     private struct AccelerateJob : IActuatorJob
     {
@@ -101,7 +100,6 @@ public class SpaceMagicMovementSystem : JobComponentSystem
 
         // var world2 = new MLAgentsWorld(10, ActionType.DISCRETE, new int3[] { new int3(5, 0, 0) }, 6, new int[6] { 2, 3, 4, 5, 6, 7 });
         // sys.SubscribeWorld("SpaceMagic2", world2);
-
     }
 
     protected override JobHandle OnUpdate(JobHandle inputDeps)
@@ -136,8 +134,5 @@ public class SpaceMagicMovementSystem : JobComponentSystem
     protected override void OnDestroy()
     {
         world.Dispose();
-
     }
 }
-
-

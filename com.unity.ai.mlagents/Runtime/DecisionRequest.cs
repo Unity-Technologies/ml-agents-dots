@@ -58,17 +58,18 @@ namespace Unity.AI.MLAgents
         public DecisionRequest SetDiscreteActionMask(int branch, int actionIndex)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                if (world.ActionType == ActionType.CONTINUOUS){
-                    throw new MLAgentsException("SetDiscreteActionMask can only be used with discrete acton space.");
-                }
-                if (branch > world.DiscreteActionBranches.Length)
-                {
-                    throw new MLAgentsException("Unknown action branch used when setting mask.");
-                }
-                if (actionIndex > world.DiscreteActionBranches[branch])
-                {
-                    throw new MLAgentsException("Index is out of bounds for requested action mask.");
-                }
+            if (world.ActionType == ActionType.CONTINUOUS)
+            {
+                throw new MLAgentsException("SetDiscreteActionMask can only be used with discrete acton space.");
+            }
+            if (branch > world.DiscreteActionBranches.Length)
+            {
+                throw new MLAgentsException("Unknown action branch used when setting mask.");
+            }
+            if (actionIndex > world.DiscreteActionBranches[branch])
+            {
+                throw new MLAgentsException("Index is out of bounds for requested action mask.");
+            }
 #endif
             var trueMaskIndex = world.DiscreteActionBranches.CumSumAt(branch) + actionIndex;
             world.ActionMasks[trueMaskIndex + world.DiscreteActionBranches.Sum() * index] = true;
@@ -85,13 +86,13 @@ namespace Unity.AI.MLAgents
         {
             int inputSize = UnsafeUtility.SizeOf<T>() / sizeof(float);
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                int3 s = world.SensorShapes[sensorNumber];
-                int expectedInputSize = s.x * math.max(1, s.y) * math.max(1, s.z);
-                if (inputSize != expectedInputSize)
-                {
-                    throw new MLAgentsException(
-                        "Cannot set observation due to incompatible size of the input. Expected size : " + expectedInputSize + ", received size : " + inputSize);
-                }
+            int3 s = world.SensorShapes[sensorNumber];
+            int expectedInputSize = s.x * math.max(1, s.y) * math.max(1, s.z);
+            if (inputSize != expectedInputSize)
+            {
+                throw new MLAgentsException(
+                    "Cannot set observation due to incompatible size of the input. Expected size : " + expectedInputSize + ", received size : " + inputSize);
+            }
 #endif
             int start = world.ObservationOffsets[sensorNumber];
             start += inputSize * index;
@@ -110,13 +111,13 @@ namespace Unity.AI.MLAgents
         {
             int inputSize = obs.Length;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                int3 s = world.SensorShapes[sensorNumber];
-                int expectedInputSize = s.x * math.max(1, s.y) * math.max(1, s.z);
-                if (inputSize != expectedInputSize)
-                {
-                    throw new MLAgentsException(
-                        "Cannot set observation due to incompatible size of the input. Expected size : " + expectedInputSize + ", received size : " + inputSize);
-                }
+            int3 s = world.SensorShapes[sensorNumber];
+            int expectedInputSize = s.x * math.max(1, s.y) * math.max(1, s.z);
+            if (inputSize != expectedInputSize)
+            {
+                throw new MLAgentsException(
+                    "Cannot set observation due to incompatible size of the input. Expected size : " + expectedInputSize + ", received size : " + inputSize);
+            }
 #endif
             int start = world.ObservationOffsets[sensorNumber];
             start += inputSize * index;

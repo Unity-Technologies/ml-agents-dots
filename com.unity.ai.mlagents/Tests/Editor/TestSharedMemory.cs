@@ -1,4 +1,4 @@
-﻿using NUnit.Framework;
+using NUnit.Framework;
 using Unity.Mathematics;
 using Unity.Entities;
 using Unity.Collections;
@@ -41,11 +41,9 @@ namespace Unity.AI.MLAgents.Tests.Editor
                     fs.Write(BitConverter.GetBytes(0), 0, 4);
                 }
                 fs.Write(BitConverter.GetBytes(0), 0, 4);
-
             }
             return path;
         }
-
 
         [Test]
         public void TestCreation()
@@ -117,7 +115,6 @@ namespace Unity.AI.MLAgents.Tests.Editor
             File.Delete(path1);
             File.Delete(path2);
             w.Dispose();
-
         }
 
         [Test]
