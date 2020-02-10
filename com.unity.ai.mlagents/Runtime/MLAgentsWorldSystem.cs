@@ -55,9 +55,6 @@ namespace Unity.AI.MLAgents
 
         public void SubscribeSideChannel(SideChannel channel)
         {
-            if (com == null){
-                return;
-            }
             foreach (var registeredChannel in m_SideChannels)
             {
                 if (registeredChannel.ChannelType() == channel.ChannelType())
@@ -88,6 +85,7 @@ namespace Unity.AI.MLAgents
             if (path == null)
             {
                 UnityEngine.Debug.Log("Could not connect");
+                m_SideChannels = new SideChannel[0];
             }
             else
             {
@@ -178,8 +176,9 @@ namespace Unity.AI.MLAgents
                     }
                 }
             }
-            else
+            else // The communicator is null
             {
+                SideChannelUtils.GetSideChannelMessage(m_SideChannels);
                 foreach (var idWorldPair in ExternalWorlds)
                 {
                     idWorldPair.world.SetActionReady();
