@@ -24,7 +24,7 @@ namespace Unity.AI.MLAgents
             public MLAgentsWorld world;
         }
         private bool FirstMessageReceived;
-        private IdWorldPair[] ExternalWorlds; // TODO : We use an array to avoid System.Collections.Generic but there should be more efficient
+        private IdWorldPair[] ExternalWorlds;
         private IWorldProcessor[] WorldProcessors;
         private NativeList<int> RegisteredWorldHashes;
         private NativeList<NativeString64> RegisteredWorldNames;
@@ -55,6 +55,9 @@ namespace Unity.AI.MLAgents
 
         public void SubscribeSideChannel(SideChannel channel)
         {
+            if (com == null){
+                return;
+            }
             foreach (var registeredChannel in m_SideChannels)
             {
                 if (registeredChannel.ChannelType() == channel.ChannelType())

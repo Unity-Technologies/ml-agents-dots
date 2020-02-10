@@ -21,11 +21,12 @@ public class BalanceBallManager : MonoBehaviour
 
     void Awake()
     {
+        var world = WorldRegistry.Get("3DBallDOTS");
         var ballSystem = World.Active.GetOrCreateSystem<BallSystem>();
-        var world = new MLAgentsWorld(1000, ActionType.CONTINUOUS, new int3[] { new int3(4, 0, 0), new int3(3, 0, 0) }, 2);
+        // var world = new MLAgentsWorld(1000, ActionType.CONTINUOUS, new int3[] { new int3(4, 0, 0), new int3(3, 0, 0) }, 2);
         ballSystem.world = world;
-        var mlsys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
-        mlsys.SubscribeWorldWithBarracudaModel("3DBallDOTS", world, model);
+        // var mlsys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
+        // mlsys.SubscribeWorldWithBarracudaModel("3DBallDOTS", world, model);
 
 
         manager = World.Active.EntityManager;
