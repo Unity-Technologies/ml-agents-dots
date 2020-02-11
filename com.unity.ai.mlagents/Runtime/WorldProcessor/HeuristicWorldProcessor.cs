@@ -8,7 +8,7 @@ namespace Unity.AI.MLAgents
     public static class HeristicWorldProcessorRegistringExtension
     {
         public static void SubscribeWorldWithHeuristic<TH>(
-            this MLAgentsWorldSystem system,
+            this MLAgentsSystem system,
             string policyId,
             MLAgentsWorld world,
             Func<TH> heuristic
@@ -19,7 +19,7 @@ namespace Unity.AI.MLAgents
         }
 
         public static void SubscribeWorldWithHeuristicForceNoCommunication<TH>(
-            this MLAgentsWorldSystem system,
+            this MLAgentsSystem system,
             string policyId,
             MLAgentsWorld world,
             Func<TH> heuristic

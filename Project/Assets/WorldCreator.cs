@@ -6,6 +6,9 @@ using Unity.Collections;
 using Barracuda;
 using System;
 
+
+// Alternatively, we could just have a struct that contains the WorldSpecs with a nice inspector
+// for the users to add to their monobehaviors. 
 public class WorldCreator : MonoBehaviour{
 
     public string name;
@@ -23,7 +26,7 @@ public class WorldCreator : MonoBehaviour{
 
     // Seems impossible, but ideally, this should run before a user tries to get the world
     public void Initialize(){
-        var sys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
+        var sys = World.Active.GetOrCreateSystem<MLAgentsSystem>();
         var world = new MLAgentsWorld(NumberAgents, actionType, obsShapes, actionSize, discreteActionBranches);
         sys.SubscribeWorldWithBarracudaModel(name, world, Model, InferenceDevice);
         WorldRegistry.Put(name, world);

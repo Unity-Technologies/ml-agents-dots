@@ -25,7 +25,7 @@ public class BalanceBallManager : MonoBehaviour
         var ballSystem = World.Active.GetOrCreateSystem<BallSystem>();
         // var world = new MLAgentsWorld(1000, ActionType.CONTINUOUS, new int3[] { new int3(4, 0, 0), new int3(3, 0, 0) }, 2);
         ballSystem.world = world;
-        // var mlsys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
+        // var mlsys = World.Active.GetOrCreateSystem<MLAgentsSystem>();
         // mlsys.SubscribeWorldWithBarracudaModel("3DBallDOTS", world, model);
 
 

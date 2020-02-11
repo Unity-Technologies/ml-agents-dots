@@ -15,7 +15,7 @@ namespace Unity.AI.MLAgents
     public static class BarracudaWorldProcessorRegistringExtension
     {
         public static void SubscribeWorldWithBarracudaModel(
-            this MLAgentsWorldSystem system,
+            this MLAgentsSystem system,
             string policyId,
             MLAgentsWorld world,
             NNModel model,
@@ -34,7 +34,7 @@ namespace Unity.AI.MLAgents
         }
 
         public static void SubscribeWorldWithBarracudaModelForceNoCommunication<TH>(
-            this MLAgentsWorldSystem system,
+            this MLAgentsSystem system,
             string policyId,
             MLAgentsWorld world,
             NNModel model,

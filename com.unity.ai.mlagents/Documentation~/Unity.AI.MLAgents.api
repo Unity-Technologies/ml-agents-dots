@@ -20,8 +20,8 @@ namespace Unity.AI.MLAgents
 
     [System.Runtime.CompilerServices.Extension] public static class BarracudaWorldProcessorRegistringExtension
     {
-        [System.Runtime.CompilerServices.Extension] public static void SubscribeWorldWithBarracudaModel(Unity.AI.MLAgents.MLAgentsWorldSystem system, string policyId, Unity.AI.MLAgents.MLAgentsWorld world, Barracuda.NNModel model, Unity.AI.MLAgents.InferenceDevice inferenceDevice = 0);
-        [System.Runtime.CompilerServices.Extension] public static void SubscribeWorldWithBarracudaModelForceNoCommunication<TH>(Unity.AI.MLAgents.MLAgentsWorldSystem system, string policyId, Unity.AI.MLAgents.MLAgentsWorld world, Barracuda.NNModel model, Unity.AI.MLAgents.InferenceDevice inferenceDevice = 0);
+        [System.Runtime.CompilerServices.Extension] public static void SubscribeWorldWithBarracudaModel(Unity.AI.MLAgents.MLAgentsSystem system, string policyId, Unity.AI.MLAgents.MLAgentsWorld world, Barracuda.NNModel model, Unity.AI.MLAgents.InferenceDevice inferenceDevice = 0);
+        [System.Runtime.CompilerServices.Extension] public static void SubscribeWorldWithBarracudaModelForceNoCommunication<TH>(Unity.AI.MLAgents.MLAgentsSystem system, string policyId, Unity.AI.MLAgents.MLAgentsWorld world, Barracuda.NNModel model, Unity.AI.MLAgents.InferenceDevice inferenceDevice = 0);
     }
 
     public struct DecisionRequest
@@ -35,8 +35,8 @@ namespace Unity.AI.MLAgents
 
     [System.Runtime.CompilerServices.Extension] public static class HeristicWorldProcessorRegistringExtension
     {
-        [System.Runtime.CompilerServices.Extension] public static void SubscribeWorldWithHeuristic<TH>(Unity.AI.MLAgents.MLAgentsWorldSystem system, string policyId, Unity.AI.MLAgents.MLAgentsWorld world, System.Func<TH> heuristic) where TH : System.ValueType, new();
-        [System.Runtime.CompilerServices.Extension] public static void SubscribeWorldWithHeuristicForceNoCommunication<TH>(Unity.AI.MLAgents.MLAgentsWorldSystem system, string policyId, Unity.AI.MLAgents.MLAgentsWorld world, System.Func<TH> heuristic) where TH : System.ValueType, new();
+        [System.Runtime.CompilerServices.Extension] public static void SubscribeWorldWithHeuristic<TH>(Unity.AI.MLAgents.MLAgentsSystem system, string policyId, Unity.AI.MLAgents.MLAgentsWorld world, System.Func<TH> heuristic) where TH : System.ValueType, new();
+        [System.Runtime.CompilerServices.Extension] public static void SubscribeWorldWithHeuristicForceNoCommunication<TH>(Unity.AI.MLAgents.MLAgentsSystem system, string policyId, Unity.AI.MLAgents.MLAgentsWorld world, System.Func<TH> heuristic) where TH : System.ValueType, new();
     }
 
     [Unity.Jobs.LowLevel.Unsafe.JobProducerType(typeof(Unity.AI.MLAgents.IActuatorJobExtensions.ActuatorDataJobProcess<>))] public interface IActuatorJob
@@ -69,10 +69,10 @@ namespace Unity.AI.MLAgents
         public Unity.AI.MLAgents.DecisionRequest RequestDecision(Unity.Entities.Entity entity);
     }
 
-    public class MLAgentsWorldSystem : Unity.Entities.JobComponentSystem
+    public class MLAgentsSystem : Unity.Entities.JobComponentSystem
     {
         public Unity.AI.MLAgents.SideChannels.IFloatProperties FloatProperties;
-        public MLAgentsWorldSystem() {}
+        public MLAgentsSystem() {}
         public Unity.Jobs.JobHandle ManualUpdate(Unity.Jobs.JobHandle inputDeps);
         protected virtual void OnCreate();
         protected virtual void OnDestroy();

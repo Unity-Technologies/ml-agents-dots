@@ -7,7 +7,7 @@ Another approach to designing ml-agents-dots would be to mimic typical API used 
 The user would access the `MLAgentsWorld` in the main thread :
 
 ```csharp
-var sys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
+var sys = World.Active.GetOrCreateSystem<MLAgentsSystem>();
 
 var world = new MLAgentsWorld(
   100,                              // The maximum number of agents that can request a decision per step

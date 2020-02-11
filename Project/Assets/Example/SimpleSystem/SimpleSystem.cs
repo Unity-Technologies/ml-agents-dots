@@ -12,11 +12,11 @@ using Unity.AI.MLAgents;
 
 
 // [UpdateInGroup(typeof(SimulationSystemGroup))]
-// [UpdateAfter(typeof(MLAgentsWorldSystem))]
+// [UpdateAfter(typeof(MLAgentsSystem))]
 [DisableAutoCreation]
 public class SimpleSystem : JobComponentSystem
 {
-    private MLAgentsWorldSystem sys;
+    private MLAgentsSystem sys;
     private MLAgentsWorld world;
     private NativeArray<Entity> entities;
     private Camera camera;
@@ -28,7 +28,7 @@ public class SimpleSystem : JobComponentSystem
     protected override void OnCreate()
     {
         Application.targetFrameRate = -1;
-        sys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
+        sys = World.Active.GetOrCreateSystem<MLAgentsSystem>();
 
         world = new MLAgentsWorld(N_Agents, ActionType.DISCRETE, new int3[] { new int3(3, 0, 0), new int3(84, 84, 3) }, 2, new int[] { 2, 3 });
         sys.SubscribeWorldWithHeuristic("test", world, () => new int2(1, 1));

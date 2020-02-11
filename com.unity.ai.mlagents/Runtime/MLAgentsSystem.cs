@@ -11,7 +11,7 @@ using UnityEditor;
 namespace Unity.AI.MLAgents
 {
     // [UpdateInGroup(typeof(SimulationSystemGroup))]
-    public class MLAgentsWorldSystem : JobComponentSystem // Should this be a ISimulation from Unity.Physics ?
+    public class MLAgentsSystem : JobComponentSystem // Should this be a ISimulation from Unity.Physics ?
     {
         private JobHandle dependencies;
         private JobHandle FinalJobHandle;
@@ -32,6 +32,7 @@ namespace Unity.AI.MLAgents
         public IFloatProperties FloatProperties;
         private SideChannel[] m_SideChannels;
 
+        // Need to find a way to deregister ?
         public void SubscribeWorld(string policyId, MLAgentsWorld world, IWorldProcessor fallbackWorldProcessor = null, bool communicate = true)
         {
             var nativePolicyId = new NativeString64(policyId);

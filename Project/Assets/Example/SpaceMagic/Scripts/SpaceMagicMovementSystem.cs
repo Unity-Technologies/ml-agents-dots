@@ -83,7 +83,7 @@ public class SpaceMagicMovementSystem : JobComponentSystem
 
     protected override void OnCreate()
     {
-        var sys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
+        var sys = World.Active.GetOrCreateSystem<MLAgentsSystem>();
         world = new MLAgentsWorld(10001, ActionType.CONTINUOUS, new int3[] { new int3(3, 0, 0) }, 3);
         sys.SubscribeWorldWithHeuristic("SpaceMagic", world, () =>
         {

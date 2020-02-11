@@ -95,12 +95,12 @@ public class BallSystem : JobComponentSystem
     }
 
     public MLAgentsWorld world;
-    MLAgentsWorldSystem sys;
+    MLAgentsSystem sys;
     int counter;
 
     protected override void OnCreate()
     {
-        sys = World.Active.GetOrCreateSystem<MLAgentsWorldSystem>();
+        sys = World.Active.GetOrCreateSystem<MLAgentsSystem>();
         // world = new MLAgentsWorld(100, ActionType.CONTINUOUS, new int3[] { new int3(4, 0, 0), new int3(3, 0, 0) }, 2);
         // sys.SubscribeWorldWithHeuristic("3DBallDOTS", world, () =>
         // {

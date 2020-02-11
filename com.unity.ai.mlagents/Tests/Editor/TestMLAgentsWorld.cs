@@ -76,7 +76,7 @@ namespace Unity.AI.MLAgents.Tests.Editor
         [Test]
         public void TestManualDecisionSteppingWithHeuristic()
         {
-            var system = ECSWorld.GetOrCreateSystem<MLAgentsWorldSystem>();
+            var system = ECSWorld.GetOrCreateSystem<MLAgentsSystem>();
             var world = new MLAgentsWorld(
                 20,
                 ActionType.DISCRETE,
