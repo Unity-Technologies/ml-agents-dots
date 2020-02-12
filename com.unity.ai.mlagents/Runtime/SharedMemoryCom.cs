@@ -66,7 +66,16 @@ namespace Unity.AI.MLAgents
                 throw new MLAgentsException("The requested file for shared memory communication does not exist.");
             }
 
-            var mmf = MemoryMappedFile.CreateFromFile(path, FileMode.Open);
+            long length = new System.IO.FileInfo(path).Length;
+            var mmf = MemoryMappedFile.CreateFromFile(
+                File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite),
+                null,
+                length,
+                MemoryMappedFileAccess.ReadWrite,
+                HandleInheritability.None,
+                false
+                );
+            UnityEngine.Debug.Log("Readched here");
             // This first file created should only contain the version id and the total file capacity
             accessor = mmf.CreateViewAccessor(0, 8, MemoryMappedFileAccess.ReadWrite);
             var capacity = accessor.ReadInt32(k_FileLengthOffset);
@@ -154,7 +163,15 @@ namespace Unity.AI.MLAgents
                 fs.Write(new byte[newTotalCapacity], 0, newTotalCapacity);
             }
 
-            var mmf = MemoryMappedFile.CreateFromFile(newFilePath, FileMode.Open);
+            long length = new System.IO.FileInfo(newFilePath).Length;
+            var mmf = MemoryMappedFile.CreateFromFile(
+                File.Open(newFilePath, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite),
+                null,
+                length,
+                MemoryMappedFileAccess.ReadWrite,
+                HandleInheritability.None,
+                false
+                );
             var newAccessor = mmf.CreateViewAccessor(0, newTotalCapacity, MemoryMappedFileAccess.ReadWrite);
             mmf.Dispose();
 
