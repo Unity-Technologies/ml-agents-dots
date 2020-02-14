@@ -30,6 +30,7 @@ public struct AngularAcceleration : IComponentData
     public float2 Value;
 }
 
+[DisableAutoCreation]
 public class BallSystem : JobComponentSystem
 {
     private struct RotateJob : IActuatorJob

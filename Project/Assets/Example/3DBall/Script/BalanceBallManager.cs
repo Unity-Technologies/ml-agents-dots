@@ -10,10 +10,6 @@ using Unity.AI.MLAgents;
 public class BalanceBallManager : MonoBehaviour
 {
     public MLAgentsWorldSpecs MyWorldSpecs;
-    [Space]
-    [Space]
-    [Space]
-
 
     private EntityManager manager;
     public GameObject prefabPlatform;

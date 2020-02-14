@@ -3,6 +3,7 @@ using Barracuda;
 using UnityEditor;
 using UnityEngine;
 using System.Reflection;
+using System.Collections.Generic;
 
 #if CUSTOM_EDITOR
 
@@ -31,16 +32,25 @@ namespace Unity.AI.MLAgents.Editor
         // The height of a line in the Unity Inspectors
         const float k_LineHeight = 21f;
         const float k_LabelHeight = 18f;
-        const float k_WarningHeight = 27f;
+        const float k_WarningBoxHeight = 36f;
+        const float k_WarningLineHeight = 39f;
+
+        static List<string> m_Warnings = new List<string>();
+
+        float m_TotalHeight=0f;
 
         /// <inheritdoc />
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
+            UpdateWarnings(property);
+
             var nbLines = 0;
             nbLines += GetHeightObservationShape(property);
             nbLines += GetHeightDiscreteAction(property);
             nbLines += 7; // TODO : COMPUTE
-            return k_LineHeight * nbLines + k_WarningHeight * GetHeightWarnings(property) + 9f;
+            m_TotalHeight = k_LineHeight * nbLines + k_WarningLineHeight * GetHeightWarnings(property);
+
+            return m_TotalHeight + 6f;
         }
 
         /// <inheritdoc />
@@ -51,10 +61,14 @@ namespace Unity.AI.MLAgents.Editor
             position.height = k_LabelHeight;
             EditorGUI.BeginProperty(position, label, property);
             
+            EditorGUI.DrawRect(
+                new Rect(position.x-3f, position.y, position.width + 6f, m_TotalHeight), 
+                new Color(0f, 0f, 0f, 0.1f));
 
             EditorGUI.LabelField(position, "ML-Agents World Specs : "+label.text);
             position.y += k_LineHeight;
             EditorGUI.indentLevel++;
+
             // Name
             EditorGUI.PropertyField(position,
                 property.FindPropertyRelative(SpecsPropertyNames.k_Name),
@@ -98,10 +112,10 @@ namespace Unity.AI.MLAgents.Editor
             position.y += k_LineHeight;
 
             // Draw Warnings
-            position.height = k_WarningHeight;
+            position.height = k_WarningBoxHeight;
             DrawWarnings(position, property);
             position.y += k_LineHeight * GetHeightWarnings(property);
-            position.height = k_LabelHeight;
+            position.height = k_LineHeight;
 
             EditorGUI.EndProperty();
             EditorGUI.indentLevel = indent;
@@ -179,20 +193,51 @@ namespace Unity.AI.MLAgents.Editor
 
         static void DrawWarnings(Rect position, SerializedProperty property)
         {
-            var model = GetValue<NNModel>(property.FindPropertyRelative(SpecsPropertyNames.k_Model));
-            if (model == null){
-                EditorGUI.HelpBox(position, "No model preset (can still train)", MessageType.Warning);
-                position.y += k_WarningHeight;
+            foreach(string warning in m_Warnings){
+                EditorGUI.HelpBox(position, warning, MessageType.Warning);
+                position.y += k_WarningLineHeight;
             }
         }
 
         static int GetHeightWarnings(SerializedProperty property){
-            var result = 0;
+            return m_Warnings.Count;
+        }
+
+        static void UpdateWarnings(SerializedProperty property){
+            m_Warnings.Clear();
+
+            // Name not empty
+            var nameProperty = property.FindPropertyRelative(SpecsPropertyNames.k_Name);
+            var name = GetValue<string>(nameProperty);
+            if (name == ""){
+                m_Warnings.Add("Your World must have a non-empty name");
+            }
+
+            // Max number of agents is not zero
+            var nAgentsProperty = property.FindPropertyRelative(SpecsPropertyNames.k_NumberAgents);
+            var nAgents = GetValue<int>(nAgentsProperty);
+            if (nAgents == 0){
+                m_Warnings.Add("Your World must have a non-zero maximum number of Agents");
+            }
+
+            // At least one observation
+            var observationShapes = property.FindPropertyRelative(SpecsPropertyNames.k_ObservationShapes);
+            if (observationShapes.arraySize == 0){
+                m_Warnings.Add("Your World must have at least one observation");
+            }
+
+            // Action Size is not zero
+            var actionSizeProperty = property.FindPropertyRelative(SpecsPropertyNames.k_ActionSize);
+            var actionSize = GetValue<int>(actionSizeProperty);
+            if (actionSize == 0){
+                m_Warnings.Add("Your World must have non-zero action size");
+            }
+
+            //Model is not empty
             var model = GetValue<NNModel>(property.FindPropertyRelative(SpecsPropertyNames.k_Model));
             if (model == null){
-                result += 1;
+                m_Warnings.Add("No model preset (can still train)");
             }
-            return result;
         }
 
         static T GetValue<T>(SerializedProperty property)

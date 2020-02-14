@@ -121,7 +121,7 @@ public class SpaceMagicMovementSystem : JobComponentSystem
                 Random.Range(-1f, 1f),
                 Random.Range(-1f, 1f))
         };
-
+inputDeps.Complete();
         inputDeps = accJob.Schedule(world, inputDeps);
 
         inputDeps = moveJob.Schedule(this, inputDeps);
