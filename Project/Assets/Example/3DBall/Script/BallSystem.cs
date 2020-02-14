@@ -30,7 +30,6 @@ public struct AngularAcceleration : IComponentData
     public float2 Value;
 }
 
-[DisableAutoCreation]
 public class BallSystem : JobComponentSystem
 {
     private struct RotateJob : IActuatorJob
@@ -103,11 +102,14 @@ public class BallSystem : JobComponentSystem
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
 
-
         inputDeps = new BallDropped
         {
             ComponentDataFromEntity = GetComponentDataFromEntity<BallData>(isReadOnly: false)
         }.Schedule(this, inputDeps);
+
+        if (!world.IsCreated){
+            return inputDeps;
+        }
 
         var senseJob = new MovePlatform
         {
