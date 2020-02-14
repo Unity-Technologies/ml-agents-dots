@@ -9,8 +9,8 @@ using System.Collections.Generic;
 
 namespace Unity.AI.MLAgents.Editor
 {
-
-    internal static class SpecsPropertyNames{
+    internal static class SpecsPropertyNames
+    {
         public const string k_Name = "Name";
         public const string k_NumberAgents = "NumberAgents";
         public const string k_ActionType = "ActionType";
@@ -37,7 +37,7 @@ namespace Unity.AI.MLAgents.Editor
 
         static List<string> m_Warnings = new List<string>();
 
-        float m_TotalHeight=0f;
+        float m_TotalHeight = 0f;
 
         /// <inheritdoc />
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
@@ -60,12 +60,12 @@ namespace Unity.AI.MLAgents.Editor
             EditorGUI.indentLevel = 0;
             position.height = k_LabelHeight;
             EditorGUI.BeginProperty(position, label, property);
-            
+
             EditorGUI.DrawRect(
-                new Rect(position.x-3f, position.y, position.width + 6f, m_TotalHeight), 
+                new Rect(position.x - 3f, position.y, position.width + 6f, m_TotalHeight),
                 new Color(0f, 0f, 0f, 0.1f));
 
-            EditorGUI.LabelField(position, "ML-Agents World Specs : "+label.text);
+            EditorGUI.LabelField(position, "ML-Agents World Specs : " + label.text);
             position.y += k_LineHeight;
             EditorGUI.indentLevel++;
 
@@ -76,7 +76,7 @@ namespace Unity.AI.MLAgents.Editor
             position.y += k_LineHeight;
 
             // Number of Agents
-             EditorGUI.PropertyField(position,
+            EditorGUI.PropertyField(position,
                 property.FindPropertyRelative(SpecsPropertyNames.k_NumberAgents),
                 new GUIContent("Number of Agents", "The maximum number of Agents that can request a Decision in the same step"));
             position.y += k_LineHeight;
@@ -131,7 +131,7 @@ namespace Unity.AI.MLAgents.Editor
             {
                 observationShapes.arraySize++;
             }
-            if (GUI.Button(new Rect(position.x + position.width / 2, position.y, position.width / 2, position.height),"Remove"))
+            if (GUI.Button(new Rect(position.x + position.width / 2, position.y, position.width / 2, position.height), "Remove"))
             {
                 observationShapes.arraySize--;
             }
@@ -144,7 +144,6 @@ namespace Unity.AI.MLAgents.Editor
                     new GUIContent(""));
                 position.y += k_LineHeight;
             }
-
         }
 
         static int GetHeightObservationShape(SerializedProperty property)
@@ -168,10 +167,11 @@ namespace Unity.AI.MLAgents.Editor
                 var actionBranchesProperty = property.FindPropertyRelative(SpecsPropertyNames.k_DiscreteActionBranches);
                 actionBranchesProperty.arraySize = actionSize;
 
-                for(int i =0; i < actionSize; i++){
+                for (int i = 0; i < actionSize; i++)
+                {
                     EditorGUI.PropertyField(position,
                         actionBranchesProperty.GetArrayElementAtIndex(i),
-                        new GUIContent("Branch "+i));
+                        new GUIContent("Branch " + i));
                     position.y += k_LineHeight;
                 }
                 EditorGUI.indentLevel--;
@@ -193,49 +193,57 @@ namespace Unity.AI.MLAgents.Editor
 
         static void DrawWarnings(Rect position, SerializedProperty property)
         {
-            foreach(string warning in m_Warnings){
+            foreach (string warning in m_Warnings)
+            {
                 EditorGUI.HelpBox(position, warning, MessageType.Warning);
                 position.y += k_WarningLineHeight;
             }
         }
 
-        static int GetHeightWarnings(SerializedProperty property){
+        static int GetHeightWarnings(SerializedProperty property)
+        {
             return m_Warnings.Count;
         }
 
-        static void UpdateWarnings(SerializedProperty property){
+        static void UpdateWarnings(SerializedProperty property)
+        {
             m_Warnings.Clear();
 
             // Name not empty
             var nameProperty = property.FindPropertyRelative(SpecsPropertyNames.k_Name);
             var name = GetValue<string>(nameProperty);
-            if (name == ""){
+            if (name == "")
+            {
                 m_Warnings.Add("Your World must have a non-empty name");
             }
 
             // Max number of agents is not zero
             var nAgentsProperty = property.FindPropertyRelative(SpecsPropertyNames.k_NumberAgents);
             var nAgents = GetValue<int>(nAgentsProperty);
-            if (nAgents == 0){
+            if (nAgents == 0)
+            {
                 m_Warnings.Add("Your World must have a non-zero maximum number of Agents");
             }
 
             // At least one observation
             var observationShapes = property.FindPropertyRelative(SpecsPropertyNames.k_ObservationShapes);
-            if (observationShapes.arraySize == 0){
+            if (observationShapes.arraySize == 0)
+            {
                 m_Warnings.Add("Your World must have at least one observation");
             }
 
             // Action Size is not zero
             var actionSizeProperty = property.FindPropertyRelative(SpecsPropertyNames.k_ActionSize);
             var actionSize = GetValue<int>(actionSizeProperty);
-            if (actionSize == 0){
+            if (actionSize == 0)
+            {
                 m_Warnings.Add("Your World must have non-zero action size");
             }
 
             //Model is not empty
             var model = GetValue<NNModel>(property.FindPropertyRelative(SpecsPropertyNames.k_Model));
-            if (model == null){
+            if (model == null)
+            {
                 m_Warnings.Add("No model preset (can still train)");
             }
         }
@@ -243,107 +251,16 @@ namespace Unity.AI.MLAgents.Editor
         static T GetValue<T>(SerializedProperty property)
         {
             object obj = property.serializedObject.targetObject;
-    
+
             FieldInfo field = null;
-            foreach( var path in property.propertyPath.Split( '.' ) )
+            foreach (var path in property.propertyPath.Split('.'))
             {
                 var type = obj.GetType();
-                field = type.GetField( path );
-                obj = field.GetValue( obj );
+                field = type.GetField(path);
+                obj = field.GetValue(obj);
             }
             return (T)obj;
         }
-
-        // /// <summary>
-        // /// Draws the Vector Actions parameters for the Brain Parameters
-        // /// </summary>
-        // /// <param name="position">Rectangle on the screen to use for the property GUI.</param>
-        // /// <param name="property">The SerializedProperty of the BrainParameters
-        // /// to make the custom GUI for.</param>
-        // static void DrawVectorAction(Rect position, SerializedProperty property)
-        // {
-        //     EditorGUI.LabelField(position, "Vector Action");
-        //     position.y += k_LineHeight;
-        //     EditorGUI.indentLevel++;
-        //     var bpVectorActionType = property.FindPropertyRelative(k_ActionTypePropName);
-        //     EditorGUI.PropertyField(
-        //         position,
-        //         bpVectorActionType,
-        //         new GUIContent("Space Type",
-        //             "Corresponds to whether state vector contains  a single integer (Discrete) " +
-        //             "or a series of real-valued floats (Continuous)."));
-        //     position.y += k_LineHeight;
-        //     if (bpVectorActionType.enumValueIndex == 1)
-        //     {
-        //         DrawContinuousVectorAction(position, property);
-        //     }
-        //     else
-        //     {
-        //         DrawDiscreteVectorAction(position, property);
-        //     }
-        // }
-
-        // /// <summary>
-        // /// Draws the Continuous Vector Actions parameters for the Brain Parameters
-        // /// </summary>
-        // /// <param name="position">Rectangle on the screen to use for the property GUI.</param>
-        // /// <param name="property">The SerializedProperty of the BrainParameters
-        // /// to make the custom GUI for.</param>
-        // static void DrawContinuousVectorAction(Rect position, SerializedProperty property)
-        // {
-        //     var vecActionSize = property.FindPropertyRelative(k_ActionSizePropName);
-        //     vecActionSize.arraySize = 1;
-        //     var continuousActionSize =
-        //         vecActionSize.GetArrayElementAtIndex(0);
-        //     EditorGUI.PropertyField(
-        //         position,
-        //         continuousActionSize,
-        //         new GUIContent("Space Size", "Length of continuous action vector."));
-        // }
-
-        // /// <summary>
-        // /// Draws the Discrete Vector Actions parameters for the Brain Parameters
-        // /// </summary>
-        // /// <param name="position">Rectangle on the screen to use for the property GUI.</param>
-        // /// <param name="property">The SerializedProperty of the BrainParameters
-        // /// to make the custom GUI for.</param>
-        // static void DrawDiscreteVectorAction(Rect position, SerializedProperty property)
-        // {
-        //     var vecActionSize = property.FindPropertyRelative(k_ActionSizePropName);
-        //     vecActionSize.arraySize = EditorGUI.IntField(
-        //         position, "Branches Size", vecActionSize.arraySize);
-        //     position.y += k_LineHeight;
-        //     position.x += 20;
-        //     position.width -= 20;
-        //     for (var branchIndex = 0;
-        //          branchIndex < vecActionSize.arraySize;
-        //          branchIndex++)
-        //     {
-        //         var branchActionSize =
-        //             vecActionSize.GetArrayElementAtIndex(branchIndex);
-
-        //         EditorGUI.PropertyField(
-        //             position,
-        //             branchActionSize,
-        //             new GUIContent("Branch " + branchIndex + " Size",
-        //                 "Number of possible actions for the branch number " + branchIndex + "."));
-        //         position.y += k_LineHeight;
-        //     }
-        // }
-
-        // /// <summary>
-        // /// The Height required to draw the Vector Action parameters
-        // /// </summary>
-        // /// <returns>The height of the drawer of the Vector Action </returns>
-        // static float GetHeightDrawVectorAction(SerializedProperty property)
-        // {
-        //     var actionSize = 2 + property.FindPropertyRelative(k_ActionSizePropName).arraySize;
-        //     if (property.FindPropertyRelative(k_ActionTypePropName).enumValueIndex == 0)
-        //     {
-        //         actionSize += 1;
-        //     }
-        //     return actionSize * k_LineHeight;
-        // }
     }
 }
 #endif

@@ -2,10 +2,11 @@ using Unity.Mathematics;
 using Unity.Entities;
 using Barracuda;
 
-namespace Unity.AI.MLAgents{
-    
+namespace Unity.AI.MLAgents
+{
     [System.Serializable]
-    public struct MLAgentsWorldSpecs{
+    public struct MLAgentsWorldSpecs
+    {
         public string Name;
 
         public int NumberAgents;
@@ -17,21 +18,22 @@ namespace Unity.AI.MLAgents{
         public NNModel Model;
         public InferenceDevice InferenceDevice;
 
-        public MLAgentsWorld GenerateWorld(){
+        public MLAgentsWorld GenerateWorld()
+        {
             return new MLAgentsWorld(
                 NumberAgents,
                 ActionType,
                 ObservationShapes,
                 ActionSize,
                 DiscreteActionBranches
-                );
+            );
         }
 
-        public MLAgentsWorld GenerateAndRegisterWorld(){
+        public MLAgentsWorld GenerateAndRegisterWorld()
+        {
             var world = GenerateWorld();
             world.SubscribeWorldWithBarracudaModel(Name, Model, InferenceDevice);
             return world;
         }
     }
-
 }

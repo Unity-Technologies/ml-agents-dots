@@ -185,5 +185,4 @@ namespace Unity.AI.MLAgents.Tests.Editor
             Academy.Instance.Dispose();
         }
     }
-
 }

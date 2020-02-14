@@ -14,7 +14,8 @@ namespace Unity.AI.MLAgents
 
     public struct MLAgentsWorld : IDisposable
     {
-        public bool IsCreated{
+        public bool IsCreated
+        {
             get { return AgentIds.IsCreated;}
         }
 

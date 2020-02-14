@@ -65,7 +65,7 @@ namespace Unity.AI.MLAgents
                 MemoryMappedFileAccess.ReadWrite,
                 HandleInheritability.None,
                 false
-                );
+            );
             // This first file created should only contain the version id and the total file capacity
             accessor = mmf.CreateViewAccessor(0, 8, MemoryMappedFileAccess.ReadWrite);
             var capacity = accessor.ReadInt32(k_FileLengthOffset);
@@ -161,7 +161,7 @@ namespace Unity.AI.MLAgents
                 MemoryMappedFileAccess.ReadWrite,
                 HandleInheritability.None,
                 false
-                );
+            );
             var newAccessor = mmf.CreateViewAccessor(0, newTotalCapacity, MemoryMappedFileAccess.ReadWrite);
             mmf.Dispose();
 

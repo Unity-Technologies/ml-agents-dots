@@ -33,7 +33,7 @@ namespace Unity.AI.MLAgents
         private Func<T> heuristic;
         private MLAgentsWorld world;
 
-        public bool IsConnected{get{return false;}}
+        public bool IsConnected {get {return false;}}
 
         internal HeuristicWorldProcessor(MLAgentsWorld world, Func<T> heuristic)
         {

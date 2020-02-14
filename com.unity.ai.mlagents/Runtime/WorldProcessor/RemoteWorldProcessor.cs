@@ -11,7 +11,7 @@ namespace Unity.AI.MLAgents
         private SharedMemoryCom com;
         private NativeString64 policyId;
 
-        public bool IsConnected{get{return true;}}
+        public bool IsConnected {get {return true;}}
 
         internal RemoteWorldProcessor(MLAgentsWorld world, string policyId, SharedMemoryCom com)
         {

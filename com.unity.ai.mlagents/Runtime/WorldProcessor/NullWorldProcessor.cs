@@ -9,7 +9,7 @@ namespace Unity.AI.MLAgents
     {
         private MLAgentsWorld world;
 
-        public bool IsConnected{get{return false;}}
+        public bool IsConnected {get {return false;}}
 
         internal NullWorldProcessor(MLAgentsWorld world)
         {

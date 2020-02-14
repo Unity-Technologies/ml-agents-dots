@@ -52,7 +52,7 @@ namespace Unity.AI.MLAgents
         private IWorker _engine;
         private const bool _verbose = false;
 
-        public bool IsConnected{get{return false;}}
+        public bool IsConnected {get {return false;}}
 
         internal BarracudaWorldProcessor(MLAgentsWorld world, NNModel model, InferenceDevice inferenceDevice)
         {

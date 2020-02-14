@@ -15,8 +15,7 @@ namespace Unity.AI.MLAgents
 {
     public class Academy : IDisposable
     {
-
-#region Singleton
+        #region Singleton
         // Lazy initializer pattern, see https://csharpindepth.com/articles/singleton#lazy
         static Lazy<Academy> s_Lazy = new Lazy<Academy>(() => new Academy());
 
@@ -38,8 +37,9 @@ namespace Unity.AI.MLAgents
             // Application.quitting += Dispose;
             LazyInitialize();
         }
+
         bool m_Initialized = false;
-#endregion
+        #endregion
 
         private bool FirstMessageReceived;
 
@@ -52,7 +52,7 @@ namespace Unity.AI.MLAgents
 
         // Signals that the Academy has been reset by the training process
         // If you have jobs Scheduled but not completed when this event is called,
-        // If is recommended to Complete them. 
+        // If is recommended to Complete them.
         public event Action OnEnvironmentReset;
 
         // Need to find a way to deregister ?
@@ -73,7 +73,6 @@ namespace Unity.AI.MLAgents
             else
             {
                 processor = new NullWorldProcessor(world);
-                
             }
             // Array.Resize<IWorldProcessor>(ref WorldProcessors, WorldProcessors.Length + 1);
             // WorldProcessors[WorldProcessors.Length - 1] = processor;
@@ -138,17 +137,20 @@ namespace Unity.AI.MLAgents
                 return;
             }
             // If no agents requested a decision return
-            if (world.AgentCounter.Count == 0){
+            if (world.AgentCounter.Count == 0)
+            {
                 return;
             }
 
             // Ensure the world does not have lingering actions:
-            if (world.ActionCounter.Count != 0){
+            if (world.ActionCounter.Count != 0)
+            {
                 throw new MLAgentsException("TODO : ActionCount is 0");
             }
 
             var processor = WorldToProcessor[world];
-            if (processor == null){
+            if (processor == null)
+            {
                 // Raise error
                 throw new MLAgentsException("TODO : Null processor");
             }
@@ -157,7 +159,7 @@ namespace Unity.AI.MLAgents
 
             if (com != null && processor.IsConnected)
             {
-#region BLOCKING_ALL_THREADS
+                #region BLOCKING_ALL_THREADS
                 if (!FirstMessageReceived)
                 {
                     // Unity must call advance to read the first message of Python.
@@ -175,7 +177,7 @@ namespace Unity.AI.MLAgents
                     world.ResetDecisionsCounter();
                     SideChannelUtils.ProcessSideChannelData(m_SideChannels, com.ReadAndClearSideChannelData());
                 }
-#endregion
+                #endregion
             }
             else
             {
@@ -208,7 +210,6 @@ namespace Unity.AI.MLAgents
 
         private void ResetAllWorlds() // This is problematic because it affects all worlds and is not thread safe...
         {
-            
             foreach (var w in WorldToProcessor.Keys)
             {
                 w.ResetActionsCounter();
@@ -221,7 +222,6 @@ namespace Unity.AI.MLAgents
 
         private void CheckWorldNotPresent(NativeString64 policyId, int worldHash)
         {
-
             if (RegisteredWorldHashes.Contains(worldHash))
             {
                 throw new MLAgentsException("The MLAgentsWorld has already been subscribed ");
