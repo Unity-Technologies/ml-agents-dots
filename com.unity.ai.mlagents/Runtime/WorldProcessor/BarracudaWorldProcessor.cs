@@ -15,9 +15,8 @@ namespace Unity.AI.MLAgents
     public static class BarracudaWorldProcessorRegistringExtension
     {
         public static void SubscribeWorldWithBarracudaModel(
-            this MLAgentsSystem system,
+            this MLAgentsWorld world,
             string policyId,
-            MLAgentsWorld world,
             NNModel model,
             InferenceDevice inferenceDevice = InferenceDevice.CPU
         )
@@ -25,24 +24,23 @@ namespace Unity.AI.MLAgents
             if (model != null)
             {
                 var worldProcessor = new BarracudaWorldProcessor(world, model, inferenceDevice);
-                system.SubscribeWorld(policyId, world, worldProcessor, true);
+                Academy.Instance.SubscribeWorld(policyId, world, worldProcessor, true);
             }
             else
             {
-                system.SubscribeWorld(policyId, world, null, true);
+                Academy.Instance.SubscribeWorld(policyId, world, null, true);
             }
         }
 
         public static void SubscribeWorldWithBarracudaModelForceNoCommunication<TH>(
-            this MLAgentsSystem system,
+            this MLAgentsWorld world,
             string policyId,
-            MLAgentsWorld world,
             NNModel model,
             InferenceDevice inferenceDevice = InferenceDevice.CPU
         )
         {
             var worldProcessor = new BarracudaWorldProcessor(world, model, inferenceDevice);
-            system.SubscribeWorld(policyId, world, worldProcessor, false);
+            Academy.Instance.SubscribeWorld(policyId, world, worldProcessor, false);
         }
     }
     internal unsafe class BarracudaWorldProcessor : IWorldProcessor
@@ -53,6 +51,8 @@ namespace Unity.AI.MLAgents
         private Model _barracudaModel;
         private IWorker _engine;
         private const bool _verbose = false;
+
+        public bool IsConnected {get {return false;}}
 
         internal BarracudaWorldProcessor(MLAgentsWorld world, NNModel model, InferenceDevice inferenceDevice)
         {
@@ -70,7 +70,7 @@ namespace Unity.AI.MLAgents
                 executionDevice, _barracudaModel, _verbose);
         }
 
-        public void ProcessWorld()
+        public RemoteCommand ProcessWorld()
         {
             // FOR VECTOR OBS ONLY
             // For Continuois control only
@@ -125,25 +125,14 @@ namespace Unity.AI.MLAgents
                     world.ContinuousActuators.Slice(0, count).CopyFrom(dest);
                     break;
                 case ActionType.DISCRETE:
-                    // The data copied was float data
-                    int[] actionData = Array.ConvertAll(actuatorT.data.Download(world.AgentCounter.Count * world.ActionSize), x => (int)x);
-                    world.DiscreteActuators.Slice(0, world.AgentCounter.Count * world.ActionSize).CopyFrom(actionData);
+                    throw new MLAgentsException("TODO : Inference only works for continuous control and vector obs");
                     break;
                 default:
                     break;
             }
             actuatorT.Dispose();
 
-
-            // Mark the world as done processing
-            world.SetActionReady();
-            world.ResetDecisionsCounter();
-        }
-
-        public void ResetWorld()
-        {
-            world.ResetActionsCounter();
-            world.ResetDecisionsCounter();
+            return RemoteCommand.DEFAULT;
         }
 
         public void Dispose()

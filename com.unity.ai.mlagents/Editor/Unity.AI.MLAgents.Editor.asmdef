@@ -1,0 +1,19 @@
+{
+    "name": "Unity.AI.MLAgents.Editor",
+    "references": [
+        "Unity.Mathematics",
+        "Barracuda",
+        "Unity.AI.MLAgents"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

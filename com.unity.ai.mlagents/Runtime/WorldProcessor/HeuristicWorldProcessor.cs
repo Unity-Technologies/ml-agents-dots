@@ -8,25 +8,23 @@ namespace Unity.AI.MLAgents
     public static class HeristicWorldProcessorRegistringExtension
     {
         public static void SubscribeWorldWithHeuristic<TH>(
-            this MLAgentsSystem system,
+            this MLAgentsWorld world,
             string policyId,
-            MLAgentsWorld world,
             Func<TH> heuristic
         ) where TH : struct
         {
             var worldProcessor = new HeuristicWorldProcessor<TH>(world, heuristic);
-            system.SubscribeWorld(policyId, world, worldProcessor, true);
+            Academy.Instance.SubscribeWorld(policyId, world, worldProcessor, true);
         }
 
         public static void SubscribeWorldWithHeuristicForceNoCommunication<TH>(
-            this MLAgentsSystem system,
+            this MLAgentsWorld world,
             string policyId,
-            MLAgentsWorld world,
             Func<TH> heuristic
         ) where TH : struct
         {
             var worldProcessor = new HeuristicWorldProcessor<TH>(world, heuristic);
-            system.SubscribeWorld(policyId, world, worldProcessor, false);
+            Academy.Instance.SubscribeWorld(policyId, world, worldProcessor, false);
         }
     }
 
@@ -34,6 +32,9 @@ namespace Unity.AI.MLAgents
     {
         private Func<T> heuristic;
         private MLAgentsWorld world;
+
+        public bool IsConnected {get {return false;}}
+
         internal HeuristicWorldProcessor(MLAgentsWorld world, Func<T> heuristic)
         {
             this.world = world;
@@ -46,7 +47,7 @@ namespace Unity.AI.MLAgents
             }
         }
 
-        public void ProcessWorld()
+        public RemoteCommand ProcessWorld()
         {
             T action = heuristic.Invoke();
             var totalCount = world.AgentCounter.Count;
@@ -68,14 +69,7 @@ namespace Unity.AI.MLAgents
                     s[i] = action;
                 }
             }
-            world.SetActionReady();
-            world.ResetDecisionsCounter();
-        }
-
-        public void ResetWorld()
-        {
-            world.ResetActionsCounter();
-            world.ResetDecisionsCounter();
+            return RemoteCommand.DEFAULT;
         }
 
         public void Dispose()

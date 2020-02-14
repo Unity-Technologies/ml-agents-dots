@@ -14,6 +14,11 @@ namespace Unity.AI.MLAgents
 
     public struct MLAgentsWorld : IDisposable
     {
+        public bool IsCreated
+        {
+            get { return AgentIds.IsCreated;}
+        }
+
         [ReadOnly] internal NativeArray<int3> SensorShapes;
         [ReadOnly] internal int ActionSize;
         [ReadOnly] internal ActionType ActionType;
@@ -142,6 +147,10 @@ namespace Unity.AI.MLAgents
 
         public void Dispose()
         {
+            if (!IsCreated)
+            {
+                return;
+            }
             SensorShapes.Dispose();
             DiscreteActionBranches.Dispose();
             ObservationOffsets.Dispose();

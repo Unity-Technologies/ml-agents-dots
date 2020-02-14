@@ -23,6 +23,10 @@ namespace Unity.AI.MLAgents
             {
                 throw new MLAgentsException("Action space does not match for Discrete action. Expected " + ActionSize);
             }
+            if (DiscreteActionSlice.Length == 0)
+            {
+                throw new MLAgentsException("No Discrete Action available for world.");
+            }
 #endif
             action = DiscreteActionSlice.SliceConvert<T>()[0];
         }
@@ -33,6 +37,10 @@ namespace Unity.AI.MLAgents
             if (ActionSize != UnsafeUtility.SizeOf<T>() / sizeof(float))
             {
                 throw new MLAgentsException("Action space does not match for Continuous action. Expected " + ActionSize);
+            }
+            if (ContinuousActionSlice.Length == 0)
+            {
+                throw new MLAgentsException("No Continuous Action available for world.");
             }
 #endif
             action = ContinuousActionSlice.SliceConvert<T>()[0];
@@ -52,6 +60,12 @@ namespace Unity.AI.MLAgents
         public static unsafe JobHandle Schedule<T>(this T jobData, MLAgentsWorld mlagentsWorld, JobHandle inputDeps)
             where T : struct, IActuatorJob
         {
+            inputDeps.Complete(); // TODO : FIND A BETTER WAY TO MAKE SURE ALL THE DATA IS IN THE WORLD
+            Academy.Instance.UpdateWorld(mlagentsWorld);
+            if (mlagentsWorld.ActionCounter.Count == 0)
+            {
+                return inputDeps;
+            }
             return ScheduleImpl(jobData, mlagentsWorld, inputDeps);
         }
 

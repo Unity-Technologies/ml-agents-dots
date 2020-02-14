@@ -7,7 +7,7 @@ namespace Unity.AI.MLAgents
 {
     public interface IWorldProcessor : IDisposable
     {
-        void ProcessWorld();
-        void ResetWorld();
+        bool IsConnected {get;}
+        RemoteCommand ProcessWorld();
     }
 }

@@ -1,6 +1,17 @@
 // This file is generated. Do not modify by hand.
 namespace Unity.AI.MLAgents
 {
+    public class Academy : System.IDisposable
+    {
+        public Unity.AI.MLAgents.SideChannels.IFloatProperties FloatProperties;
+        public event System.Action OnEnvironmentReset;
+        public static Unity.AI.MLAgents.Academy Instance { get; }
+        public static bool IsInitialized { get; }
+        public virtual void Dispose();
+        public void SubscribeSideChannel(Unity.AI.MLAgents.SideChannels.SideChannel channel);
+        public void SubscribeWorld(string policyId, Unity.AI.MLAgents.MLAgentsWorld world, Unity.AI.MLAgents.IWorldProcessor fallbackWorldProcessor = default(Unity.AI.MLAgents.IWorldProcessor), bool communicate = True);
+    }
+
     public enum ActionType
     {
         public const Unity.AI.MLAgents.ActionType CONTINUOUS = 1;
@@ -20,8 +31,8 @@ namespace Unity.AI.MLAgents
 
     [System.Runtime.CompilerServices.Extension] public static class BarracudaWorldProcessorRegistringExtension
     {
-        [System.Runtime.CompilerServices.Extension] public static void SubscribeWorldWithBarracudaModel(Unity.AI.MLAgents.MLAgentsSystem system, string policyId, Unity.AI.MLAgents.MLAgentsWorld world, Barracuda.NNModel model, Unity.AI.MLAgents.InferenceDevice inferenceDevice = 0);
-        [System.Runtime.CompilerServices.Extension] public static void SubscribeWorldWithBarracudaModelForceNoCommunication<TH>(Unity.AI.MLAgents.MLAgentsSystem system, string policyId, Unity.AI.MLAgents.MLAgentsWorld world, Barracuda.NNModel model, Unity.AI.MLAgents.InferenceDevice inferenceDevice = 0);
+        [System.Runtime.CompilerServices.Extension] public static void SubscribeWorldWithBarracudaModel(Unity.AI.MLAgents.MLAgentsWorld world, string policyId, Barracuda.NNModel model, Unity.AI.MLAgents.InferenceDevice inferenceDevice = 0);
+        [System.Runtime.CompilerServices.Extension] public static void SubscribeWorldWithBarracudaModelForceNoCommunication<TH>(Unity.AI.MLAgents.MLAgentsWorld world, string policyId, Barracuda.NNModel model, Unity.AI.MLAgents.InferenceDevice inferenceDevice = 0);
     }
 
     public struct DecisionRequest
@@ -35,8 +46,8 @@ namespace Unity.AI.MLAgents
 
     [System.Runtime.CompilerServices.Extension] public static class HeristicWorldProcessorRegistringExtension
     {
-        [System.Runtime.CompilerServices.Extension] public static void SubscribeWorldWithHeuristic<TH>(Unity.AI.MLAgents.MLAgentsSystem system, string policyId, Unity.AI.MLAgents.MLAgentsWorld world, System.Func<TH> heuristic) where TH : System.ValueType, new();
-        [System.Runtime.CompilerServices.Extension] public static void SubscribeWorldWithHeuristicForceNoCommunication<TH>(Unity.AI.MLAgents.MLAgentsSystem system, string policyId, Unity.AI.MLAgents.MLAgentsWorld world, System.Func<TH> heuristic) where TH : System.ValueType, new();
+        [System.Runtime.CompilerServices.Extension] public static void SubscribeWorldWithHeuristic<TH>(Unity.AI.MLAgents.MLAgentsWorld world, string policyId, System.Func<TH> heuristic) where TH : System.ValueType, new();
+        [System.Runtime.CompilerServices.Extension] public static void SubscribeWorldWithHeuristicForceNoCommunication<TH>(Unity.AI.MLAgents.MLAgentsWorld world, string policyId, System.Func<TH> heuristic) where TH : System.ValueType, new();
     }
 
     [Unity.Jobs.LowLevel.Unsafe.JobProducerType(typeof(Unity.AI.MLAgents.IActuatorJobExtensions.ActuatorDataJobProcess<>))] public interface IActuatorJob
@@ -58,28 +69,39 @@ namespace Unity.AI.MLAgents
 
     public interface IWorldProcessor : System.IDisposable
     {
-        public abstract void ProcessWorld();
-        public abstract void ResetWorld();
+        public abstract bool IsConnected { get; }
+        public abstract Unity.AI.MLAgents.RemoteCommand ProcessWorld();
     }
 
     public struct MLAgentsWorld : System.IDisposable
     {
+        public bool IsCreated { get; }
         public MLAgentsWorld(int maximumNumberAgents, Unity.AI.MLAgents.ActionType actionType, Unity.Mathematics.int3[] obsShapes, int actionSize, int[] discreteActionBranches = default(int[])) {}
         public virtual void Dispose();
         public Unity.AI.MLAgents.DecisionRequest RequestDecision(Unity.Entities.Entity entity);
     }
 
-    public class MLAgentsSystem : Unity.Entities.JobComponentSystem
+    public struct MLAgentsWorldSpecs
     {
-        public Unity.AI.MLAgents.SideChannels.IFloatProperties FloatProperties;
-        public MLAgentsSystem() {}
-        public Unity.Jobs.JobHandle ManualUpdate(Unity.Jobs.JobHandle inputDeps);
-        protected virtual void OnCreate();
-        protected virtual void OnDestroy();
-        protected virtual Unity.Jobs.JobHandle OnUpdate(Unity.Jobs.JobHandle inputDeps);
-        public void RegisterDependency(Unity.Jobs.JobHandle handle);
-        public void SubscribeSideChannel(Unity.AI.MLAgents.SideChannels.SideChannel channel);
-        public void SubscribeWorld(string policyId, Unity.AI.MLAgents.MLAgentsWorld world, Unity.AI.MLAgents.IWorldProcessor fallbackWorldProcessor = default(Unity.AI.MLAgents.IWorldProcessor), bool communicate = True);
+        public int ActionSize;
+        public Unity.AI.MLAgents.ActionType ActionType;
+        public int[] DiscreteActionBranches;
+        public Unity.AI.MLAgents.InferenceDevice InferenceDevice;
+        public Barracuda.NNModel Model;
+        public string Name;
+        public int NumberAgents;
+        public Unity.Mathematics.int3[] ObservationShapes;
+        public Unity.AI.MLAgents.MLAgentsWorld GenerateAndRegisterWorld();
+        public Unity.AI.MLAgents.MLAgentsWorld GenerateWorld();
+    }
+
+    public enum RemoteCommand
+    {
+        public const Unity.AI.MLAgents.RemoteCommand CHANGE_FILE = 2;
+        public const Unity.AI.MLAgents.RemoteCommand CLOSE = 3;
+        public const Unity.AI.MLAgents.RemoteCommand DEFAULT = 0;
+        public const Unity.AI.MLAgents.RemoteCommand RESET = 1;
+        public System.SByte value__;
     }
 
     public static class VisualObservationUtility

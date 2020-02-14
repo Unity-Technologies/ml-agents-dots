@@ -76,7 +76,6 @@ namespace Unity.AI.MLAgents.Tests.Editor
         [Test]
         public void TestManualDecisionSteppingWithHeuristic()
         {
-            var system = ECSWorld.GetOrCreateSystem<MLAgentsSystem>();
             var world = new MLAgentsWorld(
                 20,
                 ActionType.DISCRETE,
@@ -84,12 +83,11 @@ namespace Unity.AI.MLAgents.Tests.Editor
                 2,
                 new int[] { 2, 3 });
 
-            system.SubscribeWorldWithHeuristic("test", world, () => new int2(0, 1));
+            world.SubscribeWorldWithHeuristic("test", () => new int2(0, 1));
 
             var entity = entityManager.CreateEntity();
 
             world.RequestDecision(entity);
-            system.ManualUpdate(new JobHandle()).Complete();
 
             var entities = new NativeArray<Entity>(1, Allocator.Persistent);
             var actions = new NativeArray<DiscreteAction_TWO_THREE>(1, Allocator.Persistent);
@@ -111,6 +109,80 @@ namespace Unity.AI.MLAgents.Tests.Editor
             world.Dispose();
             entities.Dispose();
             actions.Dispose();
+            Academy.Instance.Dispose();
+        }
+
+        [Test]
+        public void TestMultiWorld()
+        {
+            var world1 = new MLAgentsWorld(
+                20,
+                ActionType.DISCRETE,
+                new int3[] { new int3(3, 0, 0) },
+                2,
+                new int[] { 2, 3 });
+            var world2 = new MLAgentsWorld(
+                20,
+                ActionType.DISCRETE,
+                new int3[] { new int3(3, 0, 0) },
+                2,
+                new int[] { 2, 3 });
+
+            world1.SubscribeWorldWithHeuristic("test1", () => new DiscreteAction_TWO_THREE
+            {
+                action_ONE = TwoOptionEnum.Option_TWO,
+                action_TWO = ThreeOptionEnum.Option_ONE
+            });
+            world2.SubscribeWorldWithHeuristic("test2", () => new DiscreteAction_TWO_THREE
+            {
+                action_ONE = TwoOptionEnum.Option_ONE,
+                action_TWO = ThreeOptionEnum.Option_TWO
+            });
+
+            var entity = entityManager.CreateEntity();
+
+            world1.RequestDecision(entity);
+            world2.RequestDecision(entity);
+
+            var entities = new NativeArray<Entity>(1, Allocator.Persistent);
+            var actions = new NativeArray<DiscreteAction_TWO_THREE>(1, Allocator.Persistent);
+            var actionJob1 = new SingleActionEnumUpdate
+            {
+                ent = entities,
+                action = actions
+            };
+            actionJob1.Schedule(world1, new JobHandle()).Complete();
+
+            Assert.AreEqual(entity, entities[0]);
+            Assert.AreEqual(new DiscreteAction_TWO_THREE
+            {
+                action_ONE = TwoOptionEnum.Option_TWO,
+                action_TWO = ThreeOptionEnum.Option_ONE
+            }, actions[0]);
+            entities.Dispose();
+            actions.Dispose();
+
+            entities = new NativeArray<Entity>(1, Allocator.Persistent);
+            actions = new NativeArray<DiscreteAction_TWO_THREE>(1, Allocator.Persistent);
+            var actionJob2 = new SingleActionEnumUpdate
+            {
+                ent = entities,
+                action = actions
+            };
+            actionJob2.Schedule(world2, new JobHandle()).Complete();
+
+            Assert.AreEqual(entity, entities[0]);
+            Assert.AreEqual(new DiscreteAction_TWO_THREE
+            {
+                action_ONE = TwoOptionEnum.Option_ONE,
+                action_TWO = ThreeOptionEnum.Option_TWO
+            }, actions[0]);
+            entities.Dispose();
+            actions.Dispose();
+
+            world1.Dispose();
+            world2.Dispose();
+            Academy.Instance.Dispose();
         }
     }
 }

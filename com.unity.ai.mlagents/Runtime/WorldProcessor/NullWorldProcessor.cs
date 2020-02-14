@@ -8,21 +8,17 @@ namespace Unity.AI.MLAgents
     internal class NullWorldProcessor : IWorldProcessor
     {
         private MLAgentsWorld world;
+
+        public bool IsConnected {get {return false;}}
+
         internal NullWorldProcessor(MLAgentsWorld world)
         {
             this.world = world;
         }
 
-        public void ProcessWorld()
+        public RemoteCommand ProcessWorld()
         {
-            world.SetActionReady();
-            world.ResetDecisionsCounter();
-        }
-
-        public void ResetWorld()
-        {
-            world.ResetActionsCounter();
-            world.ResetDecisionsCounter();
+            return RemoteCommand.DEFAULT;
         }
 
         public void Dispose()

@@ -10,8 +10,7 @@ public class RegisterStringLogSideChannel : MonoBehaviour
     {
         stringChannel = new StringLogSideChannel();
 
-        var sys = World.Active.GetOrCreateSystem<MLAgentsSystem>();
-        sys.SubscribeSideChannel(stringChannel);
+        Academy.Instance.SubscribeSideChannel(stringChannel);
 
         Application.logMessageReceived += stringChannel.SendDebugStatementToPython;
     }

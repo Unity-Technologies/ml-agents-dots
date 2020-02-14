@@ -83,7 +83,7 @@ namespace Unity.AI.MLAgents.Tests.Editor
             var sm = new SharedMemoryCom(path1);
 
             var uCommand = sm.Advance();
-            Assert.AreEqual(SharedMemoryCom.PythonCommand.DEFAULT, uCommand);
+            Assert.AreEqual(RemoteCommand.DEFAULT, uCommand);
 
             var w = new MLAgentsWorld(10, ActionType.CONTINUOUS, new int3[1] { new int3(3, 0, 0) }, 3, null);
             for (int i = 0; i < 10; i++)
@@ -95,7 +95,7 @@ namespace Unity.AI.MLAgents.Tests.Editor
 
             var mmf = MemoryMappedFile.CreateFromFile(path1, FileMode.Open);
             var accessor = mmf.CreateViewAccessor(0, INITIAL_FILE_CAPACITY, MemoryMappedFileAccess.ReadWrite);
-            Assert.AreEqual((sbyte)SharedMemoryCom.PythonCommand.CHANGE_FILE, accessor.ReadSByte(9));
+            Assert.AreEqual((sbyte)RemoteCommand.CHANGE_FILE, accessor.ReadSByte(9));
             Assert.False(accessor.ReadBoolean(8));
             accessor.Dispose();
             mmf.Dispose();
@@ -125,7 +125,7 @@ namespace Unity.AI.MLAgents.Tests.Editor
             var sm = new SharedMemoryCom(path1);
 
             var uCommand = sm.Advance();
-            Assert.AreEqual(SharedMemoryCom.PythonCommand.CLOSE, uCommand);
+            Assert.AreEqual(RemoteCommand.CLOSE, uCommand);
             sm.Dispose();
             File.Delete(path1);
         }
@@ -137,7 +137,7 @@ namespace Unity.AI.MLAgents.Tests.Editor
 
             var sm = new SharedMemoryCom(path1);
             var uCommand = sm.Advance();
-            Assert.AreEqual(SharedMemoryCom.PythonCommand.RESET, uCommand);
+            Assert.AreEqual(RemoteCommand.RESET, uCommand);
             sm.Dispose();
             File.Delete(path1);
         }

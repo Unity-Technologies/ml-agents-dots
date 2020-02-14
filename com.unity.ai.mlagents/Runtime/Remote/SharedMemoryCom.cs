@@ -34,15 +34,6 @@ namespace Unity.AI.MLAgents
             public int ActionOffset;
         }
 
-        public enum PythonCommand : sbyte
-        {
-            DEFAULT = 0,
-            RESET = 1,
-            CHANGE_FILE = 2,
-            CLOSE = 3
-        }
-
-
         private NativeHashMap<NativeString64, AgentGroupFileOffsets> groupOffsets;
         private string filePath;
         private MemoryMappedViewAccessor accessor;
@@ -74,8 +65,7 @@ namespace Unity.AI.MLAgents
                 MemoryMappedFileAccess.ReadWrite,
                 HandleInheritability.None,
                 false
-                );
-            UnityEngine.Debug.Log("Readched here");
+            );
             // This first file created should only contain the version id and the total file capacity
             accessor = mmf.CreateViewAccessor(0, 8, MemoryMappedFileAccess.ReadWrite);
             var capacity = accessor.ReadInt32(k_FileLengthOffset);
@@ -171,7 +161,7 @@ namespace Unity.AI.MLAgents
                 MemoryMappedFileAccess.ReadWrite,
                 HandleInheritability.None,
                 false
-                );
+            );
             var newAccessor = mmf.CreateViewAccessor(0, newTotalCapacity, MemoryMappedFileAccess.ReadWrite);
             mmf.Dispose();
 
@@ -199,7 +189,7 @@ namespace Unity.AI.MLAgents
             currentRLDataCapacity += additionalRLDataCapacity;
 
             // Mark file as dirty :
-            accessor.Write(k_CommandOffset, (sbyte)PythonCommand.CHANGE_FILE);
+            accessor.Write(k_CommandOffset, (sbyte)RemoteCommand.CHANGE_FILE);
             accessor.Write(k_MutexOffset, false);
 
             // Release accessor
@@ -469,7 +459,7 @@ namespace Unity.AI.MLAgents
         {
             if (accessor.CanWrite)
             {
-                accessor.Write(k_CommandOffset, (sbyte)PythonCommand.DEFAULT);
+                accessor.Write(k_CommandOffset, (sbyte)RemoteCommand.DEFAULT);
                 accessor.Write(k_MutexOffset, false);
             }
             else
@@ -478,24 +468,24 @@ namespace Unity.AI.MLAgents
             }
         }
 
-        public PythonCommand Advance()
+        public RemoteCommand Advance()
         {
             var pythonAlive = WaitOnPython();
-            PythonCommand commandReceived = (PythonCommand)accessor.ReadSByte(k_CommandOffset);
+            RemoteCommand commandReceived = (RemoteCommand)accessor.ReadSByte(k_CommandOffset);
             if (!pythonAlive)
             {
-                // commandReceived = PythonCommand.CLOSE;
-                return PythonCommand.CLOSE;
+                // commandReceived = RemoteCommand.CLOSE;
+                return RemoteCommand.CLOSE;
             }
 
             switch (commandReceived)
             {
-                case PythonCommand.RESET:
+                case RemoteCommand.RESET:
                     return commandReceived;
-                case PythonCommand.CLOSE:
+                case RemoteCommand.CLOSE:
                     OnCloseCommand();
                     return commandReceived;
-                case PythonCommand.CHANGE_FILE:
+                case RemoteCommand.CHANGE_FILE:
                     OnChangeFileCommand();
                     return Advance();
                 default:
@@ -508,7 +498,16 @@ namespace Unity.AI.MLAgents
         /// </summary>
         public void LoadWorld(NativeString64 worldName, MLAgentsWorld world)
         {
+            if (!accessor.CanWrite)
+            {
+                return;
+            }
             var offsets = groupOffsets[worldName];
+
+            // Reset the AgentCounter
+            accessor.Write(offsets.NumberAgentsOffset, 0);
+
+            // Load the actions
             IntPtr src = IntPtr.Add(accessorPointer, offsets.ActionOffset);
             IntPtr dst = new IntPtr(world.DiscreteActuators.GetUnsafePtr());
             if (world.ActionType == ActionType.CONTINUOUS)
@@ -523,7 +522,7 @@ namespace Unity.AI.MLAgents
         {
             if (accessor.CanWrite)
             {
-                accessor.Write(k_CommandOffset, (sbyte)PythonCommand.CLOSE);
+                accessor.Write(k_CommandOffset, (sbyte)RemoteCommand.CLOSE);
                 accessor.Write(k_MutexOffset, false);
                 accessor.SafeMemoryMappedViewHandle.ReleasePointer();
                 accessor.Dispose();
