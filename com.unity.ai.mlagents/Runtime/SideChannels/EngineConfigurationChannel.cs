@@ -33,7 +33,7 @@ namespace Unity.AI.MLAgents.SideChannels
                     Application.targetFrameRate = targetFrameRate;
 
                     // TODO : Need a better way to do this
-                    World.Active.GetOrCreateSystem<SimulationSystemGroup>().SetFixedTimeStep(1 / 60f, timeScale);
+                    World.DefaultGameObjectInjectionWorld.GetOrCreateSystem<SimulationSystemGroup>().SetFixedTimeStep(1 / 60f, timeScale);
                 }
             }
         }

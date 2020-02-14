@@ -9,19 +9,22 @@ using Unity.AI.MLAgents;
 
 public class BalanceBallManager : MonoBehaviour
 {
+    public MLAgentsWorldSpecs MyWorldSpecs;
+    [Space]
+    [Space]
+    [Space]
+
+
     private EntityManager manager;
     public GameObject prefabPlatform;
     public GameObject prefabBall;
     private Entity _prefabEntityPlatform;
     private Entity _prefabEntityBall;
     int currentIndex;
-    // Start is called before the first frame update
-
-    public NNModel model;
 
     void Awake()
     {
-        var world = WorldRegistry.Get("3DBallDOTS");
+        var world = MyWorldSpecs.GenerateAndRegisterWorld();
         var ballSystem = World.Active.GetOrCreateSystem<BallSystem>();
         // var world = new MLAgentsWorld(1000, ActionType.CONTINUOUS, new int3[] { new int3(4, 0, 0), new int3(3, 0, 0) }, 2);
         ballSystem.world = world;

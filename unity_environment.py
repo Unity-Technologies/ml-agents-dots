@@ -6,16 +6,16 @@ import os
 import subprocess
 from typing import Dict, List, Optional, Any
 
-from mlagents.envs.side_channel.side_channel import SideChannel
+from mlagents_envs.side_channel.side_channel import SideChannel
 
-from mlagents.envs.base_env import (
+from mlagents_envs.base_env import (
     BaseEnv,
     BatchedStepResult,
     AgentGroupSpec,
     ActionType,
 )
-from mlagents.envs.timers import timed, hierarchical_timer
-from mlagents.envs.exception import (
+from mlagents_envs.timers import timed, hierarchical_timer
+from mlagents_envs.exception import (
     UnityEnvironmentException,
     UnityCommunicationException,
     UnityActionException,

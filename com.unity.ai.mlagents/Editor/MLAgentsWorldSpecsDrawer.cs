@@ -1,0 +1,304 @@
+#define CUSTOM_EDITOR
+using Barracuda;
+using UnityEditor;
+using UnityEngine;
+using System.Reflection;
+
+#if CUSTOM_EDITOR
+
+namespace Unity.AI.MLAgents.Editor
+{
+
+    internal static class SpecsPropertyNames{
+        public const string k_Name = "Name";
+        public const string k_NumberAgents = "NumberAgents";
+        public const string k_ActionType = "ActionType";
+        public const string k_ObservationShapes = "ObservationShapes";
+        public const string k_ActionSize = "ActionSize";
+        public const string k_DiscreteActionBranches = "DiscreteActionBranches";
+        public const string k_Model = "Model";
+        public const string k_InferenceDevice = "InferenceDevice";
+    }
+
+
+    /// <summary>
+    /// PropertyDrawer for BrainParameters. Defines how BrainParameters are displayed in the
+    /// Inspector.
+    /// </summary>
+    [CustomPropertyDrawer(typeof(MLAgentsWorldSpecs))]
+    internal class MLAgentsWorldSpecsDrawer : PropertyDrawer
+    {
+        // The height of a line in the Unity Inspectors
+        const float k_LineHeight = 21f;
+        const float k_LabelHeight = 18f;
+        const float k_WarningHeight = 27f;
+
+        /// <inheritdoc />
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            var nbLines = 0;
+            nbLines += GetHeightObservationShape(property);
+            nbLines += GetHeightDiscreteAction(property);
+            nbLines += 7; // TODO : COMPUTE
+            return k_LineHeight * nbLines + k_WarningHeight * GetHeightWarnings(property) + 9f;
+        }
+
+        /// <inheritdoc />
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
+            var indent = EditorGUI.indentLevel;
+            EditorGUI.indentLevel = 0;
+            position.height = k_LabelHeight;
+            EditorGUI.BeginProperty(position, label, property);
+            
+
+            EditorGUI.LabelField(position, "ML-Agents World Specs : "+label.text);
+            position.y += k_LineHeight;
+            EditorGUI.indentLevel++;
+            // Name
+            EditorGUI.PropertyField(position,
+                property.FindPropertyRelative(SpecsPropertyNames.k_Name),
+                new GUIContent("World Name", "The name of the World"));
+            position.y += k_LineHeight;
+
+            // Number of Agents
+             EditorGUI.PropertyField(position,
+                property.FindPropertyRelative(SpecsPropertyNames.k_NumberAgents),
+                new GUIContent("Number of Agents", "The maximum number of Agents that can request a Decision in the same step"));
+            position.y += k_LineHeight;
+
+            // Observation Shapes
+            DrawObservationShape(position, property);
+            position.y += k_LineHeight * GetHeightObservationShape(property);
+
+            // Draw Action Type
+            EditorGUI.PropertyField(position,
+                property.FindPropertyRelative(SpecsPropertyNames.k_ActionType),
+                new GUIContent("Action Type", "The type of Action : Discrete or continuous"));
+            position.y += k_LineHeight;
+
+            // Draw Action Size
+            EditorGUI.PropertyField(position,
+                property.FindPropertyRelative(SpecsPropertyNames.k_ActionSize),
+                new GUIContent("Action Size", "TODO"));
+            position.y += k_LineHeight;
+
+            // Draw discrete Action Branches
+            DrawDiscreteActionBranches(position, property);
+            position.y += k_LineHeight * GetHeightDiscreteAction(property);
+
+            // Draw NNModel and Inference Device
+            EditorGUI.PropertyField(position,
+                property.FindPropertyRelative(SpecsPropertyNames.k_Model),
+                new GUIContent("Model", "The Model used for inference"));
+            position.y += k_LineHeight;
+            EditorGUI.PropertyField(position,
+                property.FindPropertyRelative(SpecsPropertyNames.k_InferenceDevice),
+                new GUIContent("Inference Device", "TODO"));
+            position.y += k_LineHeight;
+
+            // Draw Warnings
+            position.height = k_WarningHeight;
+            DrawWarnings(position, property);
+            position.y += k_LineHeight * GetHeightWarnings(property);
+            position.height = k_LabelHeight;
+
+            EditorGUI.EndProperty();
+            EditorGUI.indentLevel = indent;
+        }
+
+        static void DrawObservationShape(Rect position, SerializedProperty property)
+        {
+            var observationShapes = property.FindPropertyRelative(SpecsPropertyNames.k_ObservationShapes);
+            EditorGUI.LabelField(position, "Observation Shapes");
+            position.y += k_LineHeight;
+
+            if (GUI.Button(new Rect(position.x, position.y, position.width / 2, position.height), "Add"))
+            {
+                observationShapes.arraySize++;
+            }
+            if (GUI.Button(new Rect(position.x + position.width / 2, position.y, position.width / 2, position.height),"Remove"))
+            {
+                observationShapes.arraySize--;
+            }
+            position.y += k_LineHeight;
+
+            for (var i = 0; i < observationShapes.arraySize; i++)
+            {
+                EditorGUI.PropertyField(position,
+                    observationShapes.GetArrayElementAtIndex(i),
+                    new GUIContent(""));
+                position.y += k_LineHeight;
+            }
+
+        }
+
+        static int GetHeightObservationShape(SerializedProperty property)
+        {
+            var observationShapes = property.FindPropertyRelative(SpecsPropertyNames.k_ObservationShapes);
+            return (observationShapes.arraySize + 2);
+        }
+
+        static void DrawDiscreteActionBranches(Rect position, SerializedProperty property)
+        {
+            var actionTypeProperty = property.FindPropertyRelative(SpecsPropertyNames.k_ActionType);
+            var actionType = GetValue<ActionType>(actionTypeProperty);
+            var actionSizeProperty = property.FindPropertyRelative(SpecsPropertyNames.k_ActionSize);
+            var actionSize = GetValue<int>(actionSizeProperty);
+            if (actionType == ActionType.DISCRETE)
+            {
+                EditorGUI.indentLevel++;
+                EditorGUI.LabelField(position, "Discrete Action Options");
+                position.y += k_LineHeight;
+
+                var actionBranchesProperty = property.FindPropertyRelative(SpecsPropertyNames.k_DiscreteActionBranches);
+                actionBranchesProperty.arraySize = actionSize;
+
+                for(int i =0; i < actionSize; i++){
+                    EditorGUI.PropertyField(position,
+                        actionBranchesProperty.GetArrayElementAtIndex(i),
+                        new GUIContent("Branch "+i));
+                    position.y += k_LineHeight;
+                }
+                EditorGUI.indentLevel--;
+            }
+        }
+
+        static int GetHeightDiscreteAction(SerializedProperty property)
+        {
+            var actionTypeProperty = property.FindPropertyRelative(SpecsPropertyNames.k_ActionType);
+            var actionType = GetValue<ActionType>(actionTypeProperty);
+            var actionSizeProperty = property.FindPropertyRelative(SpecsPropertyNames.k_ActionSize);
+            var actionSize = GetValue<int>(actionSizeProperty);
+            if (actionType == ActionType.DISCRETE)
+            {
+                return actionSize + 1;
+            }
+            return 0;
+        }
+
+        static void DrawWarnings(Rect position, SerializedProperty property)
+        {
+            var model = GetValue<NNModel>(property.FindPropertyRelative(SpecsPropertyNames.k_Model));
+            if (model == null){
+                EditorGUI.HelpBox(position, "No model preset (can still train)", MessageType.Warning);
+                position.y += k_WarningHeight;
+            }
+        }
+
+        static int GetHeightWarnings(SerializedProperty property){
+            var result = 0;
+            var model = GetValue<NNModel>(property.FindPropertyRelative(SpecsPropertyNames.k_Model));
+            if (model == null){
+                result += 1;
+            }
+            return result;
+        }
+
+        static T GetValue<T>(SerializedProperty property)
+        {
+            object obj = property.serializedObject.targetObject;
+    
+            FieldInfo field = null;
+            foreach( var path in property.propertyPath.Split( '.' ) )
+            {
+                var type = obj.GetType();
+                field = type.GetField( path );
+                obj = field.GetValue( obj );
+            }
+            return (T)obj;
+        }
+
+        // /// <summary>
+        // /// Draws the Vector Actions parameters for the Brain Parameters
+        // /// </summary>
+        // /// <param name="position">Rectangle on the screen to use for the property GUI.</param>
+        // /// <param name="property">The SerializedProperty of the BrainParameters
+        // /// to make the custom GUI for.</param>
+        // static void DrawVectorAction(Rect position, SerializedProperty property)
+        // {
+        //     EditorGUI.LabelField(position, "Vector Action");
+        //     position.y += k_LineHeight;
+        //     EditorGUI.indentLevel++;
+        //     var bpVectorActionType = property.FindPropertyRelative(k_ActionTypePropName);
+        //     EditorGUI.PropertyField(
+        //         position,
+        //         bpVectorActionType,
+        //         new GUIContent("Space Type",
+        //             "Corresponds to whether state vector contains  a single integer (Discrete) " +
+        //             "or a series of real-valued floats (Continuous)."));
+        //     position.y += k_LineHeight;
+        //     if (bpVectorActionType.enumValueIndex == 1)
+        //     {
+        //         DrawContinuousVectorAction(position, property);
+        //     }
+        //     else
+        //     {
+        //         DrawDiscreteVectorAction(position, property);
+        //     }
+        // }
+
+        // /// <summary>
+        // /// Draws the Continuous Vector Actions parameters for the Brain Parameters
+        // /// </summary>
+        // /// <param name="position">Rectangle on the screen to use for the property GUI.</param>
+        // /// <param name="property">The SerializedProperty of the BrainParameters
+        // /// to make the custom GUI for.</param>
+        // static void DrawContinuousVectorAction(Rect position, SerializedProperty property)
+        // {
+        //     var vecActionSize = property.FindPropertyRelative(k_ActionSizePropName);
+        //     vecActionSize.arraySize = 1;
+        //     var continuousActionSize =
+        //         vecActionSize.GetArrayElementAtIndex(0);
+        //     EditorGUI.PropertyField(
+        //         position,
+        //         continuousActionSize,
+        //         new GUIContent("Space Size", "Length of continuous action vector."));
+        // }
+
+        // /// <summary>
+        // /// Draws the Discrete Vector Actions parameters for the Brain Parameters
+        // /// </summary>
+        // /// <param name="position">Rectangle on the screen to use for the property GUI.</param>
+        // /// <param name="property">The SerializedProperty of the BrainParameters
+        // /// to make the custom GUI for.</param>
+        // static void DrawDiscreteVectorAction(Rect position, SerializedProperty property)
+        // {
+        //     var vecActionSize = property.FindPropertyRelative(k_ActionSizePropName);
+        //     vecActionSize.arraySize = EditorGUI.IntField(
+        //         position, "Branches Size", vecActionSize.arraySize);
+        //     position.y += k_LineHeight;
+        //     position.x += 20;
+        //     position.width -= 20;
+        //     for (var branchIndex = 0;
+        //          branchIndex < vecActionSize.arraySize;
+        //          branchIndex++)
+        //     {
+        //         var branchActionSize =
+        //             vecActionSize.GetArrayElementAtIndex(branchIndex);
+
+        //         EditorGUI.PropertyField(
+        //             position,
+        //             branchActionSize,
+        //             new GUIContent("Branch " + branchIndex + " Size",
+        //                 "Number of possible actions for the branch number " + branchIndex + "."));
+        //         position.y += k_LineHeight;
+        //     }
+        // }
+
+        // /// <summary>
+        // /// The Height required to draw the Vector Action parameters
+        // /// </summary>
+        // /// <returns>The height of the drawer of the Vector Action </returns>
+        // static float GetHeightDrawVectorAction(SerializedProperty property)
+        // {
+        //     var actionSize = 2 + property.FindPropertyRelative(k_ActionSizePropName).arraySize;
+        //     if (property.FindPropertyRelative(k_ActionTypePropName).enumValueIndex == 0)
+        //     {
+        //         actionSize += 1;
+        //     }
+        //     return actionSize * k_LineHeight;
+        // }
+    }
+}
+#endif

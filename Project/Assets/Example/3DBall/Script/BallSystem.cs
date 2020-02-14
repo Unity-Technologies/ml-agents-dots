@@ -95,28 +95,13 @@ public class BallSystem : JobComponentSystem
     }
 
     public MLAgentsWorld world;
-    MLAgentsSystem sys;
     int counter;
 
-    protected override void OnCreate()
-    {
-        sys = World.Active.GetOrCreateSystem<MLAgentsSystem>();
-        // world = new MLAgentsWorld(100, ActionType.CONTINUOUS, new int3[] { new int3(4, 0, 0), new int3(3, 0, 0) }, 2);
-        // sys.SubscribeWorldWithHeuristic("3DBallDOTS", world, () =>
-        // {
-        //     return new float2(Input.GetAxis("Vertical"), -Input.GetAxis("Horizontal"));
-        // }
-        // );
-    }
 
     // Update is called once per frame
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
-        var reactiveJob = new RotateJob
-        {
-            ComponentDataFromEntity = GetComponentDataFromEntity<AngularAcceleration>(isReadOnly: false)
-        };
-        inputDeps = reactiveJob.Schedule(world, inputDeps);
+
 
         inputDeps = new BallDropped
         {
@@ -130,11 +115,15 @@ public class BallSystem : JobComponentSystem
         };
         inputDeps = senseJob.Schedule(this, inputDeps);
 
-        inputDeps.Complete();
+        var reactiveJob = new RotateJob
+        {
+            ComponentDataFromEntity = GetComponentDataFromEntity<AngularAcceleration>(isReadOnly: false)
+        };
+        inputDeps = reactiveJob.Schedule(world, inputDeps);
 
 
         counter++;
-        sys.RegisterDependency(inputDeps);
+        // sys.RegisterDependency(inputDeps);
         return inputDeps;
     }
 

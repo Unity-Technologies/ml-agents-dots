@@ -13,10 +13,9 @@ using Unity.AI.MLAgents;
 
 // [UpdateInGroup(typeof(SimulationSystemGroup))]
 // [UpdateAfter(typeof(MLAgentsSystem))]
-[DisableAutoCreation]
+// [DisableAutoCreation]
 public class SimpleSystem : JobComponentSystem
 {
-    private MLAgentsSystem sys;
     private MLAgentsWorld world;
     private NativeArray<Entity> entities;
     private Camera camera;
@@ -28,10 +27,9 @@ public class SimpleSystem : JobComponentSystem
     protected override void OnCreate()
     {
         Application.targetFrameRate = -1;
-        sys = World.Active.GetOrCreateSystem<MLAgentsSystem>();
 
         world = new MLAgentsWorld(N_Agents, ActionType.DISCRETE, new int3[] { new int3(3, 0, 0), new int3(84, 84, 3) }, 2, new int[] { 2, 3 });
-        sys.SubscribeWorldWithHeuristic("test", world, () => new int2(1, 1));
+        world.SubscribeWorldWithHeuristic("test", () => new int2(1, 1));
         entities = new NativeArray<Entity>(N_Agents, Allocator.Persistent);
         // World.Active.EntityManager.CreateEntity(entities);
         for (int i = 0; i < N_Agents; i++)
@@ -54,16 +52,16 @@ public class SimpleSystem : JobComponentSystem
             camera = Camera.main;
             camera = GameObject.FindObjectOfType<Camera>();
         }
-        // inputDeps.Complete();
+        inputDeps.Complete();
         var reactiveJob = new UserCreatedActionEventJob
         {
             myNumber = 666
         };
         inputDeps = reactiveJob.Schedule(world, inputDeps);
-
+//  inputDeps.Complete();
         if (counter % 5 == 0)
         {
-            var visObs = VisualObservationUtility.GetVisObs(camera, 84, 84);
+            var visObs = VisualObservationUtility.GetVisObs(camera, 84, 84, Allocator.TempJob);
             var senseJob = new UserCreateSensingJob
             {
                 cameraObservation = visObs,
@@ -76,7 +74,7 @@ public class SimpleSystem : JobComponentSystem
             visObs.Dispose();
         }
         counter++;
-        sys.RegisterDependency(inputDeps);
+        // sys.RegisterDependency(inputDeps);
 
         // inputDeps = sys.ManualUpdate(inputDeps);
 
@@ -111,7 +109,7 @@ public class SimpleSystem : JobComponentSystem
             var tmp = new testAction();
             data.GetDiscreteAction(out tmp);
             // Debug.Log(data.Entity.Index + "  " + tmp.x);
-            // Debug.Log(data.Entity.Index + "  " + tmp.e1);
+            Debug.Log(data.Entity.Index + "  " + tmp.e1);
         }
     }
 
