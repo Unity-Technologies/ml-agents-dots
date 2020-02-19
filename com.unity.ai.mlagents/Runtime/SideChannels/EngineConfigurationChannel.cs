@@ -19,6 +19,7 @@ namespace Unity.AI.MLAgents.SideChannels
             {
                 using (var binaryReader = new BinaryReader(memStream))
                 {
+                    /*
                     var width = binaryReader.ReadInt32();
                     var height = binaryReader.ReadInt32();
                     var qualityLevel = binaryReader.ReadInt32();
@@ -41,7 +42,7 @@ namespace Unity.AI.MLAgents.SideChannels
 #else
                     TimeUtils.EnableFixedRateWithCatchUp(simGroup, 1 / 60f, timeScale);
 #endif
-
+*/
                     
                     
                 }
