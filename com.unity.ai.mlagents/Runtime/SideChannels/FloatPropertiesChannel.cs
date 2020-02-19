@@ -3,7 +3,6 @@ using System.IO;
 using System;
 using System.Text;
 
-
 namespace Unity.AI.MLAgents.SideChannels
 {
     public interface IFloatProperties
@@ -40,12 +39,19 @@ namespace Unity.AI.MLAgents.SideChannels
 
     public class FloatPropertiesChannel : SideChannel, IFloatProperties
     {
-        private Dictionary<string, float> m_FloatProperties = new Dictionary<string, float>();
-        private Dictionary<string, Action<float>> m_RegisteredActions = new Dictionary<string, Action<float>>();
+        Dictionary<string, float> m_FloatProperties = new Dictionary<string, float>();
+        Dictionary<string, Action<float>> m_RegisteredActions = new Dictionary<string, Action<float>>();
+        private const string k_FloatPropertiesDefaultId = "60ccf7d0-4f7e-11ea-b238-784f4387d1f7";
 
-        public override int ChannelType()
+        public FloatPropertiesChannel(Guid channelId = default(Guid))
         {
-            return (int)SideChannelType.FloatProperties;
+            if (channelId == default(Guid))
+            {
+                ChannelId = new Guid(k_FloatPropertiesDefaultId);
+            }
+            else{
+                ChannelId = channelId;
+            }
         }
 
         public override void OnMessageReceived(byte[] data)
@@ -90,7 +96,7 @@ namespace Unity.AI.MLAgents.SideChannels
             return new List<string>(m_FloatProperties.Keys);
         }
 
-        private static KeyValuePair<string, float> DeserializeMessage(byte[] data)
+        static KeyValuePair<string, float> DeserializeMessage(byte[] data)
         {
             using (var memStream = new MemoryStream(data))
             {
@@ -104,7 +110,7 @@ namespace Unity.AI.MLAgents.SideChannels
             }
         }
 
-        private static byte[] SerializeMessage(string key, float value)
+        static byte[] SerializeMessage(string key, float value)
         {
             using (var memStream = new MemoryStream())
             {

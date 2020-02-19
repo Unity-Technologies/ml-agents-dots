@@ -235,7 +235,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MyWorldSpecs:
-    Name: DOTS_3DBall
+    Name: Ball_DOTS
     NumberAgents: 1000
     ActionType: 1
     ObservationShapes:
@@ -246,7 +246,7 @@ MonoBehaviour:
       y: 0
       z: 0
     ActionSize: 2
-    DiscreteActionBranches: 0000000000000000
+    DiscreteActionBranches: 
     Model: {fileID: 5022602860645237092, guid: c8a63f5244bd341c6a933daeadc365f0, type: 3}
     InferenceDevice: 0
   prefabPlatform: {fileID: 3981253095504673273, guid: 4a09e6c7ae14743f5b16f9e6f3155f68,

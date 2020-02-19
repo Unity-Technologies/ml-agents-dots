@@ -34,7 +34,7 @@ public class SimpleSystem : JobComponentSystem
         // World.Active.EntityManager.CreateEntity(entities);
         for (int i = 0; i < N_Agents; i++)
         {
-            entities[i] = World.Active.EntityManager.CreateEntity();
+            entities[i] = World.DefaultGameObjectInjectionWorld.EntityManager.CreateEntity();
         }
     }
 

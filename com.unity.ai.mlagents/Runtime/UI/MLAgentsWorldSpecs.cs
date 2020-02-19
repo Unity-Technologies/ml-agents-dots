@@ -1,10 +1,11 @@
 using Unity.Mathematics;
 using Unity.Entities;
 using Barracuda;
+using System;
 
 namespace Unity.AI.MLAgents
 {
-    [System.Serializable]
+    [Serializable]
     public struct MLAgentsWorldSpecs
     {
         public string Name;
@@ -18,8 +19,16 @@ namespace Unity.AI.MLAgents
         public NNModel Model;
         public InferenceDevice InferenceDevice;
 
+        private bool m_AlreadyCreated;
+
         public MLAgentsWorld GenerateWorld()
         {
+            if (m_AlreadyCreated){
+                throw new MLAgentsException(
+                    "World has already been generated using Specs"
+                    );
+            }
+            m_AlreadyCreated = true;
             return new MLAgentsWorld(
                 NumberAgents,
                 ActionType,

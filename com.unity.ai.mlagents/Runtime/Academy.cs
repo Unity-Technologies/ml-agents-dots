@@ -43,7 +43,7 @@ namespace Unity.AI.MLAgents
 
         private bool FirstMessageReceived;
 
-        internal Dictionary<MLAgentsWorld, IWorldProcessor> WorldToProcessor;
+        internal Dictionary<MLAgentsWorld, IWorldProcessor> WorldToProcessor; // Maybe we can put the processor in the world with an unsafe managed memory pointer
 
         private SharedMemoryCom com;
 
@@ -83,7 +83,7 @@ namespace Unity.AI.MLAgents
         {
             foreach (var registeredChannel in m_SideChannels)
             {
-                if (registeredChannel.ChannelType() == channel.ChannelType())
+                if (registeredChannel.ChannelId == channel.ChannelId)
                 {
                     // TODO Error
                     return;

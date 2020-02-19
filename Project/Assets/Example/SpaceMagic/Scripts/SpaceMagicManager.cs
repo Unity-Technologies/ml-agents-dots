@@ -26,10 +26,10 @@ public class SpaceMagicManager : MonoBehaviour
 
     void Start()
     {
-        World.Active.GetOrCreateSystem<SpaceMagicMovementSystem>();
-        manager = World.Active.EntityManager;
+        World.DefaultGameObjectInjectionWorld.GetOrCreateSystem<SpaceMagicMovementSystem>();
+        manager = World.DefaultGameObjectInjectionWorld.EntityManager;
         // sys.SetModel("SpaceMagic", modelA);
-        _prefabEntity = GameObjectConversionUtility.ConvertGameObjectHierarchy(prefab, World.Active);
+        _prefabEntity = GameObjectConversionUtility.ConvertGameObjectHierarchy(prefab, World.DefaultGameObjectInjectionWorld);
 
         Spawn(100);
     }

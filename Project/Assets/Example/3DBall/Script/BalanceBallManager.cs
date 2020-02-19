@@ -21,7 +21,7 @@ public class BalanceBallManager : MonoBehaviour
     void Awake()
     {
         var world = MyWorldSpecs.GenerateAndRegisterWorld();
-        var ballSystem = World.Active.GetOrCreateSystem<BallSystem>();
+        var ballSystem = World.DefaultGameObjectInjectionWorld.GetOrCreateSystem<BallSystem>();
         ballSystem.Enabled = true;
         // var world = new MLAgentsWorld(1000, ActionType.CONTINUOUS, new int3[] { new int3(4, 0, 0), new int3(3, 0, 0) }, 2);
         ballSystem.world = world;
@@ -29,7 +29,7 @@ public class BalanceBallManager : MonoBehaviour
         // mlsys.SubscribeWorldWithBarracudaModel("3DBallDOTS", world, model);
 
 
-        manager = World.Active.EntityManager;
+        manager = World.DefaultGameObjectInjectionWorld.EntityManager;
 
         BlobAssetStore blob = new BlobAssetStore();
         GameObjectConversionSettings settings = GameObjectConversionSettings.FromWorld(World.DefaultGameObjectInjectionWorld, blob);

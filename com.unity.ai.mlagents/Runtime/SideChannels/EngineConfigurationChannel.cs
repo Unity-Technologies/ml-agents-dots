@@ -1,15 +1,16 @@
-using System.Collections.Generic;
 using System.IO;
-using Unity.Entities;
+using System;
 using UnityEngine;
+using Unity.Entities;
 
 namespace Unity.AI.MLAgents.SideChannels
 {
     public class EngineConfigurationChannel : SideChannel
     {
-        public override int ChannelType()
+        private const string k_EngineConfigId = "e951342c-4f7e-11ea-b238-784f4387d1f7";
+        public EngineConfigurationChannel()
         {
-            return (int)SideChannelType.EngineSettings;
+            ChannelId = new Guid(k_EngineConfigId);
         }
 
         public override void OnMessageReceived(byte[] data)
@@ -32,8 +33,17 @@ namespace Unity.AI.MLAgents.SideChannels
                     Time.captureFramerate = 60;
                     Application.targetFrameRate = targetFrameRate;
 
-                    // TODO : Need a better way to do this
-                    World.DefaultGameObjectInjectionWorld.GetOrCreateSystem<SimulationSystemGroup>().SetFixedTimeStep(1 / 60f, timeScale);
+
+                    var simGroup = World.DefaultGameObjectInjectionWorld.GetOrCreateSystem<SimulationSystemGroup>();
+
+#if UNITY_EDITOR
+                    FixedRateUtils.EnableFixedRateSimple(simGroup, 1 / 60f);
+#else
+                    TimeUtils.EnableFixedRateWithCatchUp(simGroup, 1 / 60f, timeScale);
+#endif
+
+                    
+                    
                 }
             }
         }

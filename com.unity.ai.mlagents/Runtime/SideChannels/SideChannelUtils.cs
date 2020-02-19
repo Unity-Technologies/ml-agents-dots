@@ -26,11 +26,11 @@ namespace Unity.AI.MLAgents.SideChannels
                 {
                     while (memStream.Position < memStream.Length)
                     {
-                        int channelType = 0;
+                        Guid channelId = Guid.Empty;
                         byte[] message = null;
                         try
                         {
-                            channelType = binaryReader.ReadInt32();
+                            channelId = new Guid(binaryReader.ReadBytes(16));
                             var messageLength = binaryReader.ReadInt32();
                             message = binaryReader.ReadBytes(messageLength);
                         }
@@ -44,7 +44,7 @@ namespace Unity.AI.MLAgents.SideChannels
                         bool consumed = false;
                         foreach (var channel in sideChannels)
                         {
-                            if (channel.ChannelType() == channelType)
+                            if (channel.ChannelId == channelId)
                             {
                                 channel.OnMessageReceived(message);
                                 consumed = true;
@@ -54,7 +54,7 @@ namespace Unity.AI.MLAgents.SideChannels
                         {
                             UnityEngine.Debug.Log(string.Format(
                                 "Unknown side channel data received. Channel type "
-                                + ": {0}", channelType));
+                                + ": {0}", channelId));
                         }
                     }
                 }
@@ -78,7 +78,7 @@ namespace Unity.AI.MLAgents.SideChannels
                         var messageList = sideChannel.MessageQueue;
                         foreach (var message in messageList)
                         {
-                            binaryWriter.Write(sideChannel.ChannelType());
+                            binaryWriter.Write(sideChannel.ChannelId.ToByteArray());
                             binaryWriter.Write(message.Length);
                             binaryWriter.Write(message);
                         }
