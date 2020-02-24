@@ -1,0 +1,44 @@
+{
+  "name": "com.unity.ai.mlagents",
+  "displayName": "DOTS ML-Agents",
+  "version": "0.2.0-preview",
+  "unity": "2019.3",
+  "description": "Add interactivity to your game with ML-Agents trained using Deep Reinforcement Learning.",
+
+  "comments":"TODO : The dependency on com.unity.physics is only for 3DBall and is not required to use the package",
+
+  "dependencies": {
+    "com.unity.barracuda": "0.5.0-preview",
+    "com.unity.entities": "0.7.0-preview.9",
+    "com.unity.jobs": "0.2.6-preview.6",
+    "com.unity.mathematics": "1.1.0",
+    "com.unity.collections": "0.5.3-preview.5",
+    "com.unity.physics": "0.2.4-preview"
+  },
+  "samples": [
+    {
+      "displayName":"3DBall",
+      "description": "A thousands platforms trying to balance a ball",
+      "createSeparatePackage": false,
+      "path":"Samples~/3DBall"
+    },
+    {
+      "displayName":"Simple System",
+      "description": "A System that uses a heuristic for simple decisions",
+      "createSeparatePackage": false,
+      "path":"Samples~/SimpleSystem"
+    },
+    {
+      "displayName":"Space Magic",
+      "description": "Simple environment where the motion of floating spheres is controlled by a Heuristic",
+      "createSeparatePackage": false,
+      "path":"Samples~/SpaceMagic"
+    },
+    {
+      "displayName":"String Side Channel",
+      "description": "An example on how to create and register side channels for communication with Python",
+      "createSeparatePackage": false,
+      "path":"Samples~/StringSideChannel"
+    }
+  ]
+}
