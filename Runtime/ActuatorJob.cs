@@ -114,10 +114,11 @@ namespace Unity.AI.MLAgents
             public static unsafe void Execute(ref ActionEventJobData<T> jobData, IntPtr listDataPtr, IntPtr unusedPtr, ref JobRanges ranges, int jobIndex)
             {
                 int size = jobData.world.ActionSize;
+                int actionCount = jobData.world.ActionCounter.Count;
                 // Continuous case
                 if (jobData.world.ActionType == ActionType.CONTINUOUS)
                 {
-                    for (int i = 0; i < jobData.world.ActionCounter.Count; i++)
+                    for (int i = 0; i < actionCount; i++)
                     {
                         if (!jobData.world.ActionDoneFlags[i])
                         {
@@ -133,7 +134,7 @@ namespace Unity.AI.MLAgents
                 // Discrete Case
                 else
                 {
-                    for (int i = 0; i < jobData.world.ActionCounter.Count; i++)
+                    for (int i = 0; i < actionCount; i++)
                     {
                         if (!jobData.world.ActionDoneFlags[i])
                         {

@@ -19,11 +19,17 @@ namespace Unity.AI.MLAgents
         // Lazy initializer pattern, see https://csharpindepth.com/articles/singleton#lazy
         static Lazy<Academy> s_Lazy = new Lazy<Academy>(() => new Academy());
 
+        /// <summary>
+        /// True if the Academy is initialized, false otherwise.
+        /// </summary>
         public static bool IsInitialized
         {
             get { return s_Lazy.IsValueCreated; }
         }
 
+        /// <summary>
+        /// The singleton Academy object.
+        /// </summary>
         public static Academy Instance { get { return s_Lazy.Value; } }
 
         /// <summary>
@@ -46,6 +52,9 @@ namespace Unity.AI.MLAgents
 
         internal Dictionary<MLAgentsWorld, IWorldProcessor> WorldToProcessor; // Maybe we can put the processor in the world with an unsafe unmanaged memory pointer ?
 
+        /// <summary>
+        /// Collection of float properties (indexed by a string).
+        /// </summary>
         public IFloatProperties FloatProperties;
         private SideChannel[] m_SideChannels;
 

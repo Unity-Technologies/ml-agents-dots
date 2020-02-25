@@ -8,4 +8,5 @@
 *Logs
 *Temp
 *obj
-
+.pytest_cache
+*__pycache__
