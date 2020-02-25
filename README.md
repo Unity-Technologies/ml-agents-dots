@@ -1,22 +1,35 @@
 
 # ML-Agents DOTS
-[ML-Agents on DOTS Proposal](https://docs.google.com/document/d/1QnGSjOfLpwaRopbMf9ZDC89oZJuG0Ii6ORA22a5TWzE/edit#heading=h.py1zfmz3396x)
 
-# Proposed API
-Another approach to designing ml-agents-dots would be to mimic typical API used for example in [Unity.Physics](https://github.com/Unity-Technologies/Unity.Physics) where a "MLAgents World" holds data, processes it and the data can then be retrieved. An example of a simple world is given [here](Assets/DOTS_MLAgents/BCore/MLAgentsWorld.cs)
+[ML-Agents on DOTS Proposal Google Doc](https://docs.google.com/document/d/1QnGSjOfLpwaRopbMf9ZDC89oZJuG0Ii6ORA22a5TWzE/edit#heading=h.py1zfmz3396x)
+
+## Installation
+
+ * Create a new Project on Unity 2019.3.0f5
+ * To your `Package/manifest.json` add the package :
+ ```json
+ "com.unity.ai.mlagents": "https://github.com/Unity-Technologies/ml-agents-dots.git#master"
+ ```
+ and add the registry : 
+ ```json
+ "registry": "https://artifactory.prd.cds.internal.unity3d.com/artifactory/api/npm/upm-candidates",
+ ```
+ * In the Package Manager window, select DOTS ML-Agents and import the Samples you need.
+
+## Proposed API
+Another approach to designing ml-agents-dots would be to use typical API used for example in [Unity.Physics](https://github.com/Unity-Technologies/Unity.Physics) where a "MLAgents World" holds data, processes it and the data can then be retrieved. 
 The user would access the `MLAgentsWorld` in the main thread :
 
 ```csharp
-var sys = World.Active.GetOrCreateSystem<MLAgentsSystem>();
-
 var world = new MLAgentsWorld(
   100,                              // The maximum number of agents that can request a decision per step
-  ActionType.CONTINUOUS,            // Continuous = float, Discrete = int
   new int3[] { new int3(3, 0, 0) }, // The observation shapes (here, one observation of shape (3,0,0))
+  ActionType.CONTINUOUS,            // Continuous = float, Discrete = int
   3);                               // The number of actions
   
-sys.SubscribeWorld("TheNameOfTheWorld", world);
+world.SubscribeWorldWithBarracudaModel(Name, Model, InferenceDevice);
 ``` 
+
 The user could then in his own jobs add and retrieve data from the world. Here is an example of a job in which the user populates the sensor data :
 
 ```csharp
@@ -50,9 +63,16 @@ protected override JobHandle OnUpdate(JobHandle inputDeps)
 }
 ```
 
-Note that this API can also be called outside of a job and used in the main thread to be compatible with OOTS. There is no reliance at all on IComponentData which means that we do not have to feed the data with blitable structs but could use NativeArrays / Textures as well.
+Note that this API can also be called outside of a job and used in the main thread to be compatible with OOTS. There is no reliance at all on IComponentData and ECS which means that we do not have to feed the data with blitable structs and could use NativeArrays as well.
 
-In order to retrieve actions, here is an example of what the API could look like : 
+```csharp
+var visObs = VisualObservationUtility.GetVisObs(camera, 84, 84, Allocator.TempJob);
+world.RequestDecision(entities[i])
+  .SetReward(1.0f)
+  .SetObservationFromSlice(1, visObs.Slice());
+```
+
+In order to retrieve actions, we use a custom job : 
 
 ```csharp
 public struct UserCreatedActionEventJob : IActuatorJob
@@ -60,15 +80,22 @@ public struct UserCreatedActionEventJob : IActuatorJob
         public void Execute(ActuatorEvent data)
         {
             var tmp = new float3();
-            data.GetAction(out tmp);
+            data.GetContinousAction(out tmp);
             Debug.Log(data.Entity.Index + "  " + tmp.x);
         }
     }
 ```
-The ActuatorEvent data contains a key (here an entity) to identify the Agent and a GetAction method to retrieve the data in the event. This is very similar to how collisions are currently handled in the Physics package.
+The ActuatorEvent data contains a key (here an entity) to identify the Agent and a `GetContinousAction` or `GetDiscreteAction` method to retrieve the data in the event. This is very similar to how collisions are currently handled in the Physics package.
+
+## UI to create world
+
+We currently offer a `MLAgentsWorldSpecs` struct that has a custom inspector drawer (you can add it to a MonoBehaviour to edit the properties of your MLAgentsWorld and even add a neural network for its behavior.
+To use the word call `MLAgentsWorldSpecs.GenerateAndRegisterWorld()`.
 
 ## Communication Between C# and Python
-In order to exchange data with Python, we would use shared memory. Python will create a small file that contains information required for starting the communication. The path to the file will be randomly generated randomly generated and passed by Python to the Unity Executable as command line argument. For in editor training, a default file will be used.  Using shared memory would allow faster data exchange and will remove the need to serialize the data to an intermediate format.
+In order to exchange data with Python, we use shared memory. Python will create a small file that contains information required for starting the communication. The path to the file will be randomly generated randomly generated and passed by Python to the Unity Executable as command line argument. For in editor training, a default file will be used. Using shared memory would allow faster data exchange and will remove the need to serialize the data to an intermediate format.
+
+__Note__ : The python code for communication is located in [ml-agents-envs~](./ml-agents-envs~).
 
 ### Shared memory layout
 #### Header
@@ -85,8 +112,8 @@ In order to exchange data with Python, we would use shared memory. Python will c
 
 #### Side channel data
 
- - int : 4 bytes : The length of the side channel data for the current step (starts at 0)
- - ??? : Side channel data (Size = total side channel capacity - 4 bytes )
+ - GUID : 16 bytes : The length of the side channel data for the current step (starts at 0)
+ - ??? : Side channel data (Size = total side channel capacity - 16 bytes )
 
 #### RL Data section
 
