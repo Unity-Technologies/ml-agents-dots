@@ -4,9 +4,11 @@ This package is available as a preview, so it is not ready for production use. T
 ## Installation
 
  * Create a new Project on Unity 2019.3.0f5
- * To your `Package/manifest.json` add the package :
+ * To your `Package/manifest.json` add the packages :
  ```json
- "com.unity.ai.mlagents": "https://github.com/Unity-Technologies/ml-agents-dots.git#master"
+ "com.unity.ai.mlagents": "https://github.com/Unity-Technologies/ml-agents-dots.git#master",
+ "com.unity.physics": "0.2.4-preview",
+ "com.unity.rendering.hybrid": "0.3.3-preview.11"
  ```
  and add the registry : 
  ```json
