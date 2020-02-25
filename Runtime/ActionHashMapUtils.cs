@@ -4,7 +4,6 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace Unity.AI.MLAgents
 {
-
     // TODO : A potential API to retrieve the actions on the main thread for projects allergic to jobs ?
     internal static class ActionHashMapUtils
     {
