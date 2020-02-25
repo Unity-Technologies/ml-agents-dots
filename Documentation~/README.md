@@ -8,7 +8,10 @@ This package is available as a preview, so it is not ready for production use. T
  ```json
  "com.unity.ai.mlagents": "https://github.com/Unity-Technologies/ml-agents-dots.git#master",
  "com.unity.physics": "0.2.4-preview",
- "com.unity.rendering.hybrid": "0.3.3-preview.11"
+ "com.unity.rendering.hybrid": "0.3.3-preview.11",
+ "com.unity.burst":"1.3.0-preview.2",
+ "com.unity.test-framework.performance": "1.3.3-preview",
+ "com.unity.coding": "0.1.0-preview.13"
  ```
  and add the registry : 
  ```json
