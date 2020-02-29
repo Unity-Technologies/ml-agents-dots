@@ -34,12 +34,6 @@ namespace Unity.AI.MLAgents.Tests.Editor
         {
             ECSWorld = new World("Test World");
             entityManager = ECSWorld.EntityManager;
-            // em = w.EntityManager;
-            // emq = new EntityManagerUtility(w);
-            // var allSystems =
-            //     DefaultWorldInitialization.GetAllSystems(WorldSystemFilterFlags.Default, requireExecuteAlways: false);
-            // allSystems.Add(typeof(ConstantDeltaTimeSystem)); //this has disable auto creation on it.
-            // DefaultWorldInitialization.AddSystemsToRootLevelSystemGroups(w, allSystems);
         }
 
         [TearDown]
@@ -49,7 +43,15 @@ namespace Unity.AI.MLAgents.Tests.Editor
         }
 
         [Test]
-        public void TestCreation()
+        public void TestAcademyCreation()
+        {
+            var instance = Academy.Instance;
+            Assert.True(Academy.IsInitialized);
+            Academy.Instance.Dispose();
+        }
+
+        [Test]
+        public void TestWorldCreation()
         {
             var world = new MLAgentsWorld(
                 20,
@@ -83,11 +85,14 @@ namespace Unity.AI.MLAgents.Tests.Editor
                 2,
                 new int[] { 2, 3 });
 
-            world.SubscribeWorldWithHeuristic("test", () => new int2(0, 1));
+            world.RegisterWorldWithHeuristic("test", () => new int2(0, 1));
 
             var entity = entityManager.CreateEntity();
 
-            world.RequestDecision(entity);
+            world.RequestDecision(entity)
+                .SetObservation(0, new float3(1, 2, 3))
+                .SetEpisodeStatus(EpisodeStatus.DEFAULT)
+                .SetReward(1f);
 
             var entities = new NativeArray<Entity>(1, Allocator.Persistent);
             var actions = new NativeArray<DiscreteAction_TWO_THREE>(1, Allocator.Persistent);
@@ -128,12 +133,12 @@ namespace Unity.AI.MLAgents.Tests.Editor
                 2,
                 new int[] { 2, 3 });
 
-            world1.SubscribeWorldWithHeuristic("test1", () => new DiscreteAction_TWO_THREE
+            world1.RegisterWorldWithHeuristic("test1", () => new DiscreteAction_TWO_THREE
             {
                 action_ONE = TwoOptionEnum.Option_TWO,
                 action_TWO = ThreeOptionEnum.Option_ONE
             });
-            world2.SubscribeWorldWithHeuristic("test2", () => new DiscreteAction_TWO_THREE
+            world2.RegisterWorldWithHeuristic("test2", () => new DiscreteAction_TWO_THREE
             {
                 action_ONE = TwoOptionEnum.Option_ONE,
                 action_TWO = ThreeOptionEnum.Option_TWO

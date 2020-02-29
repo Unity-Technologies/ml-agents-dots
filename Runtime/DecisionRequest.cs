@@ -35,16 +35,34 @@ namespace Unity.AI.MLAgents
 
         /// <summary>
         /// Specifies if the Agent terminated after the last decision request.
-        /// Note : If the Agent timed out, the doneStatus will be set to true.
         /// </summary>
-        /// <param name="doneStatus"> Wether the Agent has terminated (either succeeded or failed at its task) </param>
-        /// <param name="maxStepReached"> Wether the Agent took too long to complete to terminate </param>
+        /// <param name="status">
+        /// The episode status for the Agent:
+        ///  - DEFAULT: The episode is ongoing.
+        ///  - TERMINATED: The episode is over because the Agent ended the task
+        ///          either by succeeding or failing the task.
+        ///  - INTERRUPTED: The episode is over because it was interrupted,
+        ///          the Agent could have been continuing the task and should not
+        ///          feel bad for terminating.
+        ///  </param>
         /// <returns> The DecisionRequest struct </returns>
-        public DecisionRequest HasTerminated(bool doneStatus, bool timedOut)
+        public DecisionRequest SetEpisodeStatus(EpisodeStatus status)
         {
-            doneStatus = doneStatus || timedOut;
-            world.DoneFlags[index] = doneStatus;
-            world.MaxStepFlags[index] = timedOut;
+            switch (status)
+            {
+                case EpisodeStatus.TERMINATED:
+                    world.DoneFlags[index] = true;
+                    world.MaxStepFlags[index] = false;
+                    break;
+                case EpisodeStatus.INTERRUPTED:
+                    world.DoneFlags[index] = true;
+                    world.MaxStepFlags[index] = true;
+                    break;
+                default:
+                    world.DoneFlags[index] = false;
+                    world.MaxStepFlags[index] = false;
+                    break;
+            }
             return this;
         }
 

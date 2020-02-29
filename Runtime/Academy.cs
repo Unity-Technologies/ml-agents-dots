@@ -1,5 +1,4 @@
 using Unity.Entities;
-using Unity.Jobs;
 using Unity.Collections;
 using System;
 using Unity.AI.MLAgents.SideChannels;
@@ -40,7 +39,6 @@ namespace Unity.AI.MLAgents
         /// </summary>
         Academy()
         {
-            // Application.quitting += Dispose;
             LazyInitialize();
         }
 
@@ -58,15 +56,26 @@ namespace Unity.AI.MLAgents
         public IFloatProperties FloatProperties;
         private SideChannel[] m_SideChannels;
 
-        // Signals that the Academy has been reset by the training process
-        // If you have jobs Scheduled but not completed when this event is called,
-        // If is recommended to Complete them.
+        /// <summary>
+        /// Signals that the Academy has been reset by the training process
+        /// If you have jobs Scheduled but not completed when this event is called,
+        /// If is recommended to Complete them.
+        /// </summary>
         public event Action OnEnvironmentReset;
 
-        // Need to find a way to deregister ?
-        // Need a way to modify the World processor on the fly
-        public void SubscribeWorld(string policyId, MLAgentsWorld world, IWorldProcessor fallbackWorldProcessor = null, bool communicate = true)
+        /// <summary>
+        /// Registers a MLAgentsWorld to a decision making mechanism.
+        /// By default, the MLAgentsWorld will use a remote process for decision making when available.
+        /// </summary>
+        /// <param name="policyId"> The string identifier of the MLAgentsWorld. There can only be one world per unique id.</param>
+        /// <param name="world"> The MLAgentsWorld that is being subscribed.</param>
+        /// <param name="fallbackWorldProcessor"> If the remote process is not available, the MLAgentsWorld will use this World processor for decision making.</param>
+        /// <param name="communicate"> If true, the MLAgentsWorld will default to using the remote process for communication making and use the fallbackWorldProcessor otherwise.</param>
+        public void RegisterWorld(string policyId, MLAgentsWorld world, IWorldProcessor fallbackWorldProcessor = null, bool communicate = true)
         {
+            // Need to find a way to deregister ?
+            // Need a way to modify the World processor on the fly
+            // Automagically register world on creation ?
             var nativePolicyId = new NativeString64(policyId);
 
             IWorldProcessor processor = null;
@@ -82,12 +91,15 @@ namespace Unity.AI.MLAgents
             {
                 processor = new NullWorldProcessor(world);
             }
-            // Array.Resize<IWorldProcessor>(ref WorldProcessors, WorldProcessors.Length + 1);
-            // WorldProcessors[WorldProcessors.Length - 1] = processor;
             WorldToProcessor[world] = processor;
         }
 
-        public void SubscribeSideChannel(SideChannel channel)
+        /// <summary>
+        /// Registers SideChannel to the Academy to send and receive data with Python.
+        /// If IsCommunicatorOn is false, the SideChannel will not be registered.
+        /// </summary>
+        /// <param name="channel"> The side channel to be registered.</param>
+        public void RegisterSideChannel(SideChannel channel)
         {
             foreach (var registeredChannel in m_SideChannels)
             {
@@ -198,6 +210,7 @@ namespace Unity.AI.MLAgents
                     ResetAllWorlds();
                     // TODO : RESET logic
                     break;
+
                 case RemoteCommand.CLOSE:
 #if UNITY_EDITOR
                     EditorApplication.isPlaying = false;
@@ -206,8 +219,10 @@ namespace Unity.AI.MLAgents
 #endif
                     com = null;
                     break;
+
                 case RemoteCommand.DEFAULT:
                     break;
+
                 default:
                     break;
             }
@@ -222,6 +237,9 @@ namespace Unity.AI.MLAgents
             }
         }
 
+        /// <summary>
+        /// Shuts down the Academy.
+        /// </summary>
         public void Dispose()
         {
             com?.Dispose();

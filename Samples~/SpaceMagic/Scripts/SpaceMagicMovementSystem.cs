@@ -84,21 +84,18 @@ public class SpaceMagicMovementSystem : JobComponentSystem
     protected override void OnCreate()
     {
         world = new MLAgentsWorld(10001,  new int3[] { new int3(3, 0, 0) }, ActionType.CONTINUOUS, 3);
-        world.SubscribeWorldWithHeuristic("SpaceMagic", () =>
-        {
-            if (Input.GetKey(KeyCode.Space))
+        world.RegisterWorldWithHeuristic("SpaceMagic", () =>
             {
-                return new float3(-10, -10, -10);
+                if (Input.GetKey(KeyCode.Space))
+                {
+                    return new float3(-10, -10, -10);
+                }
+                else
+                {
+                    return new float3();
+                }
             }
-            else
-            {
-                return new float3();
-            }
-        }
         );
-
-        // var world2 = new MLAgentsWorld(10, ActionType.DISCRETE, new int3[] { new int3(5, 0, 0) }, 6, new int[6] { 2, 3, 4, 5, 6, 7 });
-        // sys.SubscribeWorld("SpaceMagic2", world2);
     }
 
     protected override JobHandle OnUpdate(JobHandle inputDeps)

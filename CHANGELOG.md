@@ -8,4 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Description
  - Added a CHANGELOG.md
+ - Added a License
+ - Renamed methods to be Register X rather than Subscribe X
+ - Renames the `HasTerminated` method to `SetEpisodeStatus`
 

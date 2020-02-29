@@ -42,7 +42,7 @@ namespace Unity.AI.MLAgents
         public MLAgentsWorld GenerateAndRegisterWorld()
         {
             var world = GenerateWorld();
-            world.SubscribeWorldWithBarracudaModel(Name, Model, InferenceDevice);
+            world.RegisterWorldWithBarracudaModel(Name, Model, InferenceDevice);
             return world;
         }
     }

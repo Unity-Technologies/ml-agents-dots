@@ -21,7 +21,7 @@ public class SimpleSystem : JobComponentSystem
         Application.targetFrameRate = -1;
 
         world = new MLAgentsWorld(N_Agents, new int3[] { new int3(3, 0, 0), new int3(84, 84, 3) }, ActionType.DISCRETE, 2, new int[] { 2, 3 });
-        world.SubscribeWorldWithHeuristic("test", () => new int2(1, 1));
+        world.RegisterWorldWithHeuristic("test", () => new int2(1, 1));
         entities = new NativeArray<Entity>(N_Agents, Allocator.Persistent);
 
         for (int i = 0; i < N_Agents; i++)

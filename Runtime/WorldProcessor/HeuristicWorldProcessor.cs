@@ -7,24 +7,24 @@ namespace Unity.AI.MLAgents
 {
     public static class HeristicWorldProcessorRegistringExtension
     {
-        public static void SubscribeWorldWithHeuristic<TH>(
+        public static void RegisterWorldWithHeuristic<TH>(
             this MLAgentsWorld world,
             string policyId,
             Func<TH> heuristic
         ) where TH : struct
         {
             var worldProcessor = new HeuristicWorldProcessor<TH>(world, heuristic);
-            Academy.Instance.SubscribeWorld(policyId, world, worldProcessor, true);
+            Academy.Instance.RegisterWorld(policyId, world, worldProcessor, true);
         }
 
-        public static void SubscribeWorldWithHeuristicForceNoCommunication<TH>(
+        public static void RegisterWorldWithHeuristicForceNoCommunication<TH>(
             this MLAgentsWorld world,
             string policyId,
             Func<TH> heuristic
         ) where TH : struct
         {
             var worldProcessor = new HeuristicWorldProcessor<TH>(world, heuristic);
-            Academy.Instance.SubscribeWorld(policyId, world, worldProcessor, false);
+            Academy.Instance.RegisterWorld(policyId, world, worldProcessor, false);
         }
     }
 

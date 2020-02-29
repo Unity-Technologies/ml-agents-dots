@@ -14,7 +14,7 @@ namespace Unity.AI.MLAgents
 
     public static class BarracudaWorldProcessorRegistringExtension
     {
-        public static void SubscribeWorldWithBarracudaModel(
+        public static void RegisterWorldWithBarracudaModel(
             this MLAgentsWorld world,
             string policyId,
             NNModel model,
@@ -24,23 +24,30 @@ namespace Unity.AI.MLAgents
             if (model != null)
             {
                 var worldProcessor = new BarracudaWorldProcessor(world, model, inferenceDevice);
-                Academy.Instance.SubscribeWorld(policyId, world, worldProcessor, true);
+                Academy.Instance.RegisterWorld(policyId, world, worldProcessor, true);
             }
             else
             {
-                Academy.Instance.SubscribeWorld(policyId, world, null, true);
+                Academy.Instance.RegisterWorld(policyId, world, null, true);
             }
         }
 
-        public static void SubscribeWorldWithBarracudaModelForceNoCommunication<TH>(
+        public static void RegisterWorldWithBarracudaModelForceNoCommunication<TH>(
             this MLAgentsWorld world,
             string policyId,
             NNModel model,
             InferenceDevice inferenceDevice = InferenceDevice.CPU
         )
         {
-            var worldProcessor = new BarracudaWorldProcessor(world, model, inferenceDevice);
-            Academy.Instance.SubscribeWorld(policyId, world, worldProcessor, false);
+            if (model != null)
+            {
+                var worldProcessor = new BarracudaWorldProcessor(world, model, inferenceDevice);
+                Academy.Instance.RegisterWorld(policyId, world, worldProcessor, false);
+            }
+            else
+            {
+                Academy.Instance.RegisterWorld(policyId, world, null, false);
+            }
         }
     }
     internal unsafe class BarracudaWorldProcessor : IWorldProcessor

@@ -79,7 +79,7 @@ public class BallSystem : JobComponentSystem
                 world.RequestDecision(entity)
                     .SetObservation(0, rotation.Value)
                     .SetObservation(1, droppedTag.position - trans.Value)
-                    .HasTerminated(droppedTag.WasDropped, false) // Are you sure ?
+                    .SetEpisodeStatus(droppedTag.WasDropped ? EpisodeStatus.TERMINATED : EpisodeStatus.DEFAULT)
                     .SetReward((droppedTag.WasDropped ? -1f : 0.1f));// - 0.025f * (math.abs(acc.Value.x) + math.abs(acc.Value.y)));
 
                 if (droppedTag.WasDropped)

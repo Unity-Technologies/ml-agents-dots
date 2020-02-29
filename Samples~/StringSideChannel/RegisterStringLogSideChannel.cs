@@ -12,7 +12,7 @@ public class RegisterStringLogSideChannel : MonoBehaviour
     {
         stringChannel = new StringLogSideChannel();
 
-        Academy.Instance.SubscribeSideChannel(stringChannel);
+        Academy.Instance.RegisterSideChannel(stringChannel);
 
         Application.logMessageReceived += stringChannel.SendDebugStatementToPython;
     }
