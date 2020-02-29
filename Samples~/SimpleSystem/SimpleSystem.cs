@@ -90,7 +90,7 @@ public class SimpleSystem : JobComponentSystem
         public void Execute(ActuatorEvent data)
         {
             var tmp = new testAction();
-            data.GetDiscreteAction(out tmp);
+            data.GetAction(out tmp);
             Debug.Log(data.Entity.Index + "  " + tmp.e1);
         }
     }

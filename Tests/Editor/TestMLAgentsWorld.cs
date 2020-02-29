@@ -70,7 +70,7 @@ namespace Unity.AI.MLAgents.Tests.Editor
             {
                 ent[0] = data.Entity;
                 DiscreteAction_TWO_THREE act = new DiscreteAction_TWO_THREE();
-                data.GetDiscreteAction<DiscreteAction_TWO_THREE>(out act);
+                data.GetAction<DiscreteAction_TWO_THREE>(out act);
                 action[0] = act;
             }
         }

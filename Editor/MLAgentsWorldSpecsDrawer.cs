@@ -158,9 +158,9 @@ namespace Unity.AI.MLAgents.Editor
         static void DrawDiscreteActionBranches(Rect position, SerializedProperty property)
         {
             var actionTypeProperty = property.FindPropertyRelative(SpecsPropertyNames.k_ActionType);
-            var actionType = GetValue<ActionType>(actionTypeProperty);
+            var actionType = (ActionType)actionTypeProperty.enumValueIndex;
             var actionSizeProperty = property.FindPropertyRelative(SpecsPropertyNames.k_ActionSize);
-            var actionSize = GetValue<int>(actionSizeProperty);
+            var actionSize = actionSizeProperty.intValue;
             if (actionType == ActionType.DISCRETE)
             {
                 EditorGUI.indentLevel++;
@@ -184,9 +184,9 @@ namespace Unity.AI.MLAgents.Editor
         static int GetHeightDiscreteAction(SerializedProperty property)
         {
             var actionTypeProperty = property.FindPropertyRelative(SpecsPropertyNames.k_ActionType);
-            var actionType = GetValue<ActionType>(actionTypeProperty);
+            var actionType = (ActionType)actionTypeProperty.enumValueIndex;
             var actionSizeProperty = property.FindPropertyRelative(SpecsPropertyNames.k_ActionSize);
-            var actionSize = GetValue<int>(actionSizeProperty);
+            var actionSize = actionSizeProperty.intValue;
             if (actionType == ActionType.DISCRETE)
             {
                 return actionSize + 1;
@@ -214,7 +214,7 @@ namespace Unity.AI.MLAgents.Editor
 
             // Name not empty
             var nameProperty = property.FindPropertyRelative(SpecsPropertyNames.k_Name);
-            var name = GetValue<string>(nameProperty);
+            var name = nameProperty.stringValue;
             if (name == "")
             {
                 m_Warnings.Add("Your World must have a non-empty name");
@@ -222,7 +222,7 @@ namespace Unity.AI.MLAgents.Editor
 
             // Max number of agents is not zero
             var nAgentsProperty = property.FindPropertyRelative(SpecsPropertyNames.k_NumberAgents);
-            var nAgents = GetValue<int>(nAgentsProperty);
+            var nAgents = nAgentsProperty.intValue;
             if (nAgents == 0)
             {
                 m_Warnings.Add("Your World must have a non-zero maximum number of Agents");
@@ -237,32 +237,19 @@ namespace Unity.AI.MLAgents.Editor
 
             // Action Size is not zero
             var actionSizeProperty = property.FindPropertyRelative(SpecsPropertyNames.k_ActionSize);
-            var actionSize = GetValue<int>(actionSizeProperty);
+            var actionSize = actionSizeProperty.intValue;
             if (actionSize == 0)
             {
                 m_Warnings.Add("Your World must have non-zero action size");
             }
 
             //Model is not empty
-            var model = GetValue<NNModel>(property.FindPropertyRelative(SpecsPropertyNames.k_Model));
+            var modelProperty = property.FindPropertyRelative(SpecsPropertyNames.k_Model);
+            var model = (NNModel)modelProperty.objectReferenceValue;
             if (model == null)
             {
                 m_Warnings.Add("No model preset (can still train)");
             }
-        }
-
-        static T GetValue<T>(SerializedProperty property)
-        {
-            object obj = property.serializedObject.targetObject;
-
-            FieldInfo field = null;
-            foreach (var path in property.propertyPath.Split('.'))
-            {
-                var type = obj.GetType();
-                field = type.GetField(path);
-                obj = field.GetValue(obj);
-            }
-            return (T)obj;
         }
     }
 }

@@ -12,38 +12,33 @@ namespace Unity.AI.MLAgents
     {
         [ReadOnly] public int ActionSize;
         [ReadOnly] public Entity Entity;
-        [ReadOnly] public NativeSlice<float> ContinuousActionSlice;
-        [ReadOnly] public NativeSlice<int> DiscreteActionSlice;
+        [ReadOnly] public ActionType ActionType;
+        [ReadOnly] internal NativeSlice<float> ContinuousActionSlice;
+        [ReadOnly] internal NativeSlice<int> DiscreteActionSlice;
 
 
-        public void GetDiscreteAction<T>(out T action) where T : struct
+        public void GetAction<T>(out T action) where T : struct
         {
+            if (ActionType == ActionType.DISCRETE)
+            {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            if (ActionSize != UnsafeUtility.SizeOf<T>() / sizeof(float))
-            {
-                throw new MLAgentsException("Action space does not match for Discrete action. Expected " + ActionSize);
-            }
-            if (DiscreteActionSlice.Length == 0)
-            {
-                throw new MLAgentsException("No Discrete Action available for world.");
-            }
+                if (ActionSize != UnsafeUtility.SizeOf<T>() / sizeof(float))
+                {
+                    throw new MLAgentsException("Action space does not match for Discrete action. Expected " + ActionSize);
+                }
 #endif
-            action = DiscreteActionSlice.SliceConvert<T>()[0];
-        }
-
-        public void GetContinuousAction<T>(out T action) where T : struct
-        {
+                action = DiscreteActionSlice.SliceConvert<T>()[0];
+            }
+            else
+            {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            if (ActionSize != UnsafeUtility.SizeOf<T>() / sizeof(float))
-            {
-                throw new MLAgentsException("Action space does not match for Continuous action. Expected " + ActionSize);
-            }
-            if (ContinuousActionSlice.Length == 0)
-            {
-                throw new MLAgentsException("No Continuous Action available for world.");
-            }
+                if (ActionSize != UnsafeUtility.SizeOf<T>() / sizeof(float))
+                {
+                    throw new MLAgentsException("Action space does not match for Continuous action. Expected " + ActionSize);
+                }
 #endif
-            action = ContinuousActionSlice.SliceConvert<T>()[0];
+                action = ContinuousActionSlice.SliceConvert<T>()[0];
+            }
         }
     }
 
@@ -125,6 +120,7 @@ namespace Unity.AI.MLAgents
                             jobData.UserJobData.Execute(new ActuatorEvent
                             {
                                 ActionSize = size,
+                                ActionType = ActionType.CONTINUOUS,
                                 Entity = jobData.world.ActionAgentIds[i],
                                 ContinuousActionSlice = jobData.world.ContinuousActuators.Slice(i * size, size)
                             });
@@ -141,6 +137,7 @@ namespace Unity.AI.MLAgents
                             jobData.UserJobData.Execute(new ActuatorEvent
                             {
                                 ActionSize = size,
+                                ActionType = ActionType.DISCRETE,
                                 Entity = jobData.world.ActionAgentIds[i],
                                 DiscreteActionSlice = jobData.world.DiscreteActuators.Slice(i * size, size)
                             });

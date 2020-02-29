@@ -39,7 +39,7 @@ public class SpaceMagicMovementSystem : JobComponentSystem
         public void Execute(ActuatorEvent ev)
         {
             var a = new Acceleration();
-            ev.GetContinuousAction(out a);
+            ev.GetAction(out a);
             ComponentDataFromEntity[ev.Entity] = a;
         }
     }

@@ -22,14 +22,15 @@ public class SpaceMagicManager : MonoBehaviour
     public GameObject prefab;
 
     private Entity _prefabEntity;
-
+    BlobAssetStore blob;
 
     void Start()
     {
         World.DefaultGameObjectInjectionWorld.GetOrCreateSystem<SpaceMagicMovementSystem>();
         manager = World.DefaultGameObjectInjectionWorld.EntityManager;
-        // sys.SetModel("SpaceMagic", modelA);
-        _prefabEntity = GameObjectConversionUtility.ConvertGameObjectHierarchy(prefab, World.DefaultGameObjectInjectionWorld);
+        blob = new BlobAssetStore();
+        GameObjectConversionSettings settings = GameObjectConversionSettings.FromWorld(World.DefaultGameObjectInjectionWorld, blob);
+        _prefabEntity = GameObjectConversionUtility.ConvertGameObjectHierarchy(prefab, settings);
 
         Spawn(100);
     }
@@ -79,5 +80,10 @@ public class SpaceMagicManager : MonoBehaviour
         }
 
         entities.Dispose();
+    }
+
+    void OnDestroy()
+    {
+        blob.Dispose();
     }
 }

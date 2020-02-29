@@ -19,31 +19,23 @@ namespace Unity.AI.MLAgents
         public NNModel Model;
         public InferenceDevice InferenceDevice;
 
-        private bool m_AlreadyCreated;
+        private MLAgentsWorld m_World;
 
-        public MLAgentsWorld GenerateWorld()
+        public MLAgentsWorld GetWorld()
         {
-            if (m_AlreadyCreated)
+            if (m_World.IsCreated)
             {
-                throw new MLAgentsException(
-                    "World has already been generated using Specs"
-                );
+                return m_World;
             }
-            m_AlreadyCreated = true;
-            return new MLAgentsWorld(
+            m_World = new MLAgentsWorld(
                 NumberAgents,
                 ObservationShapes,
                 ActionType,
                 ActionSize,
                 DiscreteActionBranches
             );
-        }
-
-        public MLAgentsWorld GenerateAndRegisterWorld()
-        {
-            var world = GenerateWorld();
-            world.RegisterWorldWithBarracudaModel(Name, Model, InferenceDevice);
-            return world;
+            m_World.RegisterWorldWithBarracudaModel(Name, Model, InferenceDevice);
+            return m_World;
         }
     }
 }
