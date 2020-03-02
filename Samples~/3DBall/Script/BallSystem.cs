@@ -37,8 +37,7 @@ public class BallSystem : JobComponentSystem
         public ComponentDataFromEntity<AngularAcceleration> ComponentDataFromEntity;
         public void Execute(ActuatorEvent ev)
         {
-            var a = new AngularAcceleration();
-            ev.GetAction(out a);
+            var a = ev.GetAction<AngularAcceleration>();
             ComponentDataFromEntity[ev.Entity] = a;
         }
     }

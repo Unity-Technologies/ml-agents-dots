@@ -69,8 +69,7 @@ namespace Unity.AI.MLAgents.Tests.Editor
             public void Execute(ActuatorEvent data)
             {
                 ent[0] = data.Entity;
-                DiscreteAction_TWO_THREE act = new DiscreteAction_TWO_THREE();
-                data.GetAction<DiscreteAction_TWO_THREE>(out act);
+                var act = data.GetAction<DiscreteAction_TWO_THREE>();
                 action[0] = act;
             }
         }

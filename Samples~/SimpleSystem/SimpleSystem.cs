@@ -89,8 +89,7 @@ public class SimpleSystem : JobComponentSystem
         public int myNumber;
         public void Execute(ActuatorEvent data)
         {
-            var tmp = new testAction();
-            data.GetAction(out tmp);
+            var tmp =data.GetAction<testAction>();
             Debug.Log(data.Entity.Index + "  " + tmp.e1);
         }
     }

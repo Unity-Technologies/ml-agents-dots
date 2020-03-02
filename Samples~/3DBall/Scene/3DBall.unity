@@ -245,7 +245,7 @@ MonoBehaviour:
     - x: 3
       y: 0
       z: 0
-    ActionSize: 1
+    ActionSize: 2
     DiscreteActionBranches: 0000000000000000
     Model: {fileID: 5022602860645237092, guid: c8a63f5244bd341c6a933daeadc365f0, type: 3}
     InferenceDevice: 0

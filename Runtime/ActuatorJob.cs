@@ -10,14 +10,31 @@ namespace Unity.AI.MLAgents
     // This struct will be provided to the user in a custom job inheriting from IActuatorJob
     public struct ActuatorEvent
     {
+        /// <summary>
+        /// The size of the action vector.
+        /// </summary>
         [ReadOnly] public int ActionSize;
+
+        /// <summary>
+        /// The Entity the vector action is for.
+        /// </summary>
         [ReadOnly] public Entity Entity;
+
+        /// <summary>
+        /// The type of action : can be DISCRETE or CONTINUOUS.
+        /// </summary>
         [ReadOnly] public ActionType ActionType;
+
         [ReadOnly] internal NativeSlice<float> ContinuousActionSlice;
         [ReadOnly] internal NativeSlice<int> DiscreteActionSlice;
 
-
-        public void GetAction<T>(out T action) where T : struct
+        /// <summary>
+        /// Retrieve the action that was decided for the Entity.
+        /// This method uses a generic type, as such you must provide a
+        /// type that is compatible with the Action Type and Action Size
+        /// for this MLAgentsWorld.
+        /// </summary>
+        public T GetAction<T>() where T : struct
         {
             if (ActionType == ActionType.DISCRETE)
             {
@@ -27,7 +44,7 @@ namespace Unity.AI.MLAgents
                     throw new MLAgentsException("Action space does not match for Discrete action. Expected " + ActionSize);
                 }
 #endif
-                action = DiscreteActionSlice.SliceConvert<T>()[0];
+                return DiscreteActionSlice.SliceConvert<T>()[0];
             }
             else
             {
@@ -37,12 +54,14 @@ namespace Unity.AI.MLAgents
                     throw new MLAgentsException("Action space does not match for Continuous action. Expected " + ActionSize);
                 }
 #endif
-                action = ContinuousActionSlice.SliceConvert<T>()[0];
+                return ContinuousActionSlice.SliceConvert<T>()[0];
             }
         }
     }
 
-    // The signature of the Job used to retrieve actuators values from a world
+    /// <summary>
+    /// The signature of the Job used to retrieve actuators values from a world
+    /// </summary>
     [JobProducerType(typeof(IActuatorJobExtensions.ActuatorDataJobProcess<>))]
     public interface IActuatorJob
     {
@@ -145,7 +164,6 @@ namespace Unity.AI.MLAgents
                     }
                 }
                 jobData.world.ResetActionsCounter();
-                // TODO : There is a risk here that the user would consume a action twice if they request a decision before the System creates new ones
             }
         }
     }
