@@ -82,13 +82,12 @@ public struct UserCreatedActionEventJob : IActuatorJob
     {
         public void Execute(ActuatorEvent data)
         {
-            var tmp = new float3();
-            data.GetContinousAction(out tmp);
+            var tmp = data.GetAction<float3>();
             Debug.Log(data.Entity.Index + "  " + tmp.x);
         }
     }
 ```
-The ActuatorEvent data contains a key (here an entity) to identify the Agent and a `GetContinousAction` or `GetDiscreteAction` method to retrieve the data in the event. This is very similar to how collisions are currently handled in the Physics package.
+The ActuatorEvent data contains a key (here an entity) to identify the Agent and a `GetAction` method to retrieve the data in the event. This is very similar to how collisions are currently handled in the Physics package.
 
 ## UI to create MLAgentsWorld
 
