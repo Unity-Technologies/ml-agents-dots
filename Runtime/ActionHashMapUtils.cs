@@ -13,7 +13,8 @@ namespace Unity.AI.MLAgents
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (world.ActionSize != UnsafeUtility.SizeOf<T>() / 4)
             {
-                throw new MLAgentsException("Action space does not match for discrete action. Expected " + world.ActionSize);
+                var receivedSize = UnsafeUtility.SizeOf<T>() / 4;
+                throw new MLAgentsException($"Action space size does not match for action. Expected {world.ActionSize} but received {receivedSize}");
             }
 #endif
             Academy.Instance.UpdateWorld(world);

@@ -36,24 +36,19 @@ namespace Unity.AI.MLAgents
         /// </summary>
         public T GetAction<T>() where T : struct
         {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (ActionSize != UnsafeUtility.SizeOf<T>() / 4)
+            {
+                var receivedSize = UnsafeUtility.SizeOf<T>() / 4;
+                throw new MLAgentsException($"Action space size does not match for action. Expected {ActionSize} but received {receivedSize}");
+            }
+#endif
             if (ActionType == ActionType.DISCRETE)
             {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-                if (ActionSize != UnsafeUtility.SizeOf<T>() / sizeof(float))
-                {
-                    throw new MLAgentsException("Action space does not match for Discrete action. Expected " + ActionSize);
-                }
-#endif
                 return DiscreteActionSlice.SliceConvert<T>()[0];
             }
             else
             {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-                if (ActionSize != UnsafeUtility.SizeOf<T>() / sizeof(float))
-                {
-                    throw new MLAgentsException("Action space does not match for Continuous action. Expected " + ActionSize);
-                }
-#endif
                 return ContinuousActionSlice.SliceConvert<T>()[0];
             }
         }

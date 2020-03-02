@@ -42,8 +42,8 @@ namespace Unity.AI.MLAgents
             var structSize = UnsafeUtility.SizeOf<T>() / sizeof(float);
             if (structSize != world.ActionSize)
             {
-                throw new MLAgentsException(string.Format(
-                    "The heuristic provided does not match the action size. Expected {0} received {1}", structSize, world.ActionSize));
+                throw new MLAgentsException(
+                    $"The heuristic provided does not match the action size. Expected {world.ActionSize} but received {structSize} from heuristic");
             }
         }
 

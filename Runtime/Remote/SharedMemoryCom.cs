@@ -72,7 +72,7 @@ namespace Unity.AI.MLAgents
             var version = accessor.ReadInt32(k_VersionOffset);
             if (version != k_ApiVersion)
             {
-                throw new MLAgentsException(string.Format("API incompatible. Python version : {0}, Unity version : {1}", version, k_ApiVersion));
+                throw new MLAgentsException($"API incompatible. Python version : {version}, Unity version : {k_ApiVersion}");
             }
             // Now that we kow the current capacity of the file, we create a new accessor with the right capacity
             accessor.Dispose();

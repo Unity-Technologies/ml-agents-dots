@@ -109,7 +109,7 @@ namespace Unity.AI.MLAgents
             if (inputSize != expectedInputSize)
             {
                 throw new MLAgentsException(
-                    "Cannot set observation due to incompatible size of the input. Expected size : " + expectedInputSize + ", received size : " + inputSize);
+                    $"Cannot set observation due to incompatible size of the input. Expected size : { expectedInputSize }, received size : { inputSize}");
             }
 #endif
             int start = world.ObservationOffsets[sensorNumber];
@@ -134,7 +134,7 @@ namespace Unity.AI.MLAgents
             if (inputSize != expectedInputSize)
             {
                 throw new MLAgentsException(
-                    "Cannot set observation due to incompatible size of the input. Expected size : " + expectedInputSize + ", received size : " + inputSize);
+                    $"Cannot set observation due to incompatible size of the input. Expected size : {expectedInputSize}, received size : { inputSize}");
             }
 #endif
             int start = world.ObservationOffsets[sensorNumber];

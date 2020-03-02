@@ -183,7 +183,7 @@ namespace Unity.AI.MLAgents
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (index > AgentEntityIds.Length)
             {
-                throw new MLAgentsException("Number of decisions requested exceeds the set maximum of " + AgentEntityIds.Length);
+                throw new MLAgentsException($"Number of decisions requested exceeds the set maximum of {AgentEntityIds.Length}");
             }
 #endif
             AgentEntityIds[index] = entity;
