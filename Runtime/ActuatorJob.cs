@@ -7,7 +7,9 @@ using Unity.Collections;
 
 namespace Unity.AI.MLAgents
 {
-    // This struct will be provided to the user in a custom job inheriting from IActuatorJob
+    /// <summary>
+    /// This struct will be provided to the user in a custom job inheriting from IActuatorJob
+    /// </summary>
     public struct ActuatorEvent
     {
         /// <summary>
@@ -34,6 +36,8 @@ namespace Unity.AI.MLAgents
         /// type that is compatible with the Action Type and Action Size
         /// for this MLAgentsWorld.
         /// </summary>
+        /// <typeparam name="T"> The type of action struct.</typeparam>
+        /// <returns> The action struct for the Entity.</returns>
         public T GetAction<T>() where T : struct
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -65,7 +69,14 @@ namespace Unity.AI.MLAgents
 
     public static class IActuatorJobExtensions
     {
-        // The scheduler the user will call when scheduling their job
+        /// <summary>
+        /// Schedule the Job that will generate the action data for the Entities that requested a decision.
+        /// </summary>
+        /// <param name="jobData"> The IActuatorJob struct.</param>
+        /// <param name="mlagentsWorld"> The MLAgentsWorld containing the data needed for decision making.</param>
+        /// <param name="inputDeps"> The jobHandle for the job.</param>
+        /// <typeparam name="T"> The type of the IActuatorData struct.</typeparam>
+        /// <returns> The updated jobHandle for the job.</returns>
         public static unsafe JobHandle Schedule<T>(this T jobData, MLAgentsWorld mlagentsWorld, JobHandle inputDeps)
             where T : struct, IActuatorJob
         {

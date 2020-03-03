@@ -69,23 +69,22 @@ namespace Unity.AI.MLAgents
         /// </summary>
         /// <param name="policyId"> The string identifier of the MLAgentsWorld. There can only be one world per unique id.</param>
         /// <param name="world"> The MLAgentsWorld that is being subscribed.</param>
-        /// <param name="fallbackWorldProcessor"> If the remote process is not available, the MLAgentsWorld will use this World processor for decision making.</param>
-        /// <param name="communicate"> If true, the MLAgentsWorld will default to using the remote process for communication making and use the fallbackWorldProcessor otherwise.</param>
-        public void RegisterWorld(string policyId, MLAgentsWorld world, IWorldProcessor fallbackWorldProcessor = null, bool communicate = true)
+        /// <param name="worldProcessor"> If the remote process is not available, the MLAgentsWorld will use this World processor for decision making.</param>
+        /// <param name="defaultRemote"> If true, the MLAgentsWorld will default to using the remote process for communication making and use the fallbackWorldProcessor otherwise.</param>
+        public void RegisterWorld(string policyId, MLAgentsWorld world, IWorldProcessor worldProcessor = null, bool defaultRemote = true)
         {
             // Need to find a way to deregister ?
             // Need a way to modify the World processor on the fly
             // Automagically register world on creation ?
-            var nativePolicyId = new NativeString64(policyId);
 
             IWorldProcessor processor = null;
-            if (com != null && communicate)
+            if (com != null && defaultRemote)
             {
                 processor = new RemoteWorldProcessor(world, policyId, com);
             }
-            else if (fallbackWorldProcessor != null)
+            else if (worldProcessor != null)
             {
-                processor = fallbackWorldProcessor;
+                processor = worldProcessor;
             }
             else
             {
@@ -206,8 +205,8 @@ namespace Unity.AI.MLAgents
             {
                 case RemoteCommand.RESET:
                     World.DefaultGameObjectInjectionWorld.EntityManager.CompleteAllJobs(); // This is problematic because it completes only for the active world
-                    OnEnvironmentReset?.Invoke();;
                     ResetAllWorlds();
+                    OnEnvironmentReset?.Invoke();
                     // TODO : RESET logic
                     break;
 

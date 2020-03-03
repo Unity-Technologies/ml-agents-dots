@@ -2,22 +2,23 @@ using Unity.Mathematics;
 using Unity.Entities;
 using Barracuda;
 using System;
+using UnityEngine;
 
 namespace Unity.AI.MLAgents
 {
     [Serializable]
     public struct MLAgentsWorldSpecs
     {
-        public string Name;
+        [SerializeField] internal string Name;
 
-        public int NumberAgents;
-        public ActionType ActionType;
-        public int3[] ObservationShapes;
-        public int ActionSize;
-        public int[] DiscreteActionBranches;
+        [SerializeField] public int NumberAgents;
+        [SerializeField] public ActionType ActionType;
+        [SerializeField] public int3[] ObservationShapes;
+        [SerializeField] public int ActionSize;
+        [SerializeField] public int[] DiscreteActionBranches;
 
-        public NNModel Model;
-        public InferenceDevice InferenceDevice;
+        [SerializeField] public NNModel Model;
+        [SerializeField] public InferenceDevice InferenceDevice;
 
         private MLAgentsWorld m_World;
 

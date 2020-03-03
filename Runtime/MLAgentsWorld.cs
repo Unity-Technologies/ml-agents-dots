@@ -6,14 +6,26 @@ using System;
 
 namespace Unity.AI.MLAgents
 {
+    /// <summary>
+    /// Indicates the action space type of an Agent action.
+    /// If CONTINUOUS, the Action is expected to be a struct containing only floats
+    /// If DISCRETE, the Action is expected to be a struct of int or int enums.
+    /// </summary>
     public enum ActionType : int
     {
         DISCRETE = 0,
         CONTINUOUS = 1,
     }
 
+    /// <summary>
+    /// MLAgentsWorld is a data container on which the user requests decisions.
+    /// </summary>
     public struct MLAgentsWorld : IDisposable
     {
+        /// <summary>
+        /// Indicates if the MLAgentsWorld has been instantiated
+        /// </summary>
+        /// <value> True if MLAgentsWorld was instantiated, False otherwise</value>
         public bool IsCreated
         {
             get { return AgentIds.IsCreated;}
@@ -48,8 +60,8 @@ namespace Unity.AI.MLAgents
         /// Creates a data container used to write data needed for decisions and retrieve action data.
         /// </summary>
         /// <param name="maximumNumberAgents"> The maximum number of decisions that can be requested between each MLAgentsSystem update </param>
-        /// <param name="actionType"> An ActionType enum (DISCRETE / CONTINUOUS) specifying the type of actions the MLAgentsWorld will produce </param>
         /// <param name="obsShapes"> An array of int3 corresponding to the shape of the expected observations (one int3 per observation) </param>
+        /// <param name="actionType"> An ActionType enum (DISCRETE / CONTINUOUS) specifying the type of actions the MLAgentsWorld will produce </param>
         /// <param name="actionSize"> The number of actions the MLAgentsWorld is expected to generate for each decision.
         ///  - If CONTINUOUS ActionType : The number of floats the action contains
         ///  - If DISCRETE ActionType : The number of branches (integer actions) the action contains </param>
@@ -145,6 +157,9 @@ namespace Unity.AI.MLAgents
             ActionAgentIds.Slice(0, count).CopyFrom(AgentEntityIds.Slice(0, count));
         }
 
+        /// <summary>
+        /// Dispose of the MLAgentsWorld.
+        /// </summary>
         public void Dispose()
         {
             if (!IsCreated)
@@ -179,6 +194,12 @@ namespace Unity.AI.MLAgents
         /// <returns></returns>
         public DecisionRequest RequestDecision(Entity entity)
         {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (!IsCreated)
+            {
+                throw new MLAgentsException($"Invalid operation, cannot request a decision on a non-initialized MLAgentsWorld");
+            }
+#endif
             var index = AgentCounter.ToConcurrent().Increment() - 1;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (index > AgentEntityIds.Length)

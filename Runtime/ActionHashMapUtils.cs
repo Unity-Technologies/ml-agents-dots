@@ -8,6 +8,13 @@ namespace Unity.AI.MLAgents
     // TODO : Make faster and parallel
     internal static class ActionHashMapUtils
     {
+        /// <summary>
+        /// Retrieves the action data for a world in puts it into a HashMap
+        /// </summary>
+        /// <param name="world"> The MLAgentsWorld the data will be retrieved from.</param>
+        /// <param name="allocator"> The memory allocator of the create NativeHashMap.</param>
+        /// <typeparam name="T"> The type of the Action struct. It must match the Action Size and Action Type of the world.</typeparam>
+        /// <returns> A NativeHashMap from Entities to Action.</returns>
         public static NativeHashMap<Entity, T> GetActionHashMap<T>(this MLAgentsWorld world, Allocator allocator) where T : struct
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -35,6 +42,7 @@ namespace Unity.AI.MLAgents
                     }
                 }
             }
+            world.ResetActionsCounter();
             return result;
         }
     }
