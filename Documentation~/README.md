@@ -20,7 +20,7 @@ This package is available as a preview, so it is not ready for production use. T
  * In the Package Manager window, select DOTS ML-Agents and import the Samples you need.
 
 ## API
-Another approach to designing ml-agents-dots would be to use typical API used for example in [Unity.Physics](https://github.com/Unity-Technologies/Unity.Physics) where a "MLAgents World" holds data, processes it and the data can then be retrieved. 
+One approach to designing ml-agents to be compativle with DOTS would be to use typical API used for example in [Unity.Physics](https://github.com/Unity-Technologies/Unity.Physics) where a "MLAgents World" holds data, processes it and the data can then be retrieved. 
 The user would access the `MLAgentsWorld` in the main thread :
 
 ```csharp
@@ -51,7 +51,7 @@ public struct UserCreateSensingJob : IJobParallelFor
     }
 ```
 
-The job would be called this way :
+The job would be called this way or use the `Entities.ForEach` API :
 
 ```csharp
 protected override JobHandle OnUpdate(JobHandle inputDeps)
@@ -66,7 +66,7 @@ protected override JobHandle OnUpdate(JobHandle inputDeps)
 }
 ```
 
-Note that this API can also be called outside of a job and used in the main thread to be compatible with OOTS. There is no reliance at all on IComponentData and ECS which means that we do not have to feed the data with blitable structs and could use NativeArrays as well.
+Note that this API can also be called outside of a job and used in the main thread to be compatible with OOTS. There is no reliance at all on IComponentData and ECS which means that we do not have to feed the data with blitable structs and could use NativeArrays as well. Here is an example on how to feed sensor data from a NativeSlice:
 
 ```csharp
 var visObs = VisualObservationUtility.GetVisObs(camera, 84, 84, Allocator.TempJob);
@@ -91,8 +91,8 @@ The ActuatorEvent data contains a key (here an entity) to identify the Agent and
 
 ## UI to create MLAgentsWorld
 
-We currently offer a `MLAgentsWorldSpecs` struct that has a custom inspector drawer (you can add it to a MonoBehaviour to edit the properties of your MLAgentsWorld and even add a neural network for its behavior.
-To use the word call `MLAgentsWorldSpecs.GenerateAndRegisterWorld()`.
+We currently offer a `MLAgentsWorldSpecs` struct that has a custom inspector drawer (you can add it to a MonoBehaviour to edit the properties of your MLAgentsWorld and even add a neural network for its behavior).
+To generate the MLAgentsWorld with the given settings call `MLAgentsWorldSpecs.GetWorld()`.
 
 ## Communication Between C# and Python
 In order to exchange data with Python, we use shared memory. Python will create a small file that contains information required for starting the communication. The path to the file will be randomly generated randomly generated and passed by Python to the Unity Executable as command line argument. For in editor training, a default file will be used. Using shared memory would allow faster data exchange and will remove the need to serialize the data to an intermediate format.
@@ -114,8 +114,8 @@ __Note__ : The python code for communication is located in [ml-agents-envs~](./m
 
 #### Side channel data
 
- - GUID : 16 bytes : The length of the side channel data for the current step (starts at 0)
- - ??? : Side channel data (Size = total side channel capacity - 16 bytes )
+ - int : 4 bytes : The length of the side channel data for the current step (starts at 0)
+ - ??? : Side channel data (Size = total side channel capacity - 4 bytes )
 
 #### RL Data section
 
