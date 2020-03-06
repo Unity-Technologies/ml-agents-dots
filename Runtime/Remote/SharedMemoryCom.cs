@@ -48,6 +48,7 @@ namespace Unity.AI.MLAgents
             }
             this.filePath = filePath;
             CreateAccessor(filePath);
+            SetUnityReady();
         }
 
         private void CreateAccessor(string path)
@@ -329,6 +330,11 @@ namespace Unity.AI.MLAgents
         /// </summary>
         public void WriteWorld(NativeString64 worldName, MLAgentsWorld world)
         {
+            if (!accessor.CanWrite)
+            {
+                return;
+            }
+
             var offsets = new AgentGroupFileOffsets();
             if (!groupOffsets.TryGetValue(worldName, out offsets))
             {

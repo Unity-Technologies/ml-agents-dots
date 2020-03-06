@@ -1,0 +1,15 @@
+Metadata-Version: 1.2
+Name: mlagents-dots-envs
+Version: 0.2.0rc0
+Summary: Unity Machine Learning Agents Interface for DOTS
+Home-page: https://github.com/Unity-Technologies/ml-agents-dots
+Author: Unity Technologies
+Author-email: ML-Agents@unity3d.com
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Requires-Python: >=3.6

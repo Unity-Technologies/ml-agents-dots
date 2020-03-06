@@ -247,8 +247,8 @@ namespace Unity.AI.MLAgents
             FloatProperties = null;
             m_Initialized = false;
 
-            // Reset the Lazy instance
-            s_Lazy = new Lazy<Academy>(() => new Academy());
+            // Reset the Lazy instance // No reset because Academy.Instance is called after dispose...
+            // s_Lazy = new Lazy<Academy>(() => new Academy());
         }
     }
 }

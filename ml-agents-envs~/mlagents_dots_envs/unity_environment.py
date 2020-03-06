@@ -27,7 +27,7 @@ from sys import platform
 import signal
 import struct
 
-from shared_memory_communicator import (
+from mlagents_dots_envs.shared_memory_communicator import (
     SharedMemoryCom,
     PythonCommand,
     AgentGroupFileOffsets,
@@ -71,6 +71,8 @@ class UnityEnvironment(BaseEnv):
             )
         self._env_specs: Dict[str, AgentGroupSpec] = {}
         self._is_first_message = True
+        self.communicator.give_unity_control(PythonCommand.DEFAULT)
+        self.communicator.wait_for_unity()
         # self._update_group_specs(aca_output)
 
     @staticmethod
