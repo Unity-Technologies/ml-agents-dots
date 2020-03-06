@@ -2,7 +2,6 @@ using System;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Barracuda;
-using Unity.AI.MLAgents.Inference;
 
 namespace Unity.AI.MLAgents
 {
@@ -59,8 +58,6 @@ namespace Unity.AI.MLAgents
         private IWorker _engine;
         private const bool _verbose = false;
 
-        private RandomNormal m_RandomNormal;
-
         public bool IsConnected {get {return false;}}
 
         internal BarracudaWorldProcessor(MLAgentsWorld world, NNModel model, InferenceDevice inferenceDevice)
@@ -77,8 +74,6 @@ namespace Unity.AI.MLAgents
 
             _engine = WorkerFactory.CreateWorker(
                 executionDevice, _barracudaModel, _verbose);
-
-            m_RandomNormal = new RandomNormal(1997U);
         }
 
         public RemoteCommand ProcessWorld()
