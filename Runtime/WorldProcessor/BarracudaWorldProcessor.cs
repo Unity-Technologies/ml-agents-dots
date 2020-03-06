@@ -84,7 +84,7 @@ namespace Unity.AI.MLAgents
         public RemoteCommand ProcessWorld()
         {
             // FOR VECTOR OBS ONLY
-            // For Continuois control only
+            // For Continuous control only
             // No LSTM
             int obsSize = 0;
             for (int i = 0; i < world.SensorShapes.Length; i++)
@@ -110,22 +110,16 @@ namespace Unity.AI.MLAgents
                     sensorOffset += world.AgentIds.Length * shape.GetTotalTensorSize();
                     vecObsOffset += shape.GetTotalTensorSize();
                 }
+                else
+                {
+                    throw new MLAgentsException("TODO : Inference only works for continuous control and vector obs");
+                }
             }
 
             input["vector_observation"] = new Tensor(
                 new TensorShape(world.AgentCounter.Count, obsSize),
                 vectorObsArr,
                 "vector_observation");
-
-            var epsi = new float[world.AgentCounter.Count * world.ActionSize];
-            for (int i = 0; i < epsi.Length; i++)
-            {
-                epsi[i] = m_RandomNormal.NextFloat();
-            }
-            input["epsilon"] = new Tensor(
-                new TensorShape(world.AgentCounter.Count, world.ActionSize),
-                epsi,
-                "epsilon");
 
             _engine.ExecuteAndWaitForCompletion(input);
 

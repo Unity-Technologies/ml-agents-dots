@@ -17,7 +17,7 @@ namespace Unity.AI.MLAgents
         public static void EnableFixedRateWithCatchUp(ComponentSystemGroup group, float timeStep, float timeScale)
         {
             var manager = new FixedRateTimeScaleCatchUpManager(timeStep, timeScale);
-            //group.UpdateCallback = manager.UpdateCallback;
+            group.UpdateCallback = manager.UpdateCallback;
         }
 
         /// <summary>
@@ -26,7 +26,7 @@ namespace Unity.AI.MLAgents
         /// <param name="group">The group whose UpdateCallback to set to null.</param>
         public static void DisableFixedRate(ComponentSystemGroup group)
         {
-            //group.UpdateCallback = null;
+            group.UpdateCallback = null;
         }
     }
 

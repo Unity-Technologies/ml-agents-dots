@@ -19,7 +19,6 @@ namespace Unity.AI.MLAgents.SideChannels
             {
                 using (var binaryReader = new BinaryReader(memStream))
                 {
-                    /*
                     var width = binaryReader.ReadInt32();
                     var height = binaryReader.ReadInt32();
                     var qualityLevel = binaryReader.ReadInt32();
@@ -37,12 +36,11 @@ namespace Unity.AI.MLAgents.SideChannels
 
                     var simGroup = World.DefaultGameObjectInjectionWorld.GetOrCreateSystem<SimulationSystemGroup>();
 
-#if UNITY_EDITOR
-                    FixedRateUtils.EnableFixedRateSimple(simGroup, 1 / 60f);
-#else
+// #if UNITY_EDITOR
+//                     FixedRateUtils.EnableFixedRateSimple(simGroup, 1 / 60f);
+// #else
                     TimeUtils.EnableFixedRateWithCatchUp(simGroup, 1 / 60f, timeScale);
-#endif
-*/
+// #endif
                 }
             }
         }

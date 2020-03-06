@@ -214,7 +214,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1996448684}
   - component: {fileID: 1996448683}
-  - component: {fileID: 1996448685}
   m_Layer: 0
   m_Name: Manager
   m_TagString: Untagged
@@ -245,9 +244,12 @@ MonoBehaviour:
     - x: 3
       y: 0
       z: 0
+    - x: 3
+      y: 0
+      z: 0
     ActionSize: 2
     DiscreteActionBranches: 0000000000000000
-    Model: {fileID: 5022602860645237092, guid: c8a63f5244bd341c6a933daeadc365f0, type: 3}
+    Model: {fileID: 5022602860645237092, guid: 2a71846cb622a45f79af562cefae1ca5, type: 3}
     InferenceDevice: 0
   prefabPlatform: {fileID: 3981253095504673273, guid: 4a09e6c7ae14743f5b16f9e6f3155f68,
     type: 3}
@@ -267,18 +269,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1996448685
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1996448682}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 18c192b429ed34831bb7e18da5f73b2b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &2028998453
 GameObject:
   m_ObjectHideFlags: 0
