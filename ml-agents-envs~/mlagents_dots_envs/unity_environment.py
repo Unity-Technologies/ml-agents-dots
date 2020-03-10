@@ -70,7 +70,6 @@ class UnityEnvironment(BaseEnv):
                 "Start training by pressing the Play button in the Unity Editor."
             )
         self._env_specs: Dict[str, AgentGroupSpec] = {}
-        self._is_first_message = True
         self.communicator.give_unity_control(PythonCommand.DEFAULT)
         self.communicator.wait_for_unity()
         # self._update_group_specs(aca_output)
@@ -192,9 +191,6 @@ class UnityEnvironment(BaseEnv):
 
     @timed
     def step(self) -> None:
-        if self._is_first_message:
-            self._is_first_message = False
-            return self.reset()
         self._step(PythonCommand.DEFAULT)
 
     def get_agent_groups(self) -> List[str]:

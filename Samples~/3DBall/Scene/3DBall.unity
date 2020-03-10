@@ -249,7 +249,7 @@ MonoBehaviour:
       z: 0
     ActionSize: 2
     DiscreteActionBranches: 0000000000000000
-    Model: {fileID: 5022602860645237092, guid: 2a71846cb622a45f79af562cefae1ca5, type: 3}
+    Model: {fileID: 5022602860645237092, guid: 82d150fa7689d46bdbdeb9cbaabde435, type: 3}
     InferenceDevice: 0
   prefabPlatform: {fileID: 3981253095504673273, guid: 4a09e6c7ae14743f5b16f9e6f3155f68,
     type: 3}

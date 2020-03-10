@@ -1,4 +1,4 @@
-from unity_environment import UnityEnvironment
+from mlagents_dots_envs.unity_environment import UnityEnvironment
 
 from mlagents_envs.side_channel.engine_configuration_channel import (
     EngineConfigurationChannel,
@@ -6,8 +6,7 @@ from mlagents_envs.side_channel.engine_configuration_channel import (
 
 sc = EngineConfigurationChannel()
 env = UnityEnvironment(side_channels=[sc])
-
-env.reset()
+env.step()
 
 
 for i in range(10):

@@ -180,11 +180,11 @@ namespace Unity.AI.MLAgents
                 {
                     // Unity must call advance to read the first message of Python.
                     // We do this only if there is already something to send
+                    // We could ignore the first command
                     command = com.Advance();
                     SideChannelUtils.ProcessSideChannelData(m_SideChannels, com.ReadAndClearSideChannelData());
                     FirstMessageReceived = true;
                 }
-
                 if (command == RemoteCommand.DEFAULT)
                 {
                     com.WriteSideChannelData(SideChannelUtils.GetSideChannelMessage(m_SideChannels));
@@ -204,6 +204,7 @@ namespace Unity.AI.MLAgents
             switch (command)
             {
                 case RemoteCommand.RESET:
+                    Debug.Log("RESET");
                     World.DefaultGameObjectInjectionWorld.EntityManager.CompleteAllJobs(); // This is problematic because it completes only for the active world
                     ResetAllWorlds();
                     OnEnvironmentReset?.Invoke();
