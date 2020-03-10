@@ -95,7 +95,7 @@ We currently offer a `MLAgentsWorldSpecs` struct that has a custom inspector dra
 To generate the MLAgentsWorld with the given settings call `MLAgentsWorldSpecs.GetWorld()`.
 
 ## Communication Between C# and Python
-In order to exchange data with Python, we use shared memory. Python will create a small file that contains information required for starting the communication. The path to the file will be randomly generated randomly generated and passed by Python to the Unity Executable as command line argument. For in editor training, a default file will be used. Using shared memory would allow faster data exchange and will remove the need to serialize the data to an intermediate format.
+In order to exchange data with Python, we use shared memory. Python will create a small file that contains information required for starting the communication. The path to the file will be randomly generated and passed by Python to the Unity Executable as command line argument. For in editor training, a default file will be used. Using shared memory allows for faster data exchange and will remove the need to serialize the data to an intermediate format.
 
 __Note__ : The python code for communication is located in [ml-agents-envs~](./ml-agents-envs~).
 
