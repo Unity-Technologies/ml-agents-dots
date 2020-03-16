@@ -468,34 +468,33 @@ namespace Unity.AI.MLAgents
                 accessor.Write(k_CommandOffset, (sbyte)RemoteCommand.DEFAULT);
                 accessor.Write(k_MutexOffset, false);
             }
-            else
-            {
-                throw new MLAgentsException("Communication has stopped.");
-            }
         }
 
-        public RemoteCommand Advance()
+        public WorldCommand Advance()
         {
+            if (!accessor.CanWrite)
+            {
+                return WorldCommand.CLOSE;
+            }
             var pythonAlive = WaitOnPython();
             RemoteCommand commandReceived = (RemoteCommand)accessor.ReadSByte(k_CommandOffset);
             if (!pythonAlive)
             {
-                // commandReceived = RemoteCommand.CLOSE;
-                return RemoteCommand.CLOSE;
+                return WorldCommand.CLOSE;
             }
 
             switch (commandReceived)
             {
                 case RemoteCommand.RESET:
-                    return commandReceived;
+                    return WorldCommand.RESET;
                 case RemoteCommand.CLOSE:
                     OnCloseCommand();
-                    return commandReceived;
+                    return WorldCommand.CLOSE;
                 case RemoteCommand.CHANGE_FILE:
                     OnChangeFileCommand();
                     return Advance();
                 default:
-                    return commandReceived;
+                    return WorldCommand.DEFAULT;
             }
         }
 

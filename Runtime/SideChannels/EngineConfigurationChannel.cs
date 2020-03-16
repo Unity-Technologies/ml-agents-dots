@@ -36,11 +36,11 @@ namespace Unity.AI.MLAgents.SideChannels
 
                     var simGroup = World.DefaultGameObjectInjectionWorld.GetOrCreateSystem<SimulationSystemGroup>();
 
-// #if UNITY_EDITOR
-//                     FixedRateUtils.EnableFixedRateSimple(simGroup, 1 / 60f);
-// #else
+#if UNITY_EDITOR
+                    TimeUtils.EnableFixedRateWithCatchUp(simGroup, 1 / 60f, 1f);
+#else
                     TimeUtils.EnableFixedRateWithCatchUp(simGroup, 1 / 60f, timeScale);
-// #endif
+#endif
                 }
             }
         }

@@ -31,7 +31,7 @@ namespace Unity.AI.MLAgents
             }
         }
 
-        public static void RegisterWorldWithBarracudaModelForceNoCommunication<TH>(
+        public static void RegisterWorldWithBarracudaModelForceNoCommunication(
             this MLAgentsWorld world,
             string policyId,
             NNModel model,
@@ -76,7 +76,7 @@ namespace Unity.AI.MLAgents
                 executionDevice, _barracudaModel, _verbose);
         }
 
-        public RemoteCommand ProcessWorld()
+        public WorldCommand ProcessWorld()
         {
             // FOR VECTOR OBS ONLY
             // For Continuous control only
@@ -136,7 +136,7 @@ namespace Unity.AI.MLAgents
             }
             actuatorT.Dispose();
 
-            return RemoteCommand.DEFAULT;
+            return WorldCommand.DEFAULT;
         }
 
         public void Dispose()

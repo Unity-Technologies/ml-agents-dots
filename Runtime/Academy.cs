@@ -171,7 +171,7 @@ namespace Unity.AI.MLAgents
                 throw new MLAgentsException("TODO : Null processor");
             }
 
-            var command = RemoteCommand.DEFAULT;
+            var command = WorldCommand.DEFAULT;
 
             if (com != null && processor.IsConnected)
             {
@@ -185,7 +185,7 @@ namespace Unity.AI.MLAgents
                     SideChannelUtils.ProcessSideChannelData(m_SideChannels, com.ReadAndClearSideChannelData());
                     FirstMessageReceived = true;
                 }
-                if (command == RemoteCommand.DEFAULT)
+                if (command == WorldCommand.DEFAULT)
                 {
                     com.WriteSideChannelData(SideChannelUtils.GetSideChannelMessage(m_SideChannels));
                     command = processor.ProcessWorld();
@@ -203,15 +203,15 @@ namespace Unity.AI.MLAgents
             }
             switch (command)
             {
-                case RemoteCommand.RESET:
-                    Debug.Log("RESET");
+                case WorldCommand.RESET:
                     World.DefaultGameObjectInjectionWorld.EntityManager.CompleteAllJobs(); // This is problematic because it completes only for the active world
                     ResetAllWorlds();
                     OnEnvironmentReset?.Invoke();
                     // TODO : RESET logic
                     break;
 
-                case RemoteCommand.CLOSE:
+                case WorldCommand.CLOSE:
+                    Debug.LogError("Communication was closed.");
 #if UNITY_EDITOR
                     EditorApplication.isPlaying = false;
 #else
@@ -220,7 +220,7 @@ namespace Unity.AI.MLAgents
                     com = null;
                     break;
 
-                case RemoteCommand.DEFAULT:
+                case WorldCommand.DEFAULT:
                     break;
 
                 default:

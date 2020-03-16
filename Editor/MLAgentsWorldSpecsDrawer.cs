@@ -12,6 +12,7 @@ namespace Unity.AI.MLAgents.Editor
     internal static class SpecsPropertyNames
     {
         public const string k_Name = "Name";
+        public const string k_WorldProcessorType = "WorldProcessorType";
         public const string k_NumberAgents = "NumberAgents";
         public const string k_ActionType = "ActionType";
         public const string k_ObservationShapes = "ObservationShapes";
@@ -47,7 +48,7 @@ namespace Unity.AI.MLAgents.Editor
             var nbLines = 0;
             nbLines += GetHeightObservationShape(property);
             nbLines += GetHeightDiscreteAction(property);
-            nbLines += 7; // TODO : COMPUTE
+            nbLines += 8; // TODO : COMPUTE
             m_TotalHeight = k_LineHeight * nbLines + k_WarningLineHeight * GetHeightWarnings(property);
 
             return m_TotalHeight + 6f;
@@ -74,6 +75,12 @@ namespace Unity.AI.MLAgents.Editor
             EditorGUI.PropertyField(position,
                 property.FindPropertyRelative(SpecsPropertyNames.k_Name),
                 new GUIContent("World Name", "The name of the World"));
+            position.y += k_LineHeight;
+
+            // WorldProcessorType
+            EditorGUI.PropertyField(position,
+                property.FindPropertyRelative(SpecsPropertyNames.k_WorldProcessorType),
+                new GUIContent("Processor Type", "The Policy for the World"));
             position.y += k_LineHeight;
 
             // Number of Agents

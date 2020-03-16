@@ -16,9 +16,9 @@ namespace Unity.AI.MLAgents
             this.world = world;
         }
 
-        public RemoteCommand ProcessWorld()
+        public WorldCommand ProcessWorld()
         {
-            return RemoteCommand.DEFAULT;
+            return WorldCommand.DEFAULT;
         }
 
         public void Dispose()

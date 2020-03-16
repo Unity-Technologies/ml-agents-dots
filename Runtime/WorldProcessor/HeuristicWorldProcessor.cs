@@ -47,7 +47,7 @@ namespace Unity.AI.MLAgents
             }
         }
 
-        public RemoteCommand ProcessWorld()
+        public WorldCommand ProcessWorld()
         {
             T action = heuristic.Invoke();
             var totalCount = world.AgentCounter.Count;
@@ -69,7 +69,7 @@ namespace Unity.AI.MLAgents
                     s[i] = action;
                 }
             }
-            return RemoteCommand.DEFAULT;
+            return WorldCommand.DEFAULT;
         }
 
         public void Dispose()

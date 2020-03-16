@@ -20,7 +20,7 @@ namespace Unity.AI.MLAgents
             this.policyId = policyId;
         }
 
-        public RemoteCommand ProcessWorld()
+        public WorldCommand ProcessWorld()
         {
             com.WriteWorld(policyId, world);
             com.SetUnityReady();
