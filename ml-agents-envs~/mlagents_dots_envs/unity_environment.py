@@ -38,21 +38,88 @@ logger = logging.getLogger("mlagents.envs")
 
 
 class UnityEnvironment(BaseEnv):
+    API_VERSION = "API-14"                      # TODO : REMOVE
+    DEFAULT_EDITOR_PORT = 5004                  # TODO : REMOVE
+    PORT_COMMAND_LINE_ARG = "--mlagents-port"  # TODO : REMOVE
+
+    @staticmethod # TODO : REMOVE
+    def validate_environment_path(env_path: str) -> Optional[str]:
+        # Strip out executable extensions if passed
+        env_path = (
+            env_path.strip()
+            .replace(".app", "")
+            .replace(".exe", "")
+            .replace(".x86_64", "")
+            .replace(".x86", "")
+        )
+        true_filename = os.path.basename(os.path.normpath(env_path))
+        logger.debug("The true file name is {}".format(true_filename))
+
+        if not (glob.glob(env_path) or glob.glob(env_path + ".*")):
+            return None
+
+        cwd = os.getcwd()
+        launch_string = None
+        true_filename = os.path.basename(os.path.normpath(env_path))
+        if platform == "linux" or platform == "linux2":
+            candidates = glob.glob(os.path.join(cwd, env_path) + ".x86_64")
+            if len(candidates) == 0:
+                candidates = glob.glob(os.path.join(cwd, env_path) + ".x86")
+            if len(candidates) == 0:
+                candidates = glob.glob(env_path + ".x86_64")
+            if len(candidates) == 0:
+                candidates = glob.glob(env_path + ".x86")
+            if len(candidates) > 0:
+                launch_string = candidates[0]
+
+        elif platform == "darwin":
+            candidates = glob.glob(
+                os.path.join(cwd, env_path + ".app", "Contents", "MacOS", true_filename)
+            )
+            if len(candidates) == 0:
+                candidates = glob.glob(
+                    os.path.join(env_path + ".app", "Contents", "MacOS", true_filename)
+                )
+            if len(candidates) == 0:
+                candidates = glob.glob(
+                    os.path.join(cwd, env_path + ".app", "Contents", "MacOS", "*")
+                )
+            if len(candidates) == 0:
+                candidates = glob.glob(
+                    os.path.join(env_path + ".app", "Contents", "MacOS", "*")
+                )
+            if len(candidates) > 0:
+                launch_string = candidates[0]
+        elif platform == "win32":
+            candidates = glob.glob(os.path.join(cwd, env_path + ".exe"))
+            if len(candidates) == 0:
+                candidates = glob.glob(env_path + ".exe")
+            if len(candidates) > 0:
+                launch_string = candidates[0]
+        return launch_string
+        # TODO: END REMOVE
+
     def __init__(
         self,
-        executable_name: Optional[str] = None,
+        worker_id=None,         # TODO : REMOVE
+        seed=None,              # TODO : REMOVE
+        docker_training=None,   # TODO : REMOVE
+        no_graphics=None,       # TODO : REMOVE
+        base_port=None,         # TODO : REMOVE
+        file_name: Optional[str] = None,
         args: Optional[List[str]] = None,
         side_channels: Optional[List[SideChannel]] = None,
     ):
         """
         Starts a new unity environment and establishes a connection with the environment.
 
-        :string executable_name: Name of Unity environment binary. If None, will try to connect to the Editor.
+        :string file_name: Name of Unity environment binary. If None, will try to connect to the Editor.
         :list args: Addition Unity command line arguments
         :list side_channels: Additional side channel for not-rl communication with Unity
         """
         args = args or []
         atexit.register(self.close)
+        executable_name = file_name
 
         if executable_name is None:
             assert args == []

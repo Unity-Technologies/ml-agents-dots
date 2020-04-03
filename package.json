@@ -6,10 +6,10 @@
   "description": "Add interactivity to your game with ML-Agents trained using Deep Reinforcement Learning.",
   "dependencies": {
     "com.unity.barracuda": "0.5.0-preview",
-    "com.unity.entities": "0.7.0-preview.9",
-    "com.unity.jobs": "0.2.6-preview.6",
+    "com.unity.entities": "0.7.0-preview.19",
+    "com.unity.jobs": "0.2.6-preview.13",
     "com.unity.mathematics": "1.1.0",
-    "com.unity.collections": "0.5.3-preview.5"
+    "com.unity.collections": "0.6.0-preview.9"
   },
   "samples": [
     {
