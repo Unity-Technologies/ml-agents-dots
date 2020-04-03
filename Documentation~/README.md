@@ -3,21 +3,63 @@ This package is available as a preview, so it is not ready for production use. T
 
 ## Installation
 
+### Install C# code
  * Create a new Project on Unity 2019.3.0f5
  * To your `Package/manifest.json` add the packages :
  ```json
- "com.unity.ai.mlagents": "https://github.com/Unity-Technologies/ml-agents-dots.git#master",
+ "com.unity.ai.mlagents": "https://github.com/Unity-Technologies/ml-agents-dots.git#release-0.2.0",
  "com.unity.physics": "0.2.4-preview",
  "com.unity.rendering.hybrid": "0.3.3-preview.11",
  "com.unity.burst":"1.3.0-preview.2",
  "com.unity.test-framework.performance": "1.3.3-preview",
  "com.unity.coding": "0.1.0-preview.13"
  ```
- and add the registry : 
- ```json
- "registry": "https://artifactory.prd.cds.internal.unity3d.com/artifactory/api/npm/upm-candidates",
- ```
  * In the Package Manager window, select DOTS ML-Agents and import the Samples you need.
+
+### Install Python code
+ * Clone this repository in a new folder
+ * Checkout release-0.2.0
+ * run the following command inside the repository:
+ ```
+ pip3 install -e ./ml-agents-envs~
+ ```
+
+### Install trainer code
+ * ML-Agents on DOTS is compatible with version 0.15.1 of the [ml-agents packages](https://github.com/Unity-Technologies/ml-agents/blob/0.15.1). Checkout the ml-agents repository on version 0.15.1
+ * Run these commands at its root.
+ ```
+ pip3 install -e ./ml-agents-envs
+ pip3 install -e ./ml-agents
+ ```
+ * Modify `./ml-agents/mlagents/trainers/learn.py` :
+   Replace line 24:
+   ```python
+   from mlagents_envs.environment import UnityEnvironment
+   ```
+   with 
+   ```python
+   from mlagents_dots_envs.unity_environment import UnityEnvironment
+   ```
+ * Similarly, modify `./ml-agents/mlagents/trainers/subprocess_env_manager.py` :
+   Replace line 4:
+   ```python
+   from mlagents_envs.environment import UnityEnvironment
+   ```
+   with 
+   ```python
+   from mlagents_dots_envs.unity_environment import UnityEnvironment
+   ```
+
+
+## Train a sample
+ * In Unity, open the 3DBall scene in the Samples
+ * From the ml-agents repository root, call
+ ```
+ mlagents-learn --train config/trainer_config.yaml
+ ```
+ and press play in the Editor.
+ If the installation was successful, you should see in the `Ball_DOTS` training results.
+
 
 ## API
 One approach to designing ml-agents to be compativle with DOTS would be to use typical API used for example in [Unity.Physics](https://github.com/Unity-Technologies/Unity.Physics) where a "MLAgents World" holds data, processes it and the data can then be retrieved. 
