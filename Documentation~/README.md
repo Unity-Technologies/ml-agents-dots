@@ -1,5 +1,5 @@
-## Preview package
-This package is available as a preview, so it is not ready for production use. The features and documentation in this package might change before it is verified for release.
+## ML-Agents DOTS Installation Guide
+Please note that this package is available as a preview, so it is not ready for production use. The features and documentation in this package might change before it is verified for release.
 
 ## Installation
 
