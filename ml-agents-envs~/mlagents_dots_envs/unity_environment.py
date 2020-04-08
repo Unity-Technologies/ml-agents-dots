@@ -1,18 +1,20 @@
 import atexit
-import glob
 import logging
 import numpy as np
-import os
-import subprocess
 import uuid
-from typing import Dict, List, Optional, Any
+import signal
+import struct
+import subprocess
+from typing import Dict, List, Optional, Any, Tuple
 
 from mlagents_envs.side_channel.side_channel import SideChannel
 
 from mlagents_envs.base_env import (
     BaseEnv,
-    BatchedStepResult,
-    AgentGroupSpec,
+    DecisionSteps,
+    TerminalSteps,
+    BehaviorSpec,
+    BehaviorName,
     ActionType,
 )
 from mlagents_envs.timers import timed, hierarchical_timer
@@ -23,15 +25,17 @@ from mlagents_envs.exception import (
     UnityTimeOutException,
 )
 
-from sys import platform
-import signal
-import struct
+from mlagents_dots_envs.shared_memory_communicator import SharedMemCom
 
-from mlagents_dots_envs.shared_memory_communicator import (
-    SharedMemoryCom,
-    PythonCommand,
-    AgentGroupFileOffsets,
+from mlagents_dots_envs.env_utils import (
+    get_side_channels,
+    executable_launcher,
+    generate_side_channel_data,
+    parse_side_channel_message,
+    returncode_to_signal_name
 )
+
+from mlagents_dots_envs.master_shared_mem import MasterSharedMem
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("mlagents.envs")
@@ -40,64 +44,7 @@ logger = logging.getLogger("mlagents.envs")
 class UnityEnvironment(BaseEnv):
     API_VERSION = "API-14"                      # TODO : REMOVE
     DEFAULT_EDITOR_PORT = 5004                  # TODO : REMOVE
-    PORT_COMMAND_LINE_ARG = "--mlagents-port"  # TODO : REMOVE
-
-    @staticmethod # TODO : REMOVE
-    def validate_environment_path(env_path: str) -> Optional[str]:
-        # Strip out executable extensions if passed
-        env_path = (
-            env_path.strip()
-            .replace(".app", "")
-            .replace(".exe", "")
-            .replace(".x86_64", "")
-            .replace(".x86", "")
-        )
-        true_filename = os.path.basename(os.path.normpath(env_path))
-        logger.debug("The true file name is {}".format(true_filename))
-
-        if not (glob.glob(env_path) or glob.glob(env_path + ".*")):
-            return None
-
-        cwd = os.getcwd()
-        launch_string = None
-        true_filename = os.path.basename(os.path.normpath(env_path))
-        if platform == "linux" or platform == "linux2":
-            candidates = glob.glob(os.path.join(cwd, env_path) + ".x86_64")
-            if len(candidates) == 0:
-                candidates = glob.glob(os.path.join(cwd, env_path) + ".x86")
-            if len(candidates) == 0:
-                candidates = glob.glob(env_path + ".x86_64")
-            if len(candidates) == 0:
-                candidates = glob.glob(env_path + ".x86")
-            if len(candidates) > 0:
-                launch_string = candidates[0]
-
-        elif platform == "darwin":
-            candidates = glob.glob(
-                os.path.join(cwd, env_path + ".app", "Contents", "MacOS", true_filename)
-            )
-            if len(candidates) == 0:
-                candidates = glob.glob(
-                    os.path.join(env_path + ".app", "Contents", "MacOS", true_filename)
-                )
-            if len(candidates) == 0:
-                candidates = glob.glob(
-                    os.path.join(cwd, env_path + ".app", "Contents", "MacOS", "*")
-                )
-            if len(candidates) == 0:
-                candidates = glob.glob(
-                    os.path.join(env_path + ".app", "Contents", "MacOS", "*")
-                )
-            if len(candidates) > 0:
-                launch_string = candidates[0]
-        elif platform == "win32":
-            candidates = glob.glob(os.path.join(cwd, env_path + ".exe"))
-            if len(candidates) == 0:
-                candidates = glob.glob(env_path + ".exe")
-            if len(candidates) > 0:
-                launch_string = candidates[0]
-        return launch_string
-        # TODO: END REMOVE
+    PORT_COMMAND_LINE_ARG = "--mlagents-port"   # TODO : REMOVE
 
     def __init__(
         self,
@@ -123,219 +70,99 @@ class UnityEnvironment(BaseEnv):
 
         if executable_name is None:
             assert args == []
-        self.side_channels = self.get_side_channels(side_channels)
-        self.communicator = SharedMemoryCom(executable_name is None)
+        self._side_channels = get_side_channels(side_channels)
+        self._communicator = SharedMemCom(executable_name is None)
 
         # The process that is started. If None, no process was started
         self.proc1 = None
         if executable_name is not None:
-            self.proc1 = self.executable_launcher(
-                executable_name, self.communicator.get_file_name(), args
+            self.proc1 = executable_launcher(
+                executable_name, self._communicator.communicator_id, args
             )
         else:
             logger.info(
                 "Start training by pressing the Play button in the Unity Editor."
             )
-        self._env_specs: Dict[str, AgentGroupSpec] = {}
-        self.communicator.give_unity_control(PythonCommand.DEFAULT)
-        self.communicator.wait_for_unity()
-        # self._update_group_specs(aca_output)
+        self._env_specs = self._communicator.generate_specs()
+        self._communicator.give_unity_control()
+        self._communicator.wait_for_unity()
 
-    @staticmethod
-    def get_side_channels(
-        side_c: Optional[List[SideChannel]]
-    ) -> Dict[uuid.UUID, SideChannel]:
-        side_channels_dict: Dict[uuid.UUID, SideChannel] = {}
-        if side_c is not None:
-            for _sc in side_c:
-                if _sc.channel_id in side_channels_dict:
-                    raise UnityEnvironmentException(
-                        "There cannot be two side channels with the same channel type {0}.".format(
-                            _sc.channel_id
-                        )
-                    )
-                side_channels_dict[_sc.channel_id] = _sc
-        return side_channels_dict
-
-    @staticmethod
-    def executable_launcher(exec_name, memory_path, args):
-        cwd = os.getcwd()
-        exec_name = (
-            exec_name.strip()
-            .replace(".app", "")
-            .replace(".exe", "")
-            .replace(".x86_64", "")
-            .replace(".x86", "")
-        )
-        true_filename = os.path.basename(os.path.normpath(exec_name))
-        logger.debug("The true file name is {}".format(true_filename))
-        launch_string = None
-        if platform == "linux" or platform == "linux2":
-            candidates = glob.glob(os.path.join(cwd, exec_name) + ".x86_64")
-            if len(candidates) == 0:
-                candidates = glob.glob(os.path.join(cwd, exec_name) + ".x86")
-            if len(candidates) == 0:
-                candidates = glob.glob(exec_name + ".x86_64")
-            if len(candidates) == 0:
-                candidates = glob.glob(exec_name + ".x86")
-            if len(candidates) > 0:
-                launch_string = candidates[0]
-
-        elif platform == "darwin":
-            candidates = glob.glob(
-                os.path.join(
-                    cwd, exec_name + ".app", "Contents", "MacOS", true_filename
-                )
-            )
-            if len(candidates) == 0:
-                candidates = glob.glob(
-                    os.path.join(exec_name + ".app", "Contents", "MacOS", true_filename)
-                )
-            if len(candidates) == 0:
-                candidates = glob.glob(
-                    os.path.join(cwd, exec_name + ".app", "Contents", "MacOS", "*")
-                )
-            if len(candidates) == 0:
-                candidates = glob.glob(
-                    os.path.join(exec_name + ".app", "Contents", "MacOS", "*")
-                )
-            if len(candidates) > 0:
-                launch_string = candidates[0]
-        elif platform == "win32":
-            candidates = glob.glob(os.path.join(cwd, exec_name + ".exe"))
-            if len(candidates) == 0:
-                candidates = glob.glob(exec_name + ".exe")
-            if len(candidates) > 0:
-                launch_string = candidates[0]
-        if launch_string is None:
-            raise UnityEnvironmentException(
-                "Couldn't launch the {0} environment. "
-                "Provided filename does not match any environments.".format(
-                    true_filename
-                )
-            )
-        else:
-            logger.debug("This is the launch string {}".format(launch_string))
-            # Launch Unity environment
-            subprocess_args = [launch_string]
-            subprocess_args += ["--memory-path", str(memory_path)]
-            subprocess_args += args
-            try:
-                return subprocess.Popen(
-                    subprocess_args,
-                    # start_new_session=True means that signals to the parent python process
-                    # (e.g. SIGINT from keyboard interrupt) will not be sent to the new process on POSIX platforms.
-                    # This is generally good since we want the environment to have a chance to shutdown,
-                    # but may be undesirable in come cases; if so, we'll add a command-line toggle.
-                    # Note that on Windows, the CTRL_C signal will still be sent.
-                    start_new_session=True,
-                )
-            except PermissionError as perm:
-                # This is likely due to missing read or execute permissions on file.
-                raise UnityEnvironmentException(
-                    f"Error when trying to launch environment - make sure "
-                    f"permissions are set correctly. For example "
-                    f'"chmod -R 755 {launch_string}"'
-                ) from perm
 
     def reset(self) -> None:
-        self._step(PythonCommand.RESET)
-
-    def _step(self, command: PythonCommand) -> None:
-        if not self.communicator.active:
-            raise UnityCommunicationException("Communicator has stopped.")
-        channel_data = self._generate_side_channel_data(self.side_channels)
-        self.communicator.write_side_channel_data(channel_data)
-        self.communicator.give_unity_control(command)
-        self.communicator.wait_for_unity()
-        if not self.communicator.active:
-            raise UnityCommunicationException("Communicator has stopped.")
-        self._parse_side_channel_message(
-            self.side_channels, self.communicator.read_side_channel_data_and_clear()
-        )
-        if len(self._env_specs) != self.communicator.get_n_agent_groups():
-            self._env_specs = self.create_group_spec(self.communicator.group_offsets)
+        self._step(reset = True)
 
     @timed
     def step(self) -> None:
-        self._step(PythonCommand.DEFAULT)
+        self._step(reset = False)
 
-    def get_agent_groups(self) -> List[str]:
+    def _step(self, reset:bool= False) -> None:
+        if not self._communicator.active:
+            raise UnityCommunicationException("Communicator has stopped.")
+        channel_data = generate_side_channel_data(self._side_channels)
+        self._communicator.write_side_channel_data(channel_data)
+        self._communicator.give_unity_control(reset)
+        self._communicator.wait_for_unity()
+        if not self._communicator.active:
+            raise UnityCommunicationException("Communicator has stopped.")
+        parse_side_channel_message(
+            self._side_channels, self._communicator.read_side_channel_data_and_clear()
+        )
+        if len(self._env_specs) != self._communicator.num_behaviors:
+            self._env_specs = self._communicator.generate_specs()
+
+    def get_behavior_names(self) -> List[str]:
         return list(self._env_specs.keys())
 
-    def _assert_group_exists(self, agent_group: str) -> None:
-        if agent_group not in self._env_specs:
+    def _assert_behavior_exists(self, behavior_name: BehaviorName) -> None:
+        if behavior_name not in self._env_specs:
             raise UnityActionException(
-                "The group {0} does not correspond to an existing agent group "
-                "in the environment".format(agent_group)
+                "The behavior {0} does not correspond to one existing "
+                "in the environment".format(behavior_name)
             )
 
-    def set_actions(self, agent_group: str, action: np.array) -> None:
-        self._assert_group_exists(agent_group)
-        offsets = self.communicator.group_offsets[agent_group]
-        expected_n_agents = self.communicator.get_n_agents(agent_group)
+    def set_actions(self, behavior_name: BehaviorName, action: np.array) -> None:
+        self._assert_behavior_exists(behavior_name)
+        expected_n_agents = self._communicator.get_n_decisions_requested(behavior_name)
         if expected_n_agents == 0 and len(action) != 0:
             raise UnityActionException(
-                "The group {0} does not need an input this step".format(agent_group)
+                "The behavior {0} does not need an input this step".format(behavior_name)
             )
-        spec = self._env_specs[agent_group]
+        spec = self._env_specs[behavior_name]
         expected_type = np.float32 if spec.is_action_continuous() else np.int32
         expected_shape = (expected_n_agents, spec.action_size)
         if action.shape != expected_shape:
             raise UnityActionException(
-                "The group {0} needs an input of dimension {1} but received input of dimension {2}".format(
-                    agent_group, expected_shape, action.shape
+                "The behavior {0} needs an input of dimension {1} but received input of dimension {2}".format(
+                    behavior_name, expected_shape, action.shape
                 )
             )
         if action.dtype != expected_type:
             action = action.astype(expected_type)
-        self.communicator.set_ndarray(offsets.action_offset, action)
+        self._communicator.set_actions(behavior_name, action)
 
     def set_action_for_agent(
-        self, agent_group: str, agent_id: int, action: np.array
+        self, behavior_name: BehaviorName, agent_id: int, action: np.array
     ) -> None:
-        # TODO
-        return
+        raise NotImplementedError("Method not implemented.")
 
-    def get_step_result(self, agent_group: str) -> BatchedStepResult:
-        self._assert_group_exists(agent_group)
-        offsets = self.communicator.group_offsets[agent_group]
-        expected_n_agents = self.communicator.get_n_agents(agent_group)
-        obs_b_sizes = [(expected_n_agents,) + s for s in offsets.obs_shapes]
-        return BatchedStepResult(
-            obs=[
-                self.communicator.get_ndarray(off, obs_b_sizes[i], np.float32)
-                for i, off in enumerate(offsets.obs_offset)
-            ],
-            reward=self.communicator.get_ndarray(
-                offsets.rewards_offset, expected_n_agents, np.float32
-            ),
-            done=self.communicator.get_ndarray(
-                offsets.done_offset, expected_n_agents, np.bool
-            ),
-            max_step=self.communicator.get_ndarray(
-                offsets.max_step_offset, expected_n_agents, np.bool
-            ),
-            agent_id=self.communicator.get_ndarray(
-                offsets.agent_id_offset, expected_n_agents, np.int32
-            ),
-            action_mask=None,  # TODO
-        )
+    def get_steps(self, behavior_name: BehaviorName) -> Tuple[DecisionSteps, TerminalSteps]:
+        self._assert_behavior_exists(behavior_name)
+        self._communicator.get_steps(behavior_name)
 
-    def get_agent_group_spec(self, agent_group: str) -> AgentGroupSpec:
-        self._assert_group_exists(agent_group)
-        return self._env_specs[agent_group]
+    def get_behavior_spec(self, behavior_name:BehaviorName) -> BehaviorSpec:
+        self._assert_behavior_exists(behavior_name)
+        return self._env_specs[behavior_name]
 
     def close(self):
         """
         Sends a shutdown signal to the unity environment, and closes the socket connection.
         """
-        self.communicator.close()
+        self._communicator.close()
         if self.proc1 is not None:
             # Wait a bit for the process to shutdown, but kill it if it takes too long
             try:
                 self.proc1.wait(timeout=5)
-                signal_name = self.returncode_to_signal_name(self.proc1.returncode)
+                signal_name = returncode_to_signal_name(self.proc1.returncode)
                 signal_name = f" ({signal_name})" if signal_name else ""
                 return_info = f"Environment shut down with return code {self.proc1.returncode}{signal_name}."
                 logger.info(return_info)
@@ -345,77 +172,3 @@ class UnityEnvironment(BaseEnv):
             # Set to None so we don't try to close multiple times.
             self.proc1 = None
 
-    @staticmethod  # TODO use most recent version
-    def _parse_side_channel_message(
-        side_channels: Dict[uuid.UUID, SideChannel], data: bytearray
-    ) -> None:
-        offset = 0
-        while offset < len(data):
-            try:
-                channel_id = uuid.UUID(bytes_le=bytes(data[offset : offset + 16]))
-                offset += 16
-                message_len, = struct.unpack_from("<i", data, offset)
-                offset = offset + 4
-                message_data = data[offset : offset + message_len]
-                offset = offset + message_len
-            except Exception:
-                raise UnityEnvironmentException(
-                    "There was a problem reading a message in a SideChannel. "
-                    "Please make sure the version of MLAgents in Unity is "
-                    "compatible with the Python version."
-                )
-            if len(message_data) != message_len:
-                raise UnityEnvironmentException(
-                    "The message received by the side channel {0} was "
-                    "unexpectedly short. Make sure your Unity Environment "
-                    "sending side channel data properly.".format(channel_id)
-                )
-            if channel_id in side_channels:
-                side_channels[channel_id].on_message_received(message_data)
-            else:
-                logger.warning(
-                    "Unknown side channel data received. Channel type "
-                    ": {0}.".format(channel_id)
-                )
-
-    @staticmethod  # TODO use most recent version
-    def _generate_side_channel_data(
-        side_channels: Dict[uuid.UUID, SideChannel]
-    ) -> bytearray:
-        result = bytearray()
-        for channel_id, channel in side_channels.items():
-            for message in channel.message_queue:
-                result += channel_id.bytes_le
-                result += struct.pack("<i", len(message))
-                result += message
-            channel.message_queue = []
-        return result
-
-    @staticmethod
-    def create_group_spec(
-        offsets: Dict[str, AgentGroupFileOffsets]
-    ) -> Dict[str, AgentGroupSpec]:
-        result: Dict[str, AgentGroupSpec] = {}
-        for k, v in offsets.items():
-            action_type = (
-                ActionType.CONTINUOUS if v.is_continuous else ActionType.DISCRETE
-            )
-            action_shape = v.a_size
-            if action_type == ActionType.DISCRETE:
-                action_shape = v.discrete_branches
-            result[k] = AgentGroupSpec(v.obs_shapes, action_type, action_shape)
-        return result
-
-    @staticmethod
-    def returncode_to_signal_name(returncode: int) -> Optional[str]:
-        """
-        Try to convert return codes into their corresponding signal name.
-        E.g. returncode_to_signal_name(-2) -> "SIGINT"
-        """
-        try:
-            # A negative value -N indicates that the child was terminated by signal N (POSIX only).
-            s = signal.Signals(-returncode)  # pylint: disable=no-member
-            return s.name
-        except Exception:
-            # Should generally be a ValueError, but catch everything just in case.
-            return None

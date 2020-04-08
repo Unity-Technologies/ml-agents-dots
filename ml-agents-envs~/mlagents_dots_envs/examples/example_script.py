@@ -11,8 +11,8 @@ env.step()
 
 for i in range(10):
 	s = ""
-	for name in env.get_agent_groups():
-		s += name +" : " + str(env.get_step_result(name).n_agents()) +" | "
+	for name in env.get_behavior_names():
+		s += name +" : " + str(env.get_steps(name).n_agents()) +" | "
 	print(s)
 	env.step()
 print("RESET")
@@ -20,8 +20,8 @@ env.reset()
 
 for i in range(10):
         s = ""
-        for name in env.get_agent_groups():
-                s += name +" : " + str(env.get_step_result(name).n_agents()) +" | "
+        for name in env.get_behavior_names():
+                s += name +" : " + str(env.get_steps(name).n_agents()) +" | "
         print(s)
         env.step()
 env.close()
