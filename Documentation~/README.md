@@ -17,10 +17,15 @@ Please note that this package is available as a preview, so it is not ready for 
  * In your Unity project, you should see the Package Manager resolving the new packages (this may take several minutes).
  * Go to Window -> Package Manager. Select DOTS ML-Agents and import all the samples.
 
+
+
 ### Install Python code
  * Clone this repository in a new folder
- * Checkout release-0.2.0
- * run the following command inside the repository:
+ * Checkout release-0.2.0 
+ ```
+ git clone --branch release-0.2.0 https://github.com/Unity-Technologies/ml-agents-dots.git
+ ```
+ * Run the following command inside the repository:
  ```
  pip3 install -e ./ml-agents-envs~
  ```
