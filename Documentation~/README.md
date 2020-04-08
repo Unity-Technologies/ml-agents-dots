@@ -5,7 +5,7 @@ Please note that this package is available as a preview, so it is not ready for 
 
 ### Install C# code
  * Create a new Project on Unity 2019.3.0f5
- * To your `Package/manifest.json` add the packages :
+ * Navigate to the new created project folder and add the following entries into `Package/manifest.json` under "Dependencies":
  ```json
  "com.unity.ai.mlagents": "https://github.com/Unity-Technologies/ml-agents-dots.git#release-0.2.0",
  "com.unity.physics": "0.2.4-preview",
@@ -14,7 +14,8 @@ Please note that this package is available as a preview, so it is not ready for 
  "com.unity.test-framework.performance": "1.3.3-preview",
  "com.unity.coding": "0.1.0-preview.13"
  ```
- * In the Package Manager window, select DOTS ML-Agents and import the Samples you need.
+ * In your Unity project, you should see the Package Manager resolving the new packages (this may take several minutes).
+ * Go to Window -> Package Manager. Select DOTS ML-Agents and import all the samples.
 
 ### Install Python code
  * Clone this repository in a new folder
