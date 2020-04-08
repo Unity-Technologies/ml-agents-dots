@@ -19,26 +19,29 @@ Please note that this package is available as a preview, so it is not ready for 
 
 
 
-### Install Python code
+### Install ML-Agents DOTS Python code
  * Clone this repository in a new folder
  * Checkout release-0.2.0 
  ```
  git clone --branch release-0.2.0 https://github.com/Unity-Technologies/ml-agents-dots.git
  ```
- * Run the following command inside the repository:
+ * Run the following command inside the cloned repository:
  ```
  pip3 install -e ./ml-agents-envs~
  ```
 
-### Install trainer code
- * ML-Agents on DOTS is compatible with version 0.15.1 of the [ml-agents packages](https://github.com/Unity-Technologies/ml-agents/blob/0.15.1). Checkout the ml-agents repository on version 0.15.1
- * Run these commands at its root.
+### Install ML-Agents Trainer code
+ * ML-Agents on DOTS is compatible with version 0.15.1 of the [ml-agents packages](https://github.com/Unity-Technologies/ml-agents/blob/0.15.1).
+ * Checkout the ml-agents repository on version 0.15.1
+  ```
+ git clone --branch release-0.15.1 https://github.com/Unity-Technologies/ml-agents
+ ```
+ * Run the following command inside the cloned repository:
  ```
  pip3 install -e ./ml-agents-envs
  pip3 install -e ./ml-agents
  ```
- * Modify `./ml-agents/mlagents/trainers/learn.py` :
-   Replace line 24:
+ * Modify `./ml-agents/mlagents/trainers/learn.py` by replacing line 24:
    ```python
    from mlagents_envs.environment import UnityEnvironment
    ```
@@ -46,8 +49,7 @@ Please note that this package is available as a preview, so it is not ready for 
    ```python
    from mlagents_dots_envs.unity_environment import UnityEnvironment
    ```
- * Similarly, modify `./ml-agents/mlagents/trainers/subprocess_env_manager.py` :
-   Replace line 4:
+ * Similarly, modify `./ml-agents/mlagents/trainers/subprocess_env_manager.py` by replacing line 4:
    ```python
    from mlagents_envs.environment import UnityEnvironment
    ```
