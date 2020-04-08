@@ -1,11 +1,11 @@
-## Preview package
-This package is available as a preview, so it is not ready for production use. The features and documentation in this package might change before it is verified for release.
+## ML-Agents DOTS Installation Guide
+Please note that this package is available as a preview, so it is not ready for production use. The features and documentation in this package might change before it is verified for release.
 
 ## Installation
 
 ### Install C# code
  * Create a new Project on Unity 2019.3.0f5
- * To your `Package/manifest.json` add the packages :
+ * Navigate to the new created project folder and add the following entries into `Package/manifest.json` under "Dependencies":
  ```json
  "com.unity.ai.mlagents": "https://github.com/Unity-Technologies/ml-agents-dots.git#release-0.2.0",
  "com.unity.physics": "0.2.4-preview",
@@ -14,25 +14,34 @@ This package is available as a preview, so it is not ready for production use. T
  "com.unity.test-framework.performance": "1.3.3-preview",
  "com.unity.coding": "0.1.0-preview.13"
  ```
- * In the Package Manager window, select DOTS ML-Agents and import the Samples you need.
+ * In your Unity project, you should see the Package Manager resolving the new packages (this may take several minutes).
+ * Go to Window -> Package Manager. Select DOTS ML-Agents and import all the samples.
 
-### Install Python code
+
+
+### Install ML-Agents DOTS Python code
  * Clone this repository in a new folder
- * Checkout release-0.2.0
- * run the following command inside the repository:
+ * Checkout release-0.2.0 
+ ```
+ git clone --branch release-0.2.0 https://github.com/Unity-Technologies/ml-agents-dots.git
+ ```
+ * Run the following command inside the cloned repository:
  ```
  pip3 install -e ./ml-agents-envs~
  ```
 
-### Install trainer code
- * ML-Agents on DOTS is compatible with version 0.15.1 of the [ml-agents packages](https://github.com/Unity-Technologies/ml-agents/blob/0.15.1). Checkout the ml-agents repository on version 0.15.1
- * Run these commands at its root.
+### Install ML-Agents Trainer code
+ * ML-Agents on DOTS is compatible with version 0.15.1 of the [ml-agents packages](https://github.com/Unity-Technologies/ml-agents/blob/0.15.1).
+ * Checkout the ml-agents repository on version 0.15.1
+  ```
+ git clone --branch release-0.15.1 https://github.com/Unity-Technologies/ml-agents
+ ```
+ * Run the following command inside the cloned repository:
  ```
  pip3 install -e ./ml-agents-envs
  pip3 install -e ./ml-agents
  ```
- * Modify `./ml-agents/mlagents/trainers/learn.py` :
-   Replace line 24:
+ * Modify `./ml-agents/mlagents/trainers/learn.py` by replacing line 24:
    ```python
    from mlagents_envs.environment import UnityEnvironment
    ```
@@ -40,8 +49,7 @@ This package is available as a preview, so it is not ready for production use. T
    ```python
    from mlagents_dots_envs.unity_environment import UnityEnvironment
    ```
- * Similarly, modify `./ml-agents/mlagents/trainers/subprocess_env_manager.py` :
-   Replace line 4:
+ * Similarly, modify `./ml-agents/mlagents/trainers/subprocess_env_manager.py` by replacing line 4:
    ```python
    from mlagents_envs.environment import UnityEnvironment
    ```
