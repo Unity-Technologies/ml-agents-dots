@@ -59,9 +59,9 @@ Please note that this package is available as a preview, so it is not ready for 
    ```
 
 
-## Train a sample
- * In Unity, open the 3DBall scene in the Samples
- * From the ml-agents repository root, call
+## Train using 3DBall
+ * From the project window, open the 3DBall scene under Assets\Samples\DOTS ML-Agents\0.2.0-preview\3DBall\Scene\
+ * From the ml-agents 0.15.1 repository root, call
  ```
  mlagents-learn --train config/trainer_config.yaml
  ```
