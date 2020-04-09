@@ -168,6 +168,7 @@ namespace Unity.AI.MLAgents
         public int SetBytes(int offset, byte[] value)
         {
             accessor.WriteArray(offset, value, 0, value.Length);
+            return offset + value.Length;
         }
 
         public void Close()

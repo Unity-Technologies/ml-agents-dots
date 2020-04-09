@@ -43,11 +43,12 @@ namespace Unity.AI.MLAgents
 
         public byte[] RlData
         {
-            get { GetBytes(m_SideChannelBufferSize, m_RlDataBufferSize); }
-            set {
+            get { return GetBytes(m_SideChannelBufferSize, m_RlDataBufferSize); }
+            set
+            {
                 SetBytes(m_SideChannelBufferSize, value);
                 // TODO : Refresh offsets ?
-                }
+            }
         }
     }
 }
