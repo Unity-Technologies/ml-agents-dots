@@ -3,6 +3,10 @@ using System;
 
 namespace Unity.AI.MLAgents.SideChannels
 {
+    /// <summary>
+    /// Side channel for managing raw bytes of data. It is up to the clients of this side channel
+    /// to interpret the messages.
+    /// </summary>
     public class RawBytesChannel : SideChannel
     {
         List<byte[]> m_MessagesReceived = new List<byte[]>();
@@ -17,9 +21,10 @@ namespace Unity.AI.MLAgents.SideChannels
             ChannelId = channelId;
         }
 
-        public override void OnMessageReceived(byte[] data)
+        /// <inheritdoc/>
+        public override void OnMessageReceived(IncomingMessage msg)
         {
-            m_MessagesReceived.Add(data);
+            m_MessagesReceived.Add(msg.GetRawBytes());
         }
 
         /// <summary>
@@ -29,7 +34,11 @@ namespace Unity.AI.MLAgents.SideChannels
         /// <param name="data"> The byte array of data to send to Python.</param>
         public void SendRawBytes(byte[] data)
         {
-            QueueMessageToSend(data);
+            using (var msg = new OutgoingMessage())
+            {
+                msg.SetRawBytes(data);
+                QueueMessageToSend(msg);
+            }
         }
 
         /// <summary>

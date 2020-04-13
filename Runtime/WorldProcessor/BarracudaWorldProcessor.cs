@@ -76,7 +76,7 @@ namespace Unity.AI.MLAgents
                 executionDevice, _barracudaModel, _verbose);
         }
 
-        public WorldCommand ProcessWorld()
+        public void ProcessWorld()
         {
             // FOR VECTOR OBS ONLY
             // For Continuous control only
@@ -90,19 +90,19 @@ namespace Unity.AI.MLAgents
 
             var input = new System.Collections.Generic.Dictionary<string, Tensor>();
 
-            var vectorObsArr = new float[world.AgentCounter.Count * obsSize];
-            var sensorData = world.Sensors.ToArray();
+            var vectorObsArr = new float[world.DecisionCounter.Count * obsSize];
+            var sensorData = world.DecisionObs.ToArray();
             int sensorOffset = 0;
             int vecObsOffset = 0;
             foreach (var shape in world.SensorShapes)
             {
                 if (shape.GetDimensions() == 1)
                 {
-                    for (int i = 0; i < world.AgentCounter.Count; i++)
+                    for (int i = 0; i < world.DecisionCounter.Count; i++)
                     {
                         Array.Copy(sensorData, sensorOffset + i * shape.GetTotalTensorSize(), vectorObsArr, i * obsSize + vecObsOffset, shape.GetTotalTensorSize());
                     }
-                    sensorOffset += world.AgentIds.Length * shape.GetTotalTensorSize();
+                    sensorOffset += world.DecisionAgentIds.Length * shape.GetTotalTensorSize();
                     vecObsOffset += shape.GetTotalTensorSize();
                 }
                 else
@@ -112,7 +112,7 @@ namespace Unity.AI.MLAgents
             }
 
             input["vector_observation"] = new Tensor(
-                new TensorShape(world.AgentCounter.Count, obsSize),
+                new TensorShape(world.DecisionCounter.Count, obsSize),
                 vectorObsArr,
                 "vector_observation");
 
@@ -123,7 +123,7 @@ namespace Unity.AI.MLAgents
             switch (world.ActionType)
             {
                 case ActionType.CONTINUOUS:
-                    int count = world.AgentCounter.Count * world.ActionSize;
+                    int count = world.DecisionCounter.Count * world.ActionSize;
                     var wholeData = actuatorT.data.Download(count);
                     var dest = new float[count];
                     Array.Copy(wholeData, dest, count);
@@ -135,8 +135,6 @@ namespace Unity.AI.MLAgents
                     break;
             }
             actuatorT.Dispose();
-
-            return WorldCommand.DEFAULT;
         }
 
         public void Dispose()

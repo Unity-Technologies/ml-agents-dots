@@ -90,7 +90,6 @@ namespace Unity.AI.MLAgents.Tests.Editor
 
             world.RequestDecision(entity)
                 .SetObservation(0, new float3(1, 2, 3))
-                .SetEpisodeStatus(EpisodeStatus.DEFAULT)
                 .SetReward(1f);
 
             var entities = new NativeArray<Entity>(1, Allocator.Persistent);

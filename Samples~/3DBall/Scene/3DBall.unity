@@ -230,11 +230,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 1996448682}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fb3d0ebdf31e74a1a86d58a3f0e37c2e, type: 3}
+  m_Script: {fileID: 11500000, guid: 99c8505fda4844b5b8a9505d069fdd8c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   MyWorldSpecs:
     Name: Ball_DOTS
+    WorldProcessorType: 0
     NumberAgents: 1000
     ActionType: 1
     ObservationShapes:
@@ -247,13 +248,16 @@ MonoBehaviour:
     - x: 3
       y: 0
       z: 0
+    - x: 3
+      y: 0
+      z: 0
     ActionSize: 2
-    DiscreteActionBranches: 0000000000000000
-    Model: {fileID: 5022602860645237092, guid: 82d150fa7689d46bdbdeb9cbaabde435, type: 3}
+    DiscreteActionBranches: 
+    Model: {fileID: 5022602860645237092, guid: 10312addcce7c4e508c30d95eaf1a2ff, type: 3}
     InferenceDevice: 0
-  prefabPlatform: {fileID: 3981253095504673273, guid: 4a09e6c7ae14743f5b16f9e6f3155f68,
+  prefabPlatform: {fileID: 3981253095504673273, guid: 8c9aecd39f81f4a2d91dfebe7c29b81f,
     type: 3}
-  prefabBall: {fileID: 759326202301257407, guid: 4acbf7e3ef6a042a0a2dbac834c2f1d5,
+  prefabBall: {fileID: 759326202301257407, guid: 46c9069f688754349bdfc97d56ac7968,
     type: 3}
 --- !u!4 &1996448684
 Transform:

@@ -11,27 +11,32 @@ from enum import IntEnum
 import random
 from typing import Tuple, Optional, NamedTuple, List, Dict
 
-from mlagents_dots_envs.master_shared_mem import MasterSharedMem
-from mlagents_dots_envs.data_shared_mem import DataSharedMem
+from mlagents_dots_envs.shared_memory.master_shared_mem import MasterSharedMem
+from mlagents_dots_envs.shared_memory.data_shared_mem import DataSharedMem
 
 from mlagents_envs.exception import UnityCommunicationException
 from mlagents_envs.base_env import DecisionSteps, TerminalSteps, BehaviorSpec
 
 class SharedMemCom:
     FILE_DEFAULT = "default"
-    MAX_TIMEOUT_IN_SECONDS = 5
+    MAX_TIMEOUT_IN_SECONDS = 30
 
     def __init__(self, use_default: bool = False):
         if use_default:
             file_name = self.FILE_DEFAULT
         else:
-            file_name = str(uuid.uuid4())
+            file_name = str(uuid.uuid1())
             while os.path.exists(file_name):
-                file_name = str(uuid.uuid4())
+                file_name = str(uuid.uuid1())
         self._base_file_name = file_name
         self._master_mem = MasterSharedMem(file_name=file_name)
         self._current_file_number = self._master_mem.file_number
-        self._data_mem = DataSharedMem(file_name + "_" * self._current_file_number, create_file=True)
+        self._data_mem = DataSharedMem(
+            file_name + "_" * self._current_file_number,
+            create_file=True,
+            copy_from = None,
+            side_channel_buffer_size=4,
+            rl_data_buffer_size=0)
 
     @property
     def communicator_id(self):
@@ -48,17 +53,22 @@ class SharedMemCom:
     def write_side_channel_data(self, data: bytearray) -> None:
         capacity = self._master_mem.side_channel_size
         if len(data) >= capacity - 4:  # need 4 bytes for an integer size
+            new_capacity = 2*len(data)+20
             self._current_file_number += 1
             self._master_mem.file_number = self._current_file_number
+            tmp = self._data_mem
             self._data_mem = DataSharedMem(self._base_file_name + "_" * self._current_file_number,
                 create_file=True,
-                copy_from=self._data_mem,
-                side_channel_buffer_size= 2*len(data)+20
+                copy_from=tmp,
+                side_channel_buffer_size=new_capacity,
+                rl_data_buffer_size=self._master_mem.rl_data_size
             )
+            tmp.close()
             # Unity is responsible for destroying the old file
+            self._master_mem.side_channel_size = new_capacity
         self._data_mem.side_channel_data = data
 
-    def read_side_channel_data_and_clear(self) -> bytearray:
+    def read_and_clear_side_channel_data(self) -> bytearray:
         result = self._data_mem.side_channel_data
         self._data_mem.side_channel_data = bytearray()
         return result
@@ -77,17 +87,24 @@ class SharedMemCom:
             if iteration % check_timeout_iteration == 0:
                 if time.time() - t0 > self.MAX_TIMEOUT_IN_SECONDS:
                     self.close()
+                    self._master_mem.delete()
                     raise TimeoutError("The Unity Environment took too long to respond")
             iteration += 1
         if not self._master_mem.active:
-            self._data_mem.delete()
-            self._data_mem.delete()
-            raise UnityCommunicationException("Communicator has stopped.")
-        if self._current_file_number != self._master_mem.file_number:
+            try:
+                self._master_mem.check_version()
+            finally:
+                self._master_mem.delete()
+                self._data_mem.delete()
+                raise UnityCommunicationException("Communicator has stopped.")
+        while self._current_file_number < self._master_mem.file_number:
             # the file is out of date
             self._data_mem.delete()
-            self._current_file_number = self._master_mem.file_number
-            self._data_mem = DataSharedMem(self._base_file_name + "_" * self._current_file_number)
+            self._current_file_number += 1
+            self._data_mem = DataSharedMem(
+                self._base_file_name + "_" * self._current_file_number,
+                side_channel_buffer_size=self._master_mem.side_channel_size,
+                rl_data_buffer_size=self._master_mem.rl_data_size)
 
     def get_steps(self, key: str) -> Tuple[DecisionSteps, TerminalSteps]:
         return self._data_mem.get_decision_steps(key), self._data_mem.get_terminal_steps(key)

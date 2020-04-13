@@ -30,16 +30,13 @@ namespace Unity.AI.MLAgents
             int size = world.ActionSize;
             for (int i = 0; i < actionCount; i++)
             {
-                if (!world.ActionDoneFlags[i])
+                if (world.ActionType == ActionType.DISCRETE)
                 {
-                    if (world.ActionType == ActionType.DISCRETE)
-                    {
-                        result.TryAdd(world.ActionAgentIds[i], world.DiscreteActuators.Slice(i * size, size).SliceConvert<T>()[0]);
-                    }
-                    else
-                    {
-                        result.TryAdd(world.ActionAgentIds[i], world.ContinuousActuators.Slice(i * size, size).SliceConvert<T>()[0]);
-                    }
+                    result.TryAdd(world.ActionAgentEntityIds[i], world.DiscreteActuators.Slice(i * size, size).SliceConvert<T>()[0]);
+                }
+                else
+                {
+                    result.TryAdd(world.ActionAgentEntityIds[i], world.ContinuousActuators.Slice(i * size, size).SliceConvert<T>()[0]);
                 }
             }
             world.ResetActionsCounter();

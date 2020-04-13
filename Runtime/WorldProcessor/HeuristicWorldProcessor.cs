@@ -47,10 +47,10 @@ namespace Unity.AI.MLAgents
             }
         }
 
-        public WorldCommand ProcessWorld()
+        public void ProcessWorld()
         {
             T action = heuristic.Invoke();
-            var totalCount = world.AgentCounter.Count;
+            var totalCount = world.DecisionCounter.Count;
 
             // TODO : This can be parallelized
             if (world.ActionType == ActionType.CONTINUOUS)
@@ -69,7 +69,6 @@ namespace Unity.AI.MLAgents
                     s[i] = action;
                 }
             }
-            return WorldCommand.DEFAULT;
         }
 
         public void Dispose()

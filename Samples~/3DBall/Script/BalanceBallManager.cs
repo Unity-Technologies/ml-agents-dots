@@ -4,7 +4,6 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 using Random = UnityEngine.Random;
-using Barracuda;
 using Unity.AI.MLAgents;
 
 public class BalanceBallManager : MonoBehaviour
@@ -23,11 +22,7 @@ public class BalanceBallManager : MonoBehaviour
         var world = MyWorldSpecs.GetWorld();
         var ballSystem = World.DefaultGameObjectInjectionWorld.GetOrCreateSystem<BallSystem>();
         ballSystem.Enabled = true;
-        // var world = new MLAgentsWorld(1000, ActionType.CONTINUOUS, new int3[] { new int3(4, 0, 0), new int3(3, 0, 0) }, 2);
-        ballSystem.world = world;
-        // var mlsys = World.Active.GetOrCreateSystem<MLAgentsSystem>();
-        // mlsys.SubscribeWorldWithBarracudaModel("3DBallDOTS", world, model);
-
+        ballSystem.BallWorld = world;
 
         manager = World.DefaultGameObjectInjectionWorld.EntityManager;
 
@@ -36,7 +31,6 @@ public class BalanceBallManager : MonoBehaviour
         _prefabEntityPlatform = GameObjectConversionUtility.ConvertGameObjectHierarchy(prefabPlatform, settings);
         _prefabEntityBall = GameObjectConversionUtility.ConvertGameObjectHierarchy(prefabBall, settings);
 
-        Time.captureFramerate = 60;
         Spawn(1000);
         blob.Dispose();
     }
@@ -49,7 +43,7 @@ public class BalanceBallManager : MonoBehaviour
         manager.Instantiate(_prefabEntityBall, entitiesB);
         for (int i = 0; i < amount; i++)
         {
-            float3 position = new float3((currentIndex % 10) - 5, (currentIndex / 10 % 10) - 5, currentIndex / 100) * 2f;
+            float3 position = new float3((currentIndex % 10) - 5, (currentIndex / 10 % 10) - 5, currentIndex / 100) * 5f;
             float valX = Random.Range(-0.1f, 0.1f);
             float valZ = Random.Range(-0.1f, 0.1f);
             manager.SetComponentData(entitiesP[i],
@@ -68,12 +62,13 @@ public class BalanceBallManager : MonoBehaviour
                 {
                     Value = quaternion.EulerXYZ(valX, 0, valZ)
                 });
-            manager.AddComponent<RefToPlatform>(entitiesB[i]);
-            manager.SetComponentData(entitiesB[i], new RefToPlatform { Value = entitiesP[i] });
-            manager.AddComponent<BallResetData>(entitiesB[i]);
-            manager.SetComponentData(entitiesB[i], new BallResetData { ResetPosition = position + new float3(0, 0.2f, 0) });
-            manager.AddComponent<BallData>(entitiesP[i]);
-            manager.AddComponent<AngularAcceleration>(entitiesP[i]);
+            manager.AddComponent<AgentData>(entitiesP[i]);
+            manager.SetComponentData(entitiesP[i], new AgentData { 
+                BallResetPosition = position + new float3(0, 0.2f, 0),
+                BallRef = entitiesB[i],
+                StepCount = 0
+             });
+            manager.AddComponent<Actuator>(entitiesP[i]);
             currentIndex++;
         }
 

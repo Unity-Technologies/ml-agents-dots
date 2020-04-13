@@ -16,9 +16,8 @@ namespace Unity.AI.MLAgents
             this.world = world;
         }
 
-        public WorldCommand ProcessWorld()
+        public void ProcessWorld()
         {
-            return WorldCommand.DEFAULT;
         }
 
         public void Dispose()

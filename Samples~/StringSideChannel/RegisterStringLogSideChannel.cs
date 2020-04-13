@@ -1,9 +1,6 @@
 using UnityEngine;
 using System;
-using System.Text;
-using Unity.AI.MLAgents;
 using Unity.AI.MLAgents.SideChannels;
-using Unity.Entities;
 
 public class RegisterStringLogSideChannel : MonoBehaviour
 {
@@ -12,7 +9,7 @@ public class RegisterStringLogSideChannel : MonoBehaviour
     {
         stringChannel = new StringLogSideChannel();
 
-        Academy.Instance.RegisterSideChannel(stringChannel);
+        SideChannelUtils.RegisterSideChannel(stringChannel);
 
         Application.logMessageReceived += stringChannel.SendDebugStatementToPython;
     }
@@ -39,9 +36,9 @@ public class StringLogSideChannel : SideChannel
         ChannelId = new Guid("621f0a70-4f87-11ea-a6bf-784f4387d1f7");
     }
 
-    public override void OnMessageReceived(byte[] data)
+    public override void OnMessageReceived(IncomingMessage message)
     {
-        var receivedString = Encoding.ASCII.GetString(data);
+        var receivedString  = message.ReadString();
         Debug.Log("From Python : " + receivedString);
     }
 
@@ -49,9 +46,10 @@ public class StringLogSideChannel : SideChannel
     {
         if (type == LogType.Error)
         {
+            var message = new OutgoingMessage();
             var stringToSend = type.ToString() + ": " + logString + "\n" + stackTrace;
-            var encodedString = Encoding.ASCII.GetBytes(stringToSend);
-            base.QueueMessageToSend(encodedString);
+            message.WriteString(stringToSend);
+            base.QueueMessageToSend(message);
         }
     }
 }

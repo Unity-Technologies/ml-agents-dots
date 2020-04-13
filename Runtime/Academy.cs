@@ -51,12 +51,6 @@ namespace Unity.AI.MLAgents
         internal Dictionary<MLAgentsWorld, IWorldProcessor> WorldToProcessor; // Maybe we can put the processor in the world with an unsafe unmanaged memory pointer ?
 
         /// <summary>
-        /// Collection of float properties (indexed by a string).
-        /// </summary>
-        public IFloatProperties FloatProperties;
-        private SideChannel[] m_SideChannels;
-
-        /// <summary>
         /// Signals that the Academy has been reset by the training process
         /// If you have jobs Scheduled but not completed when this event is called,
         /// If is recommended to Complete them.
@@ -93,24 +87,6 @@ namespace Unity.AI.MLAgents
             WorldToProcessor[world] = processor;
         }
 
-        /// <summary>
-        /// Registers SideChannel to the Academy to send and receive data with Python.
-        /// If IsCommunicatorOn is false, the SideChannel will not be registered.
-        /// </summary>
-        /// <param name="channel"> The side channel to be registered.</param>
-        public void RegisterSideChannel(SideChannel channel)
-        {
-            foreach (var registeredChannel in m_SideChannels)
-            {
-                if (registeredChannel.ChannelId == channel.ChannelId)
-                {
-                    throw new MLAgentsException("TODO : 2 side channels with same id");
-                }
-            }
-            Array.Resize<SideChannel>(ref m_SideChannels, m_SideChannels.Length + 1);
-            m_SideChannels[m_SideChannels.Length - 1] = channel;
-        }
-
         private void LazyInitialize()
         {
             if (!m_Initialized)
@@ -128,19 +104,21 @@ namespace Unity.AI.MLAgents
         private void TryInitializeCommunicator()
         {
             var path = ArgParser.ReadSharedMemoryPathFromArgs();
+
             if (path == null)
             {
                 UnityEngine.Debug.Log("Could not connect");
-                m_SideChannels = new SideChannel[0];
             }
             else
             {
                 com = new SharedMemoryCom(path);
-                m_SideChannels = new SideChannel[2];
-                m_SideChannels[0] = new EngineConfigurationChannel();;
-                var FloatPropertiesChannel = new FloatPropertiesChannel();
-                m_SideChannels[1] = FloatPropertiesChannel;
-                FloatProperties = FloatPropertiesChannel;
+                if (!com.Active)
+                {
+                    com = null;
+                    return;
+                }
+                SideChannelUtils.RegisterSideChannel(new EngineConfigurationChannel());
+                SideChannelUtils.RegisterSideChannel(new FloatPropertiesChannel());
             }
         }
 
@@ -153,7 +131,7 @@ namespace Unity.AI.MLAgents
             }
 
             // If no agents requested a decision return
-            if (world.AgentCounter.Count == 0)
+            if (world.DecisionCounter.Count == 0 && world.TerminationCounter.Count == 0)
             {
                 return;
             }
@@ -161,6 +139,7 @@ namespace Unity.AI.MLAgents
             // Ensure the world does not have lingering actions:
             if (world.ActionCounter.Count != 0)
             {
+                // This means something in the execution went wrong, this error should never appear
                 throw new MLAgentsException("TODO : ActionCount is not 0");
             }
 
@@ -168,64 +147,63 @@ namespace Unity.AI.MLAgents
             if (processor == null)
             {
                 // Raise error
-                throw new MLAgentsException("TODO : Null processor");
+                throw new MLAgentsException($"A world has not been correctly registered.");
             }
 
-            var command = WorldCommand.DEFAULT;
 
-            if (com != null && processor.IsConnected)
+            if (com != null && com.Active && processor.IsConnected)
             {
+                bool reset = false;
                 #region BLOCKING_ALL_THREADS
                 if (!FirstMessageReceived)
                 {
                     // Unity must call advance to read the first message of Python.
                     // We do this only if there is already something to send
                     // We could ignore the first command
-                    command = com.Advance();
-                    SideChannelUtils.ProcessSideChannelData(m_SideChannels, com.ReadAndClearSideChannelData());
+                    com.WaitForPython();
+                    SideChannelUtils.ProcessSideChannelData(com.ReadAndClearSideChannelData());
                     FirstMessageReceived = true;
+                    reset = com.ReadAndClearResetCommand();
                 }
-                if (command == WorldCommand.DEFAULT)
+                if (!reset) // TODO : Comment out if we do not want to reset on first env.reset()
                 {
-                    com.WriteSideChannelData(SideChannelUtils.GetSideChannelMessage(m_SideChannels));
-                    command = processor.ProcessWorld();
+                    com.WriteSideChannelData(SideChannelUtils.GetSideChannelMessage());
+                    processor.ProcessWorld();
+                    reset = com.ReadAndClearResetCommand();
                     world.SetActionReady();
-                    world.ResetDecisionsCounter();
-                    SideChannelUtils.ProcessSideChannelData(m_SideChannels, com.ReadAndClearSideChannelData());
+                    world.ResetDecisionsAndTerminationCounters();
+                    SideChannelUtils.ProcessSideChannelData(com.ReadAndClearSideChannelData());
+                }
+                if (reset)
+                {
+                    Reset();
                 }
                 #endregion
             }
+            else if (!processor.IsConnected)
+            {
+                processor.ProcessWorld();
+                world.SetActionReady();
+                world.ResetDecisionsAndTerminationCounters();
+                // TODO com.ReadAndClearSideChannelData(); // Remove side channel data
+            }
             else
             {
-                command = processor.ProcessWorld();
-                world.SetActionReady();
-                world.ResetDecisionsCounter();
+                // The processor wants to communicate but the communicator is either null or inactive
+                world.ResetActionsCounter();
+                world.ResetDecisionsAndTerminationCounters();
             }
-            switch (command)
+            if (com == null)
             {
-                case WorldCommand.RESET:
-                    World.DefaultGameObjectInjectionWorld.EntityManager.CompleteAllJobs(); // This is problematic because it completes only for the active world
-                    ResetAllWorlds();
-                    OnEnvironmentReset?.Invoke();
-                    // TODO : RESET logic
-                    break;
-
-                case WorldCommand.CLOSE:
-                    Debug.LogError("Communication was closed.");
-#if UNITY_EDITOR
-                    EditorApplication.isPlaying = false;
-#else
-                    Application.Quit();
-#endif
-                    com = null;
-                    break;
-
-                case WorldCommand.DEFAULT:
-                    break;
-
-                default:
-                    break;
+                SideChannelUtils.GetSideChannelMessage();
             }
+        }
+
+        private void Reset()
+        {
+            World.DefaultGameObjectInjectionWorld.EntityManager.CompleteAllJobs(); // This is problematic because it completes only for the active world
+            ResetAllWorlds();
+            OnEnvironmentReset?.Invoke();
         }
 
         private void ResetAllWorlds() // This is problematic because it affects all worlds and is not thread safe...
@@ -233,7 +211,7 @@ namespace Unity.AI.MLAgents
             foreach (var w in WorldToProcessor.Keys)
             {
                 w.ResetActionsCounter();
-                w.ResetDecisionsCounter();
+                w.ResetDecisionsAndTerminationCounters();
             }
         }
 
@@ -244,12 +222,11 @@ namespace Unity.AI.MLAgents
         {
             com?.Dispose();
             com = null;
-
-            FloatProperties = null;
+            SideChannelUtils.UnregisterAllSideChannels();
             m_Initialized = false;
 
             // Reset the Lazy instance // No reset because Academy.Instance is called after dispose...
-            // s_Lazy = new Lazy<Academy>(() => new Academy());
+            s_Lazy = new Lazy<Academy>(() => new Academy());
         }
     }
 }

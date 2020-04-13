@@ -5,13 +5,24 @@ namespace Unity.AI.MLAgents
     /// </summary>
     internal class MasterSharedMem : BaseSharedMem
     {
+        private const int k_MajorVersion = 0;
+        private const int k_MinorVersion = 3;
+        private const int k_BugVersion = 0;
+
         private const int k_Size = 16;
 
         public MasterSharedMem(string fileName) : base(fileName, false) {}
 
         public bool Active
         {
-            get { return GetBool(15); }
+            get
+            {
+                if (!CanEdit)
+                {
+                    return false;
+                }
+                return !GetBool(15);
+            }
         }
 
         public int FileNumber
@@ -27,7 +38,10 @@ namespace Unity.AI.MLAgents
 
         new public void Close()
         {
-            SetBool(15, true);
+            if (CanEdit)
+            {
+                SetBool(15, true);
+            }
             base.Close();
         }
 
@@ -43,6 +57,10 @@ namespace Unity.AI.MLAgents
 
         public bool ReadAndClearResetCommand()
         {
+            if (!CanEdit)
+            {
+                return false;
+            }
             var result = GetBool(14);
             SetBool(14, false);
             return result;
@@ -58,6 +76,21 @@ namespace Unity.AI.MLAgents
         {
             get { return GetInt(24); }
             set { SetInt(24, value); }
+        }
+
+        public bool CheckVersion()
+        {
+            int major = GetInt(0);
+            SetInt(0, k_MajorVersion);
+            int minor = GetInt(4);
+            SetInt(4, k_MinorVersion);
+            int bug = GetInt(8);
+            SetInt(8, k_BugVersion);
+            if (major != k_MajorVersion || minor != k_MinorVersion || bug != k_BugVersion)
+            {
+                return false;
+            }
+            return true;
         }
     }
 }

@@ -1,4 +1,5 @@
-from mlagents_dots_envs.base_shared_mem import BasedSharedMem
+import os, glob
+from mlagents_dots_envs.shared_memory.base_shared_mem import BasedSharedMem
 
 class MasterSharedMem(BasedSharedMem):
     """
@@ -15,8 +16,12 @@ class MasterSharedMem(BasedSharedMem):
     """
     SIZE = 28
     VERSION = (0,3,0)
-    def __init__(self, file_name:str, side_channel_size = 0, rl_data_size=0):
-        super(MasterSharedMem, self).__init__(file_name, self.SIZE, True)
+    def __init__(self, file_name: str, side_channel_size=0, rl_data_size=0):
+
+        super(MasterSharedMem, self).__init__(file_name, create_file=True, size=self.SIZE)
+        for f in glob.glob(file_name + "_"):
+            # Removing all the future files in case they were not correctly created
+            os.remove(f)
         offset = 0
         offset = self.set_int(offset, self.VERSION[0])
         offset = self.set_int(offset, self.VERSION[1])
@@ -32,8 +37,8 @@ class MasterSharedMem(BasedSharedMem):
     @property
     def active(self) -> bool:
         offset = 15
-        result, _ = self.get_bool(offset)
-        return result
+        closed, _ = self.get_bool(offset)
+        return not closed
 
     @property
     def file_number(self) -> int:
@@ -47,8 +52,9 @@ class MasterSharedMem(BasedSharedMem):
         self.set_int(offset, value)
 
     def close(self):
-        offset = 15
-        self.set_bool(offset, True)
+        if self.accessor is not None:
+            offset = 15
+            self.set_bool(offset, True)
         super(MasterSharedMem, self).close()
 
     def mark_python_blocked(self):
@@ -72,7 +78,8 @@ class MasterSharedMem(BasedSharedMem):
     @property
     def side_channel_size(self):
         offset = 20
-        return self.get_int(offset)
+        result, _ = self.get_int(offset)
+        return result
 
     @side_channel_size.setter
     def side_channel_size(self, value:int):
@@ -82,10 +89,22 @@ class MasterSharedMem(BasedSharedMem):
     @property
     def rl_data_size(self):
         offset = 24
-        return self.get_int(offset)
+        result, _ = self.get_int(offset)
+        return result
 
     @rl_data_size.setter
     def rl_data_size(self, value:int):
         offset = 24
         self.set_int(offset, value)
+
+    def check_version(self):
+        offset = 0
+        major, offset = self.get_int(offset)
+        minor, offset = self.get_int(offset)
+        bug, offset = self.get_int(offset)
+        if (major, minor, bug) != self.VERSION:
+            raise Exception(f"Incompatible versions of communicator between " +
+                f"Unity {major}.{minor}.{bug} and Python "
+                f"{self.VERSION[0]}.{self.VERSION[1]}.{self.VERSION[2]}")
+
 

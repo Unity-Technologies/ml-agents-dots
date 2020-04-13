@@ -17,7 +17,7 @@ class BasedSharedMem(ABC):
         file_path = os.path.join(directory, file_name)
         if create_file:
             if os.path.exists(file_path):
-                raise FileExistsError(f"The file {file_path} already exists.")
+                os.remove(file_path)
             data = bytearray(size)
             with open(file_path, "w+b") as f:
                 f.write(data)
@@ -43,11 +43,11 @@ class BasedSharedMem(ABC):
 
     def get_ndarray(
         self, offset: int, shape: Tuple[int, ...], t: np.dtype
-    ) -> Tuple[np.ndarray, int]:
+    ) -> np.ndarray:
         count = np.prod(shape)
         return np.frombuffer(
             buffer=self.accessor, dtype=t, count=count, offset=offset
-        ).reshape(shape), offset + count * t.itemsize
+        ).reshape(shape)
 
     def get_uuid(self, offset: int) -> Tuple[uuid.UUID, int]:
         return uuid.UUID(bytes_le= self.accessor[offset:offset+16]), offset+16
@@ -75,10 +75,9 @@ class BasedSharedMem(ABC):
         self.accessor[offset: offset + 16] = value.bytes_le
         return offset + 16
 
-    def set_ndarray(self, offset: int, data: np.ndarray) -> int:
+    def set_ndarray(self, offset: int, data: np.ndarray) -> None:
         bytes_data = data.tobytes()
         self.accessor[offset: offset + len(bytes_data)] = bytes_data
-        return offset + len(bytes_data)
 
     def close(self) -> None:
         if self.accessor is not None:
@@ -87,5 +86,8 @@ class BasedSharedMem(ABC):
 
     def delete(self) -> None:
         self.close()
-        os.remove(self._file_path)
+        try:
+            os.remove(self._file_path)
+        except:
+            pass
 

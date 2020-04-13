@@ -32,7 +32,7 @@ Transform:
   m_GameObject: {fileID: 759326202301257407}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0.27, y: 0.87, z: 0}
-  m_LocalScale: {x: 0.1, y: 0.1, z: 0.1}
+  m_LocalScale: {x: 0.3, y: 0.3, z: 0.3}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -61,6 +61,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -72,6 +73,7 @@ MeshRenderer:
   m_ProbeAnchor: {fileID: 0}
   m_LightProbeVolumeOverride: {fileID: 0}
   m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
   m_PreserveUVs: 0
   m_IgnoreNormalsForChartDetection: 0
   m_ImportantGI: 0
@@ -120,8 +122,13 @@ MonoBehaviour:
     Height: 1
     Radius: 0.5
     Axis: 2
+  m_CylinderSideCount: 20
   m_SphereRadius: 0.5
-  m_ConvexRadius: 0.05
+  m_MinimumSkinnedVertexWeight: 0.1
+  m_ConvexHullGenerationParameters:
+    m_SimplificationTolerance: 0.015
+    m_BevelRadius: 0.05
+    m_MinimumAngle: 2.5000002
   m_CustomMesh: {fileID: 0}
   m_Material:
     m_SupportsTemplate: 1
@@ -132,12 +139,12 @@ MonoBehaviour:
     m_Friction:
       m_Override: 0
       m_Value:
-        Value: 0.5
+        Value: 0
         CombineMode: 0
     m_Restitution:
       m_Override: 0
       m_Value:
-        Value: 0.05
+        Value: 0
         CombineMode: 2
     m_BelongsTo:
       m_Override: 0
@@ -148,9 +155,10 @@ MonoBehaviour:
     m_RaisesCollisionEvents:
       m_Override: 0
       m_Value: 0
-    m_CustomFlags:
+    m_CustomTags:
       m_Override: 0
       m_Value: 0000000000000000
+  m_ConvexRadius_Deprecated: -1
 --- !u!114 &759326202301257405
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -166,8 +174,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_MotionType: 0
   m_Mass: 0.15
-  m_LinearDamping: 0.1
-  m_AngularDamping: 0.1
+  m_LinearDamping: 0
+  m_AngularDamping: 0
   m_InitialLinearVelocity:
     x: 0
     y: 0
@@ -192,6 +200,15 @@ MonoBehaviour:
     x: 0.4
     y: 0.4
     z: 0.4
+  m_CustomTags:
+    Tag00: 0
+    Tag01: 0
+    Tag02: 0
+    Tag03: 0
+    Tag04: 0
+    Tag05: 0
+    Tag06: 0
+    Tag07: 0
 --- !u!114 &759326202301257404
 MonoBehaviour:
   m_ObjectHideFlags: 0

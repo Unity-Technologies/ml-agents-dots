@@ -25,17 +25,17 @@ from mlagents_envs.exception import (
     UnityTimeOutException,
 )
 
-from mlagents_dots_envs.shared_memory_communicator import SharedMemCom
+from mlagents_dots_envs.shared_memory.shared_mem_com import SharedMemCom
 
 from mlagents_dots_envs.env_utils import (
     get_side_channels,
     executable_launcher,
     generate_side_channel_data,
     parse_side_channel_message,
-    returncode_to_signal_name
+    returncode_to_signal_name,
+    validate_environment_path as ttt
 )
 
-from mlagents_dots_envs.master_shared_mem import MasterSharedMem
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("mlagents.envs")
@@ -44,7 +44,13 @@ logger = logging.getLogger("mlagents.envs")
 class UnityEnvironment(BaseEnv):
     API_VERSION = "API-14"                      # TODO : REMOVE
     DEFAULT_EDITOR_PORT = 5004                  # TODO : REMOVE
+    BASE_ENVIRONMENT_PORT = 5005                # TODO : REMOVE
     PORT_COMMAND_LINE_ARG = "--mlagents-port"   # TODO : REMOVE
+
+    @staticmethod
+    def validate_environment_path( path__):
+        return ttt(path__)
+
 
     def __init__(
         self,
@@ -105,7 +111,7 @@ class UnityEnvironment(BaseEnv):
         if not self._communicator.active:
             raise UnityCommunicationException("Communicator has stopped.")
         parse_side_channel_message(
-            self._side_channels, self._communicator.read_side_channel_data_and_clear()
+            self._side_channels, self._communicator.read_and_clear_side_channel_data()
         )
         if len(self._env_specs) != self._communicator.num_behaviors:
             self._env_specs = self._communicator.generate_specs()
@@ -147,7 +153,7 @@ class UnityEnvironment(BaseEnv):
 
     def get_steps(self, behavior_name: BehaviorName) -> Tuple[DecisionSteps, TerminalSteps]:
         self._assert_behavior_exists(behavior_name)
-        self._communicator.get_steps(behavior_name)
+        return self._communicator.get_steps(behavior_name)
 
     def get_behavior_spec(self, behavior_name:BehaviorName) -> BehaviorSpec:
         self._assert_behavior_exists(behavior_name)

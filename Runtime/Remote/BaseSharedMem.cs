@@ -2,7 +2,8 @@ using System;
 using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Text;
-
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace Unity.AI.MLAgents
 {
@@ -51,20 +52,23 @@ namespace Unity.AI.MLAgents
 
         public int GetInt(ref int offset)
         {
+            var result =  accessor.ReadInt32(offset);
             offset += 4;
-            return accessor.ReadInt32(offset);
+            return result;
         }
 
         public float GetFloat(ref int offset)
         {
+            var result = accessor.ReadSingle(offset);
             offset += 4;
-            return accessor.ReadSingle(offset);
+            return result;
         }
 
         public bool GetBool(ref int offset)
         {
+            var result = accessor.ReadBoolean(offset);
             offset += 1;
-            return accessor.ReadBoolean(offset);
+            return result;
         }
 
         public string GetString(ref int offset)
@@ -77,9 +81,10 @@ namespace Unity.AI.MLAgents
             return Encoding.ASCII.GetString(bytes);
         }
 
-        public void GetArray(ref int offset, IntPtr dst, int length)
+        public void GetArray<T>(ref int offset, NativeArray<T> array, int length) where T : struct
         {
             IntPtr src = IntPtr.Add(accessorPointer, offset);
+            IntPtr dst = new IntPtr(array.GetUnsafePtr());
             Buffer.MemoryCopy(src.ToPointer(), dst.ToPointer(), length, length);
             offset += length;
         }
@@ -116,16 +121,20 @@ namespace Unity.AI.MLAgents
             return Encoding.ASCII.GetString(bytes);
         }
 
-        public void GetArray(int offset, IntPtr dst, int length)
+        public void GetArray<T>(int offset, NativeArray<T> array, int length) where T : struct
         {
             IntPtr src = IntPtr.Add(accessorPointer, offset);
+            IntPtr dst = new IntPtr(array.GetUnsafePtr());
             Buffer.MemoryCopy(src.ToPointer(), dst.ToPointer(), length, length);
         }
 
         public byte[] GetBytes(int offset, int length)
         {
             var result = new byte[length];
-            accessor.ReadArray(offset, result, 0, length);
+            if (length > 0)
+            {
+                accessor.ReadArray(offset, result, 0, length);
+            }
             return result;
         }
 
@@ -158,9 +167,10 @@ namespace Unity.AI.MLAgents
             return offset;
         }
 
-        public int SetArray(int offset, IntPtr src, int length)
+        public int SetArray<T>(int offset, NativeArray<T> arr, int length) where T : struct
         {
             IntPtr dst = IntPtr.Add(accessorPointer, offset);
+            IntPtr src = new IntPtr(arr.GetUnsafePtr());
             Buffer.MemoryCopy(src.ToPointer(), dst.ToPointer(), length, length);
             return offset + length;
         }
@@ -177,6 +187,14 @@ namespace Unity.AI.MLAgents
             {
                 accessor.SafeMemoryMappedViewHandle.ReleasePointer();
                 accessor.Dispose();
+            }
+        }
+
+        protected bool CanEdit
+        {
+            get
+            {
+                return accessor.CanWrite;
             }
         }
 

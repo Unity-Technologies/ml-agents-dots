@@ -28,7 +28,7 @@ namespace Unity.AI.MLAgents
         /// <value> True if MLAgentsWorld was instantiated, False otherwise</value>
         public bool IsCreated
         {
-            get { return AgentIds.IsCreated;}
+            get { return DecisionAgentIds.IsCreated;}
         }
 
         [ReadOnly] internal NativeArray<int3> SensorShapes;
@@ -38,22 +38,25 @@ namespace Unity.AI.MLAgents
 
         [ReadOnly] internal NativeArray<int> ObservationOffsets;
 
-        [NativeDisableParallelForRestriction][WriteOnly] internal NativeArray<float> Sensors;
-        [NativeDisableParallelForRestriction][WriteOnly] internal NativeArray<float> Rewards;
-        [NativeDisableParallelForRestriction][WriteOnly] internal NativeArray<bool> DoneFlags;
-        [NativeDisableParallelForRestriction][WriteOnly] internal NativeArray<bool> MaxStepFlags;
-        [NativeDisableParallelForRestriction] internal NativeArray<Entity> AgentEntityIds;
-        [NativeDisableParallelForRestriction] internal NativeArray<int> AgentIds;
-        [NativeDisableParallelForRestriction] internal NativeArray<bool> ActionMasks;
+        [NativeDisableParallelForRestriction][WriteOnly] internal NativeArray<float> DecisionObs;
+        [NativeDisableParallelForRestriction][WriteOnly] internal NativeArray<float> DecisionRewards;
+        [NativeDisableParallelForRestriction] internal NativeArray<int> DecisionAgentIds;
+        [NativeDisableParallelForRestriction] internal NativeArray<bool> DecisionActionMasks;
+        [NativeDisableParallelForRestriction] internal NativeArray<Entity> DecisionAgentEntityIds;
+
+        [NativeDisableParallelForRestriction][WriteOnly] internal NativeArray<float> TerminationObs;
+        [NativeDisableParallelForRestriction][WriteOnly] internal NativeArray<float> TerminationRewards;
+        [NativeDisableParallelForRestriction] internal NativeArray<int> TerminationAgentIds;
+        [NativeDisableParallelForRestriction][WriteOnly] internal NativeArray<bool> TerminationStatus;
 
         //https://forum.unity.com/threads/is-it-okay-to-read-a-nativecounter-concurrents-value-in-a-parallel-job.533037/
-        [NativeDisableParallelForRestriction] internal NativeCounter AgentCounter;
+        [NativeDisableParallelForRestriction] internal NativeCounter DecisionCounter;
+        [NativeDisableParallelForRestriction] internal NativeCounter TerminationCounter;
         [NativeDisableParallelForRestriction] internal NativeCounter ActionCounter;
 
         [NativeDisableParallelForRestriction] internal NativeArray<float> ContinuousActuators;
         [NativeDisableParallelForRestriction] internal NativeArray<int> DiscreteActuators;
-        [NativeDisableParallelForRestriction] internal NativeArray<Entity> ActionAgentIds; // Keep track of the Ids for the next action step
-        [NativeDisableParallelForRestriction] internal NativeArray<bool> ActionDoneFlags; // Keep track of the Done flags for the next action step
+        [NativeDisableParallelForRestriction] internal NativeArray<Entity> ActionAgentEntityIds; // Keep track of the Ids for the next action step
 
 
         /// <summary>
@@ -105,19 +108,24 @@ namespace Unity.AI.MLAgents
                 currentOffset += s.GetTotalTensorSize() * maximumNumberAgents;
             }
 
-            Sensors = new NativeArray<float>(currentOffset, Allocator.Persistent, NativeArrayOptions.ClearMemory);
-            Rewards = new NativeArray<float>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.ClearMemory);
-            DoneFlags = new NativeArray<bool>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.ClearMemory);
-            MaxStepFlags = new NativeArray<bool>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.ClearMemory);
-            AgentEntityIds = new NativeArray<Entity>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-            AgentIds = new NativeArray<int>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            DecisionObs = new NativeArray<float>(currentOffset, Allocator.Persistent, NativeArrayOptions.ClearMemory);
+            DecisionRewards = new NativeArray<float>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.ClearMemory);
+            DecisionAgentEntityIds = new NativeArray<Entity>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            DecisionAgentIds = new NativeArray<int>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
 
             int nMasks = 0;
             if (ActionType == ActionType.DISCRETE)
             {
                 nMasks = DiscreteActionBranches.Sum();
             }
-            ActionMasks = new NativeArray<bool>(maximumNumberAgents * nMasks, Allocator.Persistent);
+            DecisionActionMasks = new NativeArray<bool>(maximumNumberAgents * nMasks, Allocator.Persistent);
+            DecisionCounter = new NativeCounter(Allocator.Persistent);
+
+            TerminationObs = new NativeArray<float>(currentOffset, Allocator.Persistent, NativeArrayOptions.ClearMemory);
+            TerminationRewards = new NativeArray<float>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.ClearMemory);
+            TerminationAgentIds = new NativeArray<int>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            TerminationStatus = new NativeArray<bool>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.ClearMemory);
+            TerminationCounter = new NativeCounter(Allocator.Persistent);
 
             int daSize = 0;
             int caSize = 0;
@@ -130,13 +138,11 @@ namespace Unity.AI.MLAgents
                 caSize = ActionSize;
             }
 
-            AgentCounter = new NativeCounter(Allocator.Persistent);
             ActionCounter = new NativeCounter(Allocator.Persistent);
 
             ContinuousActuators = new NativeArray<float>(maximumNumberAgents * caSize, Allocator.Persistent, NativeArrayOptions.ClearMemory);
             DiscreteActuators = new NativeArray<int>(maximumNumberAgents * daSize, Allocator.Persistent, NativeArrayOptions.ClearMemory);
-            ActionDoneFlags = new NativeArray<bool>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-            ActionAgentIds = new NativeArray<Entity>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            ActionAgentEntityIds = new NativeArray<Entity>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
         }
 
         internal void ResetActionsCounter()
@@ -144,17 +150,17 @@ namespace Unity.AI.MLAgents
             ActionCounter.Count = 0;
         }
 
-        internal void ResetDecisionsCounter()
+        internal void ResetDecisionsAndTerminationCounters()
         {
-            AgentCounter.Count = 0;
+            DecisionCounter.Count = 0;
+            TerminationCounter.Count = 0;
         }
 
         internal void SetActionReady()
         {
-            int count = AgentCounter.Count;
+            int count = DecisionCounter.Count;
             ActionCounter.Count = count;
-            ActionDoneFlags.Slice(0, count).CopyFrom(DoneFlags.Slice(0, count));
-            ActionAgentIds.Slice(0, count).CopyFrom(AgentEntityIds.Slice(0, count));
+            ActionAgentEntityIds.Slice(0, count).CopyFrom(DecisionAgentEntityIds.Slice(0, count));
         }
 
         /// <summary>
@@ -169,19 +175,24 @@ namespace Unity.AI.MLAgents
             SensorShapes.Dispose();
             DiscreteActionBranches.Dispose();
             ObservationOffsets.Dispose();
-            Sensors.Dispose();
-            Rewards.Dispose();
-            DoneFlags.Dispose();
-            MaxStepFlags.Dispose();
-            AgentEntityIds.Dispose();
-            AgentIds.Dispose();
-            ActionMasks.Dispose();
-            AgentCounter.Dispose();
+
+            DecisionObs.Dispose();
+            DecisionRewards.Dispose();
+            DecisionAgentEntityIds.Dispose();
+            DecisionAgentIds.Dispose();
+            DecisionActionMasks.Dispose();
+            DecisionCounter.Dispose();
+
+            TerminationObs.Dispose();
+            TerminationRewards.Dispose();
+            TerminationAgentIds.Dispose();
+            TerminationStatus.Dispose();
+            TerminationCounter.Dispose();
+
             ActionCounter.Dispose();
             ContinuousActuators.Dispose();
             DiscreteActuators.Dispose();
-            ActionDoneFlags.Dispose();
-            ActionAgentIds.Dispose();
+            ActionAgentEntityIds.Dispose();
         }
 
         /// <summary>
@@ -200,16 +211,72 @@ namespace Unity.AI.MLAgents
                 throw new MLAgentsException($"Invalid operation, cannot request a decision on a non-initialized MLAgentsWorld");
             }
 #endif
-            var index = AgentCounter.ToConcurrent().Increment() - 1;
+            var index = DecisionCounter.ToConcurrent().Increment() - 1;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            if (index > AgentEntityIds.Length)
+            if (index > DecisionAgentIds.Length)
             {
-                throw new MLAgentsException($"Number of decisions requested exceeds the set maximum of {AgentEntityIds.Length}");
+                throw new MLAgentsException($"Number of decisions requested exceeds the set maximum of {DecisionAgentIds.Length}");
             }
 #endif
-            AgentEntityIds[index] = entity;
-            AgentIds[index] = entity.Index;
+            DecisionAgentIds[index] = entity.Index;
+            DecisionAgentEntityIds[index] = entity;
             return new DecisionRequest(index, this);
+        }
+
+        /// <summary>
+        /// Signals that the Agent has terminated its episode. The task ended properly, either in failure or in success.
+        /// The EpisodeTermination struct this method returns can be used to provide data necessary for the Agent to
+        /// train properly.
+        /// </summary>
+        /// <param name="entity"> The Entity whose episode ended. The Entity is used to track
+        /// sequences of actions of an Agent.</param>
+        /// <returns></returns>
+        public EpisodeTermination EndEpisode(Entity entity)
+        {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (!IsCreated)
+            {
+                throw new MLAgentsException($"Invalid operation, cannot end episode on a non-initialized MLAgentsWorld");
+            }
+#endif
+            var index = TerminationCounter.ToConcurrent().Increment() - 1;
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (index > TerminationAgentIds.Length)
+            {
+                throw new MLAgentsException($"Number of termination notifications exceeds the set maximum of {TerminationAgentIds.Length}");
+            }
+#endif
+            TerminationAgentIds[index] = entity.Index;
+            TerminationStatus[index] = false;
+            return new EpisodeTermination(index, this);
+        }
+
+        /// <summary>
+        /// Signals that the Agent episode has been interrupted. The task could not end properly.
+        /// The EpisodeTermination struct this method returns can be used to provide data necessary for the Agent to
+        /// train properly.
+        /// </summary>
+        /// <param name="entity"> The Entity whose episode ended. The Entity is used to track
+        /// sequences of actions of an Agent.</param>
+        /// <returns></returns>
+        public EpisodeTermination InterruptEpisode(Entity entity)
+        {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (!IsCreated)
+            {
+                throw new MLAgentsException($"Invalid operation, cannot end episode on a non-initialized MLAgentsWorld");
+            }
+#endif
+            var index = TerminationCounter.ToConcurrent().Increment() - 1;
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (index > TerminationAgentIds.Length)
+            {
+                throw new MLAgentsException($"Number of termination notifications exceeds the set maximum of {TerminationAgentIds.Length}");
+            }
+#endif
+            TerminationAgentIds[index] = entity.Index;
+            TerminationStatus[index] = true;
+            return new EpisodeTermination(index, this);
         }
     }
 }

@@ -7,16 +7,16 @@ using System;
 namespace Unity.AI.MLAgents
 {
     /// <summary>
-    /// A DecisionRequest is a struct used to provide data about an Agent to a MLAgentsWorld.
-    /// This data will be used to generate a decision after the world is processed.
+    /// A EpisodeTermination is a struct used to provide data about an Agent to a MLAgentsWorld.
+    /// This data will be used to notify of the end of the episode of an Agent.
     /// Adding data is done through a builder pattern.
     /// </summary>
-    public struct DecisionRequest
+    public struct EpisodeTermination
     {
         private int index;
         private MLAgentsWorld world;
 
-        internal DecisionRequest(int index, MLAgentsWorld world)
+        internal EpisodeTermination(int index, MLAgentsWorld world)
         {
             this.index = index;
             this.world = world;
@@ -24,50 +24,23 @@ namespace Unity.AI.MLAgents
 
         /// <summary>
         /// Sets the reward that the Agent has accumulated since the last decision request.
+        /// Add any "end of episode" reward.
         /// </summary>
         /// <param name="r"> The reward value </param>
-        /// <returns> The DecisionRequest struct </returns>
-        public DecisionRequest SetReward(float r)
+        /// <returns> The EpisodeTermination struct </returns>
+        public EpisodeTermination SetReward(float r)
         {
-            world.DecisionRewards[index] = r;
+            world.TerminationRewards[index] = r;
             return this;
         }
 
         /// <summary>
-        /// Specifies that a discrete action is not available for the next decision.
-        /// Note : This is only available is discrete action spaces.
-        /// </summary>
-        /// <param name="branch"> The branch of the action to be masked </param>
-        /// <param name="actionIndex"> The index of the action to be masked </param>
-        /// <returns> The DecisionRequest struct </returns>
-        public DecisionRequest SetDiscreteActionMask(int branch, int actionIndex)
-        {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            if (world.ActionType == ActionType.CONTINUOUS)
-            {
-                throw new MLAgentsException("SetDiscreteActionMask can only be used with discrete acton space.");
-            }
-            if (branch > world.DiscreteActionBranches.Length)
-            {
-                throw new MLAgentsException("Unknown action branch used when setting mask.");
-            }
-            if (actionIndex > world.DiscreteActionBranches[branch])
-            {
-                throw new MLAgentsException("Index is out of bounds for requested action mask.");
-            }
-#endif
-            var trueMaskIndex = world.DiscreteActionBranches.CumSumAt(branch) + actionIndex;
-            world.DecisionActionMasks[trueMaskIndex + world.DiscreteActionBranches.Sum() * index] = true;
-            return this;
-        }
-
-        /// <summary>
-        /// Sets the observation for a decision request.
+        /// Sets the observation for of the end of the Episode.
         /// </summary>
         /// <param name="sensorNumber"> The index of the observation as provided when creating the associated MLAgentsWorld </param>
         /// <param name="sensor"> A struct strictly containing floats used as observation data </param>
-        /// <returns> The DecisionRequest struct </returns>
-        public DecisionRequest SetObservation<T>(int sensorNumber, T sensor) where T : struct
+        /// <returns> The EpisodeTermination struct </returns>
+        public EpisodeTermination SetObservation<T>(int sensorNumber, T sensor) where T : struct
         {
             int inputSize = UnsafeUtility.SizeOf<T>() / sizeof(float);
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -81,18 +54,18 @@ namespace Unity.AI.MLAgents
 #endif
             int start = world.ObservationOffsets[sensorNumber];
             start += inputSize * index;
-            var tmp = world.DecisionObs.Slice(start, inputSize).SliceConvert<T>();
+            var tmp = world.TerminationObs.Slice(start, inputSize).SliceConvert<T>();
             tmp[0] = sensor;
             return this;
         }
 
         /// <summary>
-        /// Sets the observation for a decision request.
+        /// Sets the last observation the Agent perceives before ending the episode.
         /// </summary>
         /// <param name="sensorNumber"> The index of the observation as provided when creating the associated MLAgentsWorld </param>
         /// <param name="obs"> A NativeSlice of floats containing the observation data </param>
-        /// <returns> The DecisionRequest struct </returns>
-        public DecisionRequest SetObservationFromSlice(int sensorNumber, [ReadOnly] NativeSlice<float> obs)
+        /// <returns> The EpisodeTermination struct </returns>
+        public EpisodeTermination SetObservationFromSlice(int sensorNumber, [ReadOnly] NativeSlice<float> obs)
         {
             int inputSize = obs.Length;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -106,7 +79,7 @@ namespace Unity.AI.MLAgents
 #endif
             int start = world.ObservationOffsets[sensorNumber];
             start += inputSize * index;
-            world.DecisionObs.Slice(start, inputSize).CopyFrom(obs);
+            world.TerminationObs.Slice(start, inputSize).CopyFrom(obs);
             return this;
         }
     }

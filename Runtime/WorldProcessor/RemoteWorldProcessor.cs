@@ -9,7 +9,7 @@ namespace Unity.AI.MLAgents
     {
         private MLAgentsWorld world;
         private SharedMemoryCom com;
-        private NativeString64 policyId;
+        private string policyId;
 
         public bool IsConnected {get {return true;}}
 
@@ -20,14 +20,12 @@ namespace Unity.AI.MLAgents
             this.policyId = policyId;
         }
 
-        public WorldCommand ProcessWorld()
+        public void ProcessWorld()
         {
             com.WriteWorld(policyId, world);
             com.SetUnityReady();
-            var command = com.Advance();
+            com.WaitForPython();
             com.LoadWorld(policyId, world);
-
-            return command;
         }
 
         public void Dispose()

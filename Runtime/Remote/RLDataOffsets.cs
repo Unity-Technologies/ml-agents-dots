@@ -33,11 +33,9 @@ namespace Unity.AI.MLAgents
 
         public static RLDataOffsets FromMem(BaseSharedMem mem, int offset, out string name)
         {
-            var dataOffsets = new RLDataOffsets();
+            var startOffset = offset;
             name = mem.GetString(ref offset);
-
             int maxAgents = mem.GetInt(ref offset);
-            dataOffsets.MaxAgents = maxAgents;
             bool isContinuous = mem.GetBool(ref offset);
             int actionSize = mem.GetInt(ref offset);
             int totalNumberMasks = 0;
@@ -59,11 +57,72 @@ namespace Unity.AI.MLAgents
                 totalObsLength += prod;
             }
 
+            return ComputeOffsets(
+                name,
+                maxAgents,
+                isContinuous,
+                actionSize,
+                NObs,
+                totalObsLength,
+                totalNumberMasks,
+                startOffset);
+        }
+
+        public static RLDataOffsets FromWorld(MLAgentsWorld world, string name, int offset)
+        {
+            bool isContinuous = world.ActionType == ActionType.CONTINUOUS;
+            int totalFloatObsPerAgent = 0;
+            foreach (int3 shape in world.SensorShapes)
+            {
+                totalFloatObsPerAgent += shape.GetTotalTensorSize();
+            }
+            int totalNumberOfMasks = 0;
+            if (!isContinuous)
+            {
+                totalNumberOfMasks = world.DiscreteActionBranches.Sum();
+            }
+
+            return ComputeOffsets(
+                name,
+                world.DecisionAgentIds.Length,
+                isContinuous,
+                world.ActionSize,
+                world.SensorShapes.Length,
+                totalFloatObsPerAgent,
+                totalNumberOfMasks,
+                offset
+            );
+        }
+
+        private static RLDataOffsets ComputeOffsets(
+            string name,
+            int maxAgents,
+            bool isContinuous,
+            int actionSize,
+            int nbObs,
+            int totalFloatObsPerAgent,
+            int totalNumberOfMasks,
+            int offset)
+        {
+            var dataOffsets = new RLDataOffsets();
+
+            offset += 1 + ASCIIEncoding.ASCII.GetByteCount(name);
+            dataOffsets.MaxAgents = maxAgents;
+            offset += 4; // Max Agent
+            offset += 1; //Action Type
+            offset += 4; //Action Size
+            if (!isContinuous)
+            {
+                offset += 4 * actionSize; // discrete action branches
+            }
+            offset += 4; //Num Obs
+            offset += nbObs * 4 * 3;
+
             // Decision Steps Offsets
             dataOffsets.DecisionNumberAgentsOffset = offset;
             offset += 4;
             dataOffsets.DecisionObsOffset = offset;
-            offset += 4 * maxAgents * totalObsLength;
+            offset += 4 * maxAgents * totalFloatObsPerAgent;
             dataOffsets.DecisionRewardsOffset = offset;
             offset += 4 * maxAgents;
             dataOffsets.DecisionAgentIdOffset = offset;
@@ -71,14 +130,14 @@ namespace Unity.AI.MLAgents
             if (!isContinuous)
             {
                 dataOffsets.DecisionActionMasksOffset = offset;
-                offset += maxAgents * totalNumberMasks;
+                offset += maxAgents * totalNumberOfMasks;
             }
 
             // Termination Steps Offsets
             dataOffsets.TerminationNumberAgentsOffset = offset;
             offset += 4;
             dataOffsets.TerminationObsOffset = offset;
-            offset += 4 * maxAgents * totalObsLength;
+            offset += 4 * maxAgents * totalFloatObsPerAgent;
             dataOffsets.TerminationRewardsOffset = offset;
             offset += 4 * maxAgents;
             dataOffsets.TerminationStatusOffset = offset;
@@ -89,19 +148,9 @@ namespace Unity.AI.MLAgents
             // Actions offsets
             dataOffsets.ActionOffset = offset;
             offset += 4 * maxAgents * actionSize;
+
+            // Offset of the start of the next section
             dataOffsets.EndOfDataOffset = offset;
-
-
-            return dataOffsets;
-        }
-
-        public static RLDataOffsets FromWorld(MLAgentsWorld world, string name, int offset)
-        {
-            var dataOffsets = new RLDataOffsets();
-            offset = 1 + ASCIIEncoding.ASCII.GetByteCount(name);
-            int maxAgents = world.AgentIds.Length;
-
-            // TODO
             return dataOffsets;
         }
     }

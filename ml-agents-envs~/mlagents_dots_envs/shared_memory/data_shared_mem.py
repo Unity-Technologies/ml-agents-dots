@@ -1,6 +1,6 @@
 import numpy as np
-from mlagents_dots_envs.base_shared_mem import BasedSharedMem
-from mlagents_dots_envs.rl_data_offset import RLDataOffsets
+from mlagents_dots_envs.shared_memory.base_shared_mem import BasedSharedMem
+from mlagents_dots_envs.shared_memory.rl_data_offset import RLDataOffsets
 from typing import Dict, List, Optional, Any, Tuple
 from mlagents_envs.base_env import DecisionSteps, TerminalSteps, BehaviorSpec, ActionType
 
@@ -8,29 +8,29 @@ class DataSharedMem(BasedSharedMem):
     def __init__(self,
     file_name: str,
     create_file: bool = False,
-    copy_from: DataSharedMem = None,
+    copy_from: "DataSharedMem" = None,
     side_channel_buffer_size: int = 0,
     rl_data_buffer_size: int = 0):
         self._offset_dict: Dict[str, RLDataOffsets] = {}
         if create_file and copy_from is None:
             size = side_channel_buffer_size + rl_data_buffer_size
-            super(DataSharedMem, self).__init__(self, file_name, True, size)
+            super(DataSharedMem, self).__init__( file_name, True, size)
             self._side_channel_buffer_size = side_channel_buffer_size
             self._rl_data_buffer_size = rl_data_buffer_size
             return
         if create_file and copy_from is not None:
             # can only increase the size of the file
             size = side_channel_buffer_size + rl_data_buffer_size
-            super(DataSharedMem, self).__init__(self, file_name, True, size)
+            super(DataSharedMem, self).__init__(file_name, True, size)
             assert side_channel_buffer_size >= copy_from._side_channel_buffer_size
-            assert rl_data_buffer_size >= copy_from._side_channel_buffer_size
+            assert rl_data_buffer_size >= copy_from._rl_data_buffer_size
             self._side_channel_buffer_size = side_channel_buffer_size
             self._rl_data_buffer_size = rl_data_buffer_size
             self.side_channel_data = copy_from.side_channel_data
             self.rl_data = copy_from.rl_data
         if not create_file:
             size = side_channel_buffer_size + rl_data_buffer_size
-            super(DataSharedMem, self).__init__(self, file_name, False, size)
+            super(DataSharedMem, self).__init__(file_name, False, size)
             self._side_channel_buffer_size = side_channel_buffer_size
             self._rl_data_buffer_size = rl_data_buffer_size
             self._refresh_offsets()
@@ -38,7 +38,7 @@ class DataSharedMem(BasedSharedMem):
     def _refresh_offsets(self):
         self._offset_dict.clear()
         offset = self.rl_data_offset
-        while offset < self._rl_data_buffer_size:
+        while offset < self.rl_data_offset + self._rl_data_buffer_size:
             data_offsets, offset = RLDataOffsets.from_mem(self, offset)
             self._offset_dict[data_offsets.name] = data_offsets
 
@@ -82,7 +82,7 @@ class DataSharedMem(BasedSharedMem):
         obs: List[np.ndarray] = []
         for obs_offset, obs_shape in zip(offsets.decision_obs_offset, offsets.obs_shapes):
             obs_shape = (n_agents,) + obs_shape
-            arr, _ = self.get_ndarray(obs_offset, obs_shape, np.float)
+            arr = self.get_ndarray(obs_offset, obs_shape, np.float32)
             obs.append(arr)
         return DecisionSteps(
             obs=obs,
@@ -98,7 +98,7 @@ class DataSharedMem(BasedSharedMem):
         obs: List[np.ndarray] = []
         for obs_offset, obs_shape in zip(offsets.termination_obs_offset, offsets.obs_shapes):
             obs_shape = (n_agents,) + obs_shape
-            arr, _ = self.get_ndarray(obs_offset, obs_shape, np.float)
+            arr= self.get_ndarray(obs_offset, obs_shape, np.float32)
             obs.append(arr)
         return TerminalSteps(
             obs=obs,
@@ -129,7 +129,7 @@ class DataSharedMem(BasedSharedMem):
             observation_shape = offsets.obs_shapes
             action_type = (
                 ActionType.CONTINUOUS
-                if offsets[key].is_action_continuous
+                if offsets.is_action_continuous
                 else ActionType.DISCRETE
             )
             action_shape = offsets.action_size
