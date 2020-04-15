@@ -2,11 +2,16 @@ using System;
 
 namespace Unity.AI.MLAgents
 {
+    /// <summary>
     /// Contains exceptions specific to ML-Agents.
-    internal class MLAgentsException : Exception
+    /// </summary>
+    public class MLAgentsException : Exception
     {
-        public MLAgentsException(string message) : base(message)
-        {
-        }
+        /// <summary>
+        /// This exception indicates an error occurred in the ML-Agents package
+        /// </summary>
+        /// <param name="message">Text message for the error</param>
+        /// <returns></returns>
+        public MLAgentsException(string message) : base(message){}
     }
 }

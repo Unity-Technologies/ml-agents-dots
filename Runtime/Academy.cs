@@ -12,6 +12,12 @@ using UnityEngine;
 
 namespace Unity.AI.MLAgents
 {
+    /// <summary>
+    /// The Academy is a singleton that orchestrates the decision making of the
+    /// decision making of the Agents.
+    /// It is used to register WorldProcessors to Worlds and to keep track of the
+    /// reset logic of the simulation.
+    /// </summary>
     public class Academy : IDisposable
     {
         #region Singleton
@@ -64,7 +70,7 @@ namespace Unity.AI.MLAgents
         /// <param name="policyId"> The string identifier of the MLAgentsWorld. There can only be one world per unique id.</param>
         /// <param name="world"> The MLAgentsWorld that is being subscribed.</param>
         /// <param name="worldProcessor"> If the remote process is not available, the MLAgentsWorld will use this World processor for decision making.</param>
-        /// <param name="defaultRemote"> If true, the MLAgentsWorld will default to using the remote process for communication making and use the fallbackWorldProcessor otherwise.</param>
+        /// <param name="defaultRemote"> If true, the MLAgentsWorld will default to using the remote process for communication making and use the fallback worldProcessor otherwise.</param>
         public void RegisterWorld(string policyId, MLAgentsWorld world, IWorldProcessor worldProcessor = null, bool defaultRemote = true)
         {
             // Need to find a way to deregister ?

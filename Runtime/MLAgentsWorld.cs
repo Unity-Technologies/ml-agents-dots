@@ -6,16 +6,6 @@ using System;
 
 namespace Unity.AI.MLAgents
 {
-    /// <summary>
-    /// Indicates the action space type of an Agent action.
-    /// If CONTINUOUS, the Action is expected to be a struct containing only floats
-    /// If DISCRETE, the Action is expected to be a struct of int or int enums.
-    /// </summary>
-    public enum ActionType : int
-    {
-        DISCRETE = 0,
-        CONTINUOUS = 1,
-    }
 
     /// <summary>
     /// MLAgentsWorld is a data container on which the user requests decisions.

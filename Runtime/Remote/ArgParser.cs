@@ -8,7 +8,12 @@ namespace Unity.AI.MLAgents
         private const string k_MemoryFileArgument = "--memory-path";
         private const string k_MemoryFilesDirectory = "ml-agents";
         private const string k_DefaultFileName = "default";
-        // Used to read Python-provided environment parameters
+
+        /// <summary>
+        /// Used to read Python-provided environment parameters. Will return the
+        /// string corresponding to the path to the shared memory file.
+        /// </summary>
+        /// <returns> Path to the shared memroy file or null if no file is available</returns>
         public static string ReadSharedMemoryPathFromArgs()
         {
             var args = System.Environment.GetCommandLineArgs();
@@ -20,7 +25,7 @@ namespace Unity.AI.MLAgents
                 }
             }
 #if UNITY_EDITOR
-            // Try connecting on the default editor port
+            // Try connecting on the default shared memory file
             var path = Path.Combine(
                 Path.GetTempPath(),
                 k_MemoryFilesDirectory,

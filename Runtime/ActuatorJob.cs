@@ -93,7 +93,6 @@ namespace Unity.AI.MLAgents
         internal static unsafe JobHandle ScheduleImpl<T>(this T jobData, MLAgentsWorld mlagentsWorld, JobHandle inputDeps)
             where T : struct, IActuatorJob
         {
-            // inputDeps.Complete();
             // Creating a data struct that contains the data the user passed into the job (This is what T is here)
             var data = new ActionEventJobData<T>
             {
@@ -124,7 +123,6 @@ namespace Unity.AI.MLAgents
                     jobReflectionData = JobsUtility.CreateJobReflectionData(typeof(ActionEventJobData<T>), typeof(T), JobType.Single, (ExecuteJobFunction)Execute);
                 return jobReflectionData;
             }
-
             #endregion
 
 
@@ -135,6 +133,7 @@ namespace Unity.AI.MLAgents
             {
                 int size = jobData.world.ActionSize;
                 int actionCount = jobData.world.ActionCounter.Count;
+
                 // Continuous case
                 if (jobData.world.ActionType == ActionType.CONTINUOUS)
                 {
@@ -149,6 +148,7 @@ namespace Unity.AI.MLAgents
                         });
                     }
                 }
+
                 // Discrete Case
                 else
                 {
