@@ -1,20 +1,28 @@
 import numpy as np
 from mlagents_dots_envs.shared_memory.base_shared_mem import BasedSharedMem
 from mlagents_dots_envs.shared_memory.rl_data_offset import RLDataOffsets
-from typing import Dict, List, Optional, Any, Tuple
-from mlagents_envs.base_env import DecisionSteps, TerminalSteps, BehaviorSpec, ActionType
+from typing import Dict, List
+from mlagents_envs.base_env import (
+    DecisionSteps,
+    TerminalSteps,
+    BehaviorSpec,
+    ActionType,
+)
+
 
 class DataSharedMem(BasedSharedMem):
-    def __init__(self,
-    file_name: str,
-    create_file: bool = False,
-    copy_from: "DataSharedMem" = None,
-    side_channel_buffer_size: int = 0,
-    rl_data_buffer_size: int = 0):
+    def __init__(
+        self,
+        file_name: str,
+        create_file: bool = False,
+        copy_from: "DataSharedMem" = None,
+        side_channel_buffer_size: int = 0,
+        rl_data_buffer_size: int = 0,
+    ):
         self._offset_dict: Dict[str, RLDataOffsets] = {}
         if create_file and copy_from is None:
             size = side_channel_buffer_size + rl_data_buffer_size
-            super(DataSharedMem, self).__init__( file_name, True, size)
+            super(DataSharedMem, self).__init__(file_name, True, size)
             self._side_channel_buffer_size = side_channel_buffer_size
             self._rl_data_buffer_size = rl_data_buffer_size
             return
@@ -46,7 +54,7 @@ class DataSharedMem(BasedSharedMem):
     def side_channel_data(self) -> bytearray:
         offset = 0
         len_data, offset = self.get_int(offset)
-        return self.accessor[offset: offset + len_data]
+        return self.accessor[offset : offset + len_data]
 
     @side_channel_data.setter
     def side_channel_data(self, data: bytearray) -> None:
@@ -64,7 +72,7 @@ class DataSharedMem(BasedSharedMem):
     def rl_data(self) -> bytearray:
         offset = self.rl_data_offset
         size = self._rl_data_buffer_size
-        return self.accessor[offset: offset + size]
+        return self.accessor[offset : offset + size]
 
     @rl_data.setter
     def rl_data(self, data: bytearray) -> None:
@@ -72,7 +80,7 @@ class DataSharedMem(BasedSharedMem):
             raise Exception("TODO")
         offset = self.rl_data_offset
         size = self._rl_data_buffer_size
-        self.accessor[offset: offset + size] = data
+        self.accessor[offset : offset + size] = data
         self._refresh_offsets()
 
     def get_decision_steps(self, key: str) -> DecisionSteps:
@@ -80,34 +88,48 @@ class DataSharedMem(BasedSharedMem):
         offsets = self._offset_dict[key]
         n_agents, _ = self.get_int(offsets.decision_n_agents_offset)
         obs: List[np.ndarray] = []
-        for obs_offset, obs_shape in zip(offsets.decision_obs_offset, offsets.obs_shapes):
+        for obs_offset, obs_shape in zip(
+            offsets.decision_obs_offset, offsets.obs_shapes
+        ):
             obs_shape = (n_agents,) + obs_shape
             arr = self.get_ndarray(obs_offset, obs_shape, np.float32)
             obs.append(arr)
         return DecisionSteps(
             obs=obs,
-            reward=self.get_ndarray(offsets.decision_rewards_offset, (n_agents), np.float32),
-            agent_id=self.get_ndarray(offsets.decision_agent_id_offset, (n_agents), np.int32),
-            action_mask=None #TODO
+            reward=self.get_ndarray(
+                offsets.decision_rewards_offset, (n_agents), np.float32
+            ),
+            agent_id=self.get_ndarray(
+                offsets.decision_agent_id_offset, (n_agents), np.int32
+            ),
+            action_mask=None,  # TODO
         )
 
-    def get_terminal_steps(self, key) -> TerminalSteps:
+    def get_terminal_steps(self, key: str) -> TerminalSteps:
         assert key in self._offset_dict
         offsets = self._offset_dict[key]
         n_agents, _ = self.get_int(offsets.termination_n_agents_offset)
         obs: List[np.ndarray] = []
-        for obs_offset, obs_shape in zip(offsets.termination_obs_offset, offsets.obs_shapes):
+        for obs_offset, obs_shape in zip(
+            offsets.termination_obs_offset, offsets.obs_shapes
+        ):
             obs_shape = (n_agents,) + obs_shape
-            arr= self.get_ndarray(obs_offset, obs_shape, np.float32)
+            arr = self.get_ndarray(obs_offset, obs_shape, np.float32)
             obs.append(arr)
         return TerminalSteps(
             obs=obs,
-            reward=self.get_ndarray(offsets.termination_reward_offset, (n_agents), np.float32),
-            agent_id=self.get_ndarray(offsets.termination_agent_id_offset, (n_agents), np.int32),
-            max_step=self.get_ndarray(offsets.termination_status_offset, (n_agents), np.bool),
+            reward=self.get_ndarray(
+                offsets.termination_reward_offset, (n_agents), np.float32
+            ),
+            agent_id=self.get_ndarray(
+                offsets.termination_agent_id_offset, (n_agents), np.int32
+            ),
+            max_step=self.get_ndarray(
+                offsets.termination_status_offset, (n_agents), np.bool
+            ),
         )
 
-    def set_actions(self, key: str, data:np.ndarray) -> None:
+    def set_actions(self, key: str, data: np.ndarray) -> None:
         assert key in self._offset_dict
         offsets = self._offset_dict[key]
         self.set_ndarray(offsets.action_offset, data)

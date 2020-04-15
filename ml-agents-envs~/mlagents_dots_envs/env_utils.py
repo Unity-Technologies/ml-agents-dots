@@ -7,66 +7,67 @@ import subprocess
 from sys import platform
 from mlagents_envs.exception import UnityEnvironmentException
 from mlagents_envs.side_channel.side_channel import SideChannel
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional
 from mlagents_envs.logging_util import get_logger
 
 logger = get_logger(__name__)
 
+
 def validate_environment_path(env_path: str) -> Optional[str]:
-        # Strip out executable extensions if passed
-        env_path = (
-            env_path.strip()
-            .replace(".app", "")
-            .replace(".exe", "")
-            .replace(".x86_64", "")
-            .replace(".x86", "")
+    # Strip out executable extensions if passed
+    env_path = (
+        env_path.strip()
+        .replace(".app", "")
+        .replace(".exe", "")
+        .replace(".x86_64", "")
+        .replace(".x86", "")
+    )
+    true_filename = os.path.basename(os.path.normpath(env_path))
+    logger.debug("The true file name is {}".format(true_filename))
+
+    if not (glob.glob(env_path) or glob.glob(env_path + ".*")):
+        return None
+
+    cwd = os.getcwd()
+    launch_string = None
+    true_filename = os.path.basename(os.path.normpath(env_path))
+    if platform == "linux" or platform == "linux2":
+        candidates = glob.glob(os.path.join(cwd, env_path) + ".x86_64")
+        if len(candidates) == 0:
+            candidates = glob.glob(os.path.join(cwd, env_path) + ".x86")
+        if len(candidates) == 0:
+            candidates = glob.glob(env_path + ".x86_64")
+        if len(candidates) == 0:
+            candidates = glob.glob(env_path + ".x86")
+        if len(candidates) > 0:
+            launch_string = candidates[0]
+
+    elif platform == "darwin":
+        candidates = glob.glob(
+            os.path.join(cwd, env_path + ".app", "Contents", "MacOS", true_filename)
         )
-        true_filename = os.path.basename(os.path.normpath(env_path))
-        logger.debug("The true file name is {}".format(true_filename))
-
-        if not (glob.glob(env_path) or glob.glob(env_path + ".*")):
-            return None
-
-        cwd = os.getcwd()
-        launch_string = None
-        true_filename = os.path.basename(os.path.normpath(env_path))
-        if platform == "linux" or platform == "linux2":
-            candidates = glob.glob(os.path.join(cwd, env_path) + ".x86_64")
-            if len(candidates) == 0:
-                candidates = glob.glob(os.path.join(cwd, env_path) + ".x86")
-            if len(candidates) == 0:
-                candidates = glob.glob(env_path + ".x86_64")
-            if len(candidates) == 0:
-                candidates = glob.glob(env_path + ".x86")
-            if len(candidates) > 0:
-                launch_string = candidates[0]
-
-        elif platform == "darwin":
+        if len(candidates) == 0:
             candidates = glob.glob(
-                os.path.join(cwd, env_path + ".app", "Contents", "MacOS", true_filename)
+                os.path.join(env_path + ".app", "Contents", "MacOS", true_filename)
             )
-            if len(candidates) == 0:
-                candidates = glob.glob(
-                    os.path.join(env_path + ".app", "Contents", "MacOS", true_filename)
-                )
-            if len(candidates) == 0:
-                candidates = glob.glob(
-                    os.path.join(cwd, env_path + ".app", "Contents", "MacOS", "*")
-                )
-            if len(candidates) == 0:
-                candidates = glob.glob(
-                    os.path.join(env_path + ".app", "Contents", "MacOS", "*")
-                )
-            if len(candidates) > 0:
-                launch_string = candidates[0]
-        elif platform == "win32":
-            candidates = glob.glob(os.path.join(cwd, env_path + ".exe"))
-            if len(candidates) == 0:
-                candidates = glob.glob(env_path + ".exe")
-            if len(candidates) > 0:
-                launch_string = candidates[0]
-        return launch_string
-        # TODO: END REMOVE
+        if len(candidates) == 0:
+            candidates = glob.glob(
+                os.path.join(cwd, env_path + ".app", "Contents", "MacOS", "*")
+            )
+        if len(candidates) == 0:
+            candidates = glob.glob(
+                os.path.join(env_path + ".app", "Contents", "MacOS", "*")
+            )
+        if len(candidates) > 0:
+            launch_string = candidates[0]
+    elif platform == "win32":
+        candidates = glob.glob(os.path.join(cwd, env_path + ".exe"))
+        if len(candidates) == 0:
+            candidates = glob.glob(env_path + ".exe")
+        if len(candidates) > 0:
+            launch_string = candidates[0]
+    return launch_string
+    # TODO: END REMOVE
 
 
 def get_side_channels(
@@ -77,9 +78,8 @@ def get_side_channels(
         for _sc in side_c:
             if _sc.channel_id in side_channels_dict:
                 raise UnityEnvironmentException(
-                    "There cannot be two side channels with the same channel type {0}.".format(
-                        _sc.channel_id
-                    )
+                    f"There cannot be two side channels with "
+                    f"the same channel id {_sc.channel_id}."
                 )
             side_channels_dict[_sc.channel_id] = _sc
     return side_channels_dict
@@ -110,9 +110,7 @@ def executable_launcher(exec_name, memory_path, args):
 
     elif platform == "darwin":
         candidates = glob.glob(
-            os.path.join(
-                cwd, exec_name + ".app", "Contents", "MacOS", true_filename
-            )
+            os.path.join(cwd, exec_name + ".app", "Contents", "MacOS", true_filename)
         )
         if len(candidates) == 0:
             candidates = glob.glob(
@@ -137,9 +135,7 @@ def executable_launcher(exec_name, memory_path, args):
     if launch_string is None:
         raise UnityEnvironmentException(
             "Couldn't launch the {0} environment. "
-            "Provided filename does not match any environments.".format(
-                true_filename
-            )
+            "Provided filename does not match any environments.".format(true_filename)
         )
     else:
         logger.debug("This is the launch string {}".format(launch_string))
@@ -151,9 +147,10 @@ def executable_launcher(exec_name, memory_path, args):
             return subprocess.Popen(
                 subprocess_args,
                 # start_new_session=True means that signals to the parent python process
-                # (e.g. SIGINT from keyboard interrupt) will not be sent to the new process on POSIX platforms.
-                # This is generally good since we want the environment to have a chance to shutdown,
-                # but may be undesirable in come cases; if so, we'll add a command-line toggle.
+                # (e.g. SIGINT from keyboard interrupt) will not be sent to the new
+                # process on POSIX platforms. This is generally good since we want the
+                # environment to have a chance to shutdown, but may be undesirable in
+                # some cases; if so, we'll add a command-line toggle.
                 # Note that on Windows, the CTRL_C signal will still be sent.
                 start_new_session=True,
             )
@@ -198,6 +195,7 @@ def parse_side_channel_message(
                 ": {0}.".format(channel_id)
             )
 
+
 def generate_side_channel_data(
     side_channels: Dict[uuid.UUID, SideChannel]
 ) -> bytearray:
@@ -217,7 +215,8 @@ def returncode_to_signal_name(returncode: int) -> Optional[str]:
     E.g. returncode_to_signal_name(-2) -> "SIGINT"
     """
     try:
-        # A negative value -N indicates that the child was terminated by signal N (POSIX only).
+        # A negative value -N indicates that the child was terminated by
+        # signal N (POSIX only).
         s = signal.Signals(-returncode)  # pylint: disable=no-member
         return s.name
     except Exception:

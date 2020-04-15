@@ -1,14 +1,16 @@
 import numpy as np
 
-from typing import Tuple, Optional, NamedTuple, List, Dict
+from typing import Tuple, Optional, NamedTuple, List
 from mlagents_dots_envs.shared_memory.base_shared_mem import BasedSharedMem
+
 
 class RLDataOffsets(NamedTuple):
     """
     Contains the offsets to the data for a section of the RL data
     """
+
     # data
-    name:str
+    name: str
     max_n_agents: int
     is_action_continuous: bool
     action_size: int
@@ -47,28 +49,28 @@ class RLDataOffsets(NamedTuple):
         # 4 bytes : n_agents at current step
         # ? Bytes : the data : obs,reward,done,max_step,agent_id,masks,action
 
-        ## Get the specs of the group
+        # Get the specs of the group
         name, offset = mem.get_string(offset)
         max_n_agents, offset = mem.get_int(offset)
         is_continuous, offset = mem.get_bool(offset)
         action_size, offset = mem.get_int(offset)
         discrete_branches = None
         if not is_continuous:
-            discrete_branches = ()
+            discrete_branches = ()  # type: ignore
             for _ in range(action_size):
                 branch_size, offset = mem.get_int(offset)
-                discrete_branches += (branch_size,)
+                discrete_branches += (branch_size,)  # type: ignore
         n_obs, offset = mem.get_int(offset)
         obs_shapes: List[Tuple[int, ...]] = []
         for _ in range(n_obs):
-            shape = ()
+            shape = ()  # type: ignore
             for _ in range(3):
                 s, offset = mem.get_int(offset)
                 if s != 0:
-                    shape += (s,)
+                    shape += (s,)  # type: ignore
             obs_shapes += [shape]
 
-        ##  Compute the offsets for decision steps
+        #  Compute the offsets for decision steps
         # n_agents
         decision_n_agents_offset = offset
         _, offset = mem.get_int(offset)
@@ -90,7 +92,7 @@ class RLDataOffsets(NamedTuple):
             mask_offset = offset
             offset += max_n_agents * int(np.sum(discrete_branches))
 
-        ##  Compute the offsets for termination steps
+        #  Compute the offsets for termination steps
         # n_agents
         termination_n_agents_offset = offset
         _, offset = mem.get_int(offset)
@@ -102,14 +104,14 @@ class RLDataOffsets(NamedTuple):
         # rewards
         termination_reward_offset = offset
         offset += 4 * max_n_agents
-        #status
+        # status
         termination_status_offset = offset
         offset += max_n_agents
         # agent id
         termination_agent_id_offset = offset
         offset += 4 * max_n_agents
 
-        ##  Compute the offsets for actions
+        #  Compute the offsets for actions
         act_offset = offset
         offset += 4 * max_n_agents * action_size
 

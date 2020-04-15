@@ -1,21 +1,15 @@
-import mmap
-import struct
 import numpy as np
-import tempfile
 import os
 import time
 import uuid
-from datetime import datetime
-import string
-from enum import IntEnum
-import random
-from typing import Tuple, Optional, NamedTuple, List, Dict
+from typing import Tuple, Dict
 
 from mlagents_dots_envs.shared_memory.master_shared_mem import MasterSharedMem
 from mlagents_dots_envs.shared_memory.data_shared_mem import DataSharedMem
 
 from mlagents_envs.exception import UnityCommunicationException
 from mlagents_envs.base_env import DecisionSteps, TerminalSteps, BehaviorSpec
+
 
 class SharedMemCom:
     FILE_DEFAULT = "default"
@@ -34,9 +28,10 @@ class SharedMemCom:
         self._data_mem = DataSharedMem(
             file_name + "_" * self._current_file_number,
             create_file=True,
-            copy_from = None,
+            copy_from=None,
             side_channel_buffer_size=4,
-            rl_data_buffer_size=0)
+            rl_data_buffer_size=0,
+        )
 
     @property
     def communicator_id(self):
@@ -53,15 +48,16 @@ class SharedMemCom:
     def write_side_channel_data(self, data: bytearray) -> None:
         capacity = self._master_mem.side_channel_size
         if len(data) >= capacity - 4:  # need 4 bytes for an integer size
-            new_capacity = 2*len(data)+20
+            new_capacity = 2 * len(data) + 20
             self._current_file_number += 1
             self._master_mem.file_number = self._current_file_number
             tmp = self._data_mem
-            self._data_mem = DataSharedMem(self._base_file_name + "_" * self._current_file_number,
+            self._data_mem = DataSharedMem(
+                self._base_file_name + "_" * self._current_file_number,
                 create_file=True,
                 copy_from=tmp,
                 side_channel_buffer_size=new_capacity,
-                rl_data_buffer_size=self._master_mem.rl_data_size
+                rl_data_buffer_size=self._master_mem.rl_data_size,
             )
             tmp.close()
             # Unity is responsible for destroying the old file
@@ -73,7 +69,7 @@ class SharedMemCom:
         self._data_mem.side_channel_data = bytearray()
         return result
 
-    def give_unity_control(self, reset:bool = False):
+    def give_unity_control(self, reset: bool = False) -> None:
         self._master_mem.mark_python_blocked()
         if reset:
             self._master_mem.mark_reset()
@@ -104,15 +100,19 @@ class SharedMemCom:
             self._data_mem = DataSharedMem(
                 self._base_file_name + "_" * self._current_file_number,
                 side_channel_buffer_size=self._master_mem.side_channel_size,
-                rl_data_buffer_size=self._master_mem.rl_data_size)
+                rl_data_buffer_size=self._master_mem.rl_data_size,
+            )
 
     def get_steps(self, key: str) -> Tuple[DecisionSteps, TerminalSteps]:
-        return self._data_mem.get_decision_steps(key), self._data_mem.get_terminal_steps(key)
+        return (
+            self._data_mem.get_decision_steps(key),
+            self._data_mem.get_terminal_steps(key),
+        )
 
     def get_n_decisions_requested(self, key: str) -> int:
         return self._data_mem.get_n_decisions_requested(key)
 
-    def set_actions(self, key: str, data:np.ndarray) -> None:
+    def set_actions(self, key: str, data: np.ndarray) -> None:
         self._data_mem.set_actions(key, data)
 
     @property

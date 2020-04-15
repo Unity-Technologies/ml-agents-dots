@@ -1,5 +1,7 @@
-import os, glob
+import os
+import glob
 from mlagents_dots_envs.shared_memory.base_shared_mem import BasedSharedMem
+
 
 class MasterSharedMem(BasedSharedMem):
     """
@@ -14,11 +16,17 @@ class MasterSharedMem(BasedSharedMem):
      - int  : Communication file "side channel" size in bytes
      - int  : Communication file "RL section" size in bytes
     """
-    SIZE = 28
-    VERSION = (0,3,0)
-    def __init__(self, file_name: str, side_channel_size=0, rl_data_size=0):
 
-        super(MasterSharedMem, self).__init__(file_name, create_file=True, size=self.SIZE)
+    SIZE = 28
+    VERSION = (0, 3, 0)
+
+    def __init__(
+        self, file_name: str, side_channel_size: int = 0, rl_data_size: int = 0
+    ):
+
+        super(MasterSharedMem, self).__init__(
+            file_name, create_file=True, size=self.SIZE
+        )
         for f in glob.glob(file_name + "_"):
             # Removing all the future files in case they were not correctly created
             os.remove(f)
@@ -76,24 +84,24 @@ class MasterSharedMem(BasedSharedMem):
         self.set_bool(offset, True)
 
     @property
-    def side_channel_size(self):
+    def side_channel_size(self) -> int:
         offset = 20
         result, _ = self.get_int(offset)
         return result
 
     @side_channel_size.setter
-    def side_channel_size(self, value:int):
+    def side_channel_size(self, value: int) -> None:
         offset = 20
         self.set_int(offset, value)
 
     @property
-    def rl_data_size(self):
+    def rl_data_size(self) -> int:
         offset = 24
         result, _ = self.get_int(offset)
         return result
 
     @rl_data_size.setter
-    def rl_data_size(self, value:int):
+    def rl_data_size(self, value: int) -> None:
         offset = 24
         self.set_int(offset, value)
 
@@ -103,8 +111,8 @@ class MasterSharedMem(BasedSharedMem):
         minor, offset = self.get_int(offset)
         bug, offset = self.get_int(offset)
         if (major, minor, bug) != self.VERSION:
-            raise Exception(f"Incompatible versions of communicator between " +
-                f"Unity {major}.{minor}.{bug} and Python "
-                f"{self.VERSION[0]}.{self.VERSION[1]}.{self.VERSION[2]}")
-
-
+            raise Exception(
+                f"Incompatible versions of communicator between "
+                + f"Unity {major}.{minor}.{bug} and Python "
+                f"{self.VERSION[0]}.{self.VERSION[1]}.{self.VERSION[2]}"
+            )

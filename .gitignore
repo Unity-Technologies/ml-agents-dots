@@ -10,3 +10,11 @@
 *obj
 .pytest_cache
 *__pycache__
+
+# precommit
+.mypy_cache
+.pre-commit-config.yaml
+.pylintrc
+.vscode
+setup.cfg
+setup.cfg.meta

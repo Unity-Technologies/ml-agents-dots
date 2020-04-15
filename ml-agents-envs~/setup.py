@@ -1,8 +1,4 @@
-import os
-import sys
 from setuptools import setup, find_packages
-from setuptools.command.install import install
-import mlagents_dots_envs
 
 setup(
     name="mlagents_dots_envs",
@@ -17,8 +13,10 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
     ],
-    packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests", "examples"]),
+    packages=find_packages(
+        exclude=["*.tests", "*.tests.*", "tests.*", "tests", "examples"]
+    ),
     zip_safe=False,
-    install_requires=[ "mlagents_envs>=0.14.1"],
+    install_requires=["mlagents_envs>=0.14.1"],
     python_requires=">=3.6",
 )

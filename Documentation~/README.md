@@ -36,7 +36,7 @@ This package is available as a preview, so it is not ready for production use. T
    ```python
    from mlagents_envs.environment import UnityEnvironment
    ```
-   with 
+   with
    ```python
    from mlagents_dots_envs.unity_environment import UnityEnvironment
    ```
@@ -45,7 +45,7 @@ This package is available as a preview, so it is not ready for production use. T
    ```python
    from mlagents_envs.environment import UnityEnvironment
    ```
-   with 
+   with
    ```python
    from mlagents_dots_envs.unity_environment import UnityEnvironment
    ```
@@ -62,7 +62,7 @@ This package is available as a preview, so it is not ready for production use. T
 
 
 ## API
-One approach to designing ml-agents to be compativle with DOTS would be to use typical API used for example in [Unity.Physics](https://github.com/Unity-Technologies/Unity.Physics) where a "MLAgents World" holds data, processes it and the data can then be retrieved. 
+One approach to designing ml-agents to be compativle with DOTS would be to use typical API used for example in [Unity.Physics](https://github.com/Unity-Technologies/Unity.Physics) where a "MLAgents World" holds data, processes it and the data can then be retrieved.
 The user would access the `MLAgentsWorld` in the main thread :
 
 ```csharp
@@ -71,9 +71,9 @@ var world = new MLAgentsWorld(
   new int3[] { new int3(3, 0, 0) }, // The observation shapes (here, one observation of shape (3,0,0))
   ActionType.CONTINUOUS,            // Continuous = float, Discrete = int
   3);                               // The number of actions
-  
+
 world.SubscribeWorldWithBarracudaModel(Name, Model, InferenceDevice);
-``` 
+```
 
 The user could then in his own jobs add and retrieve data from the world. Here is an example of a job in which the user populates the sensor data :
 
@@ -117,7 +117,7 @@ world.RequestDecision(entities[i])
   .SetObservationFromSlice(1, visObs.Slice());
 ```
 
-In order to retrieve actions, we use a custom job : 
+In order to retrieve actions, we use a custom job :
 
 ```csharp
 public struct UserCreatedActionEventJob : IActuatorJob
@@ -162,7 +162,7 @@ __Note__ : The python code for communication is located in [ml-agents-envs~](./m
 #### RL Data section
 
  - int : 4 bytes : The number of Agent groups in the simulation (starts at 0)
- - For each group : 
+ - For each group :
 
    - string : 64 byte : group name
    - int : 4 bytes : maximum number of Agents
