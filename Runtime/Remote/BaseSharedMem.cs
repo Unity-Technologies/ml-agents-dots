@@ -338,7 +338,7 @@ namespace Unity.AI.MLAgents
         }
 
         /// <summary>
-        /// Closes and deletes the shared memory file
+        /// Closes and deletes the shared memory file.
         /// </summary>
         public void Delete()
         {
