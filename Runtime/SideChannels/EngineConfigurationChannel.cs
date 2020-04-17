@@ -29,7 +29,7 @@ namespace Unity.AI.MLAgents.SideChannels
             var timeScale = msg.ReadFloat32();
             var targetFrameRate = msg.ReadInt32();
 
-            timeScale = Mathf.Clamp(timeScale, 1, 100);
+            timeScale = Mathf.Clamp(timeScale, 0.01f, 100);
 
             Screen.SetResolution(width, height, false);
             QualitySettings.SetQualityLevel(qualityLevel, true);

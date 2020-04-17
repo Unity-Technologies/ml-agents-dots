@@ -10,12 +10,18 @@ public class BalanceBallManager : MonoBehaviour
 {
     public MLAgentsWorldSpecs MyWorldSpecs;
 
+    public int NumberBalls = 1000;
+
     private EntityManager manager;
     public GameObject prefabPlatform;
     public GameObject prefabBall;
     private Entity _prefabEntityPlatform;
     private Entity _prefabEntityBall;
     int currentIndex;
+
+    NativeArray<Entity> entitiesP;
+    NativeArray<Entity> entitiesB;
+    BlobAssetStore blob;
 
     void Awake()
     {
@@ -26,19 +32,34 @@ public class BalanceBallManager : MonoBehaviour
 
         manager = World.DefaultGameObjectInjectionWorld.EntityManager;
 
-        BlobAssetStore blob = new BlobAssetStore();
+        blob = new BlobAssetStore();
         GameObjectConversionSettings settings = GameObjectConversionSettings.FromWorld(World.DefaultGameObjectInjectionWorld, blob);
         _prefabEntityPlatform = GameObjectConversionUtility.ConvertGameObjectHierarchy(prefabPlatform, settings);
         _prefabEntityBall = GameObjectConversionUtility.ConvertGameObjectHierarchy(prefabBall, settings);
 
-        Spawn(1000);
-        blob.Dispose();
+        Spawn(NumberBalls);
+
+        Academy.Instance.OnEnvironmentReset = () =>
+        {
+            foreach(Entity e in entitiesP)
+            {
+                manager.DestroyEntity(e);
+            }
+            entitiesP.Dispose();
+            foreach(Entity e in entitiesB)
+            {
+                manager.DestroyEntity(e);
+            }
+            entitiesB.Dispose();
+            Spawn(NumberBalls);
+        };
+
     }
 
     void Spawn(int amount)
     {
-        NativeArray<Entity> entitiesP = new NativeArray<Entity>(amount, Allocator.Temp);
-        NativeArray<Entity> entitiesB = new NativeArray<Entity>(amount, Allocator.Temp);
+        entitiesP = new NativeArray<Entity>(amount, Allocator.Persistent);
+        entitiesB = new NativeArray<Entity>(amount, Allocator.Persistent);
         manager.Instantiate(_prefabEntityPlatform, entitiesP);
         manager.Instantiate(_prefabEntityBall, entitiesB);
         for (int i = 0; i < amount; i++)
@@ -71,8 +92,13 @@ public class BalanceBallManager : MonoBehaviour
             manager.AddComponent<Actuator>(entitiesP[i]);
             currentIndex++;
         }
+        currentIndex = 0;
+    }
 
+    void OnDestroy()
+    {
         entitiesP.Dispose();
         entitiesB.Dispose();
+        blob.Dispose();
     }
 }

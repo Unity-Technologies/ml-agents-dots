@@ -61,7 +61,7 @@ namespace Unity.AI.MLAgents
         /// If you have jobs Scheduled but not completed when this event is called,
         /// If is recommended to Complete them.
         /// </summary>
-        public event Action OnEnvironmentReset;
+        public Action OnEnvironmentReset;
 
         /// <summary>
         /// Registers a MLAgentsWorld to a decision making mechanism.
