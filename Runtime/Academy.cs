@@ -207,7 +207,11 @@ namespace Unity.AI.MLAgents
 
         private void Reset()
         {
-            World.DefaultGameObjectInjectionWorld.EntityManager.CompleteAllJobs(); // This is problematic because it completes only for the active world
+            foreach (World ECSWorld in World.All)
+            {
+                // Need to complete all of the jobs at this point.
+                ECSWorld.EntityManager.CompleteAllJobs();
+            }
             ResetAllWorlds();
             OnEnvironmentReset?.Invoke();
         }

@@ -7,6 +7,10 @@ from mlagents_envs.side_channel.engine_configuration_channel import (
 )
 from mlagents_envs.side_channel.float_properties_channel import FloatPropertiesChannel
 
+from mlagents_envs.logging_util import set_log_level, DEBUG
+
+set_log_level(DEBUG)
+
 sc = EngineConfigurationChannel()
 sc2 = FloatPropertiesChannel()
 env = UnityEnvironment(side_channels=[sc, sc2])
