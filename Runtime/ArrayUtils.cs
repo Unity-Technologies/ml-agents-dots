@@ -1,5 +1,6 @@
 using Unity.Collections;
 using Unity.Mathematics;
+using System.Text;
 
 namespace Unity.AI.MLAgents
 {

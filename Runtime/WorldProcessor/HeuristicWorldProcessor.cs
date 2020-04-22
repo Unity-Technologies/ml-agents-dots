@@ -7,6 +7,19 @@ namespace Unity.AI.MLAgents
 {
     public static class HeristicWorldProcessorRegistringExtension
     {
+        /// <summary>
+        /// Registers the given MLAgentsWorld to the Academy with a Heuristic.
+        /// Note that if the simulation connects to Python, the Heuristic will
+        /// be ignored and the world will exchange data with Python instead.
+        /// The Heuristic is a Function that returns an action struct.
+        /// </summary>
+        /// <param name="world"> The MLAgentsWorld to register</param>
+        /// <param name="policyId"> The name of the world. This is useful for identification
+        /// and for training.</param>
+        /// <param name="heuristic"> The Heuristic used to generate the actions.
+        /// Note that all agents in the world will receive the same action.</param>
+        /// <typeparam name="TH"> The type of the Action struct. It must match the Action
+        /// Size and Action Type of the world.</typeparam>
         public static void RegisterWorldWithHeuristic<TH>(
             this MLAgentsWorld world,
             string policyId,
@@ -17,6 +30,19 @@ namespace Unity.AI.MLAgents
             Academy.Instance.RegisterWorld(policyId, world, worldProcessor, true);
         }
 
+        /// <summary>
+        /// Registers the given MLAgentsWorld to the Academy with a Heuristic.
+        /// Note that if the simulation connects to Python, the world will not
+        /// exchange data with Python and use the Heuristic regardless.
+        /// The Heuristic is a Function that returns an action struct.
+        /// </summary>
+        /// <param name="world"> The MLAgentsWorld to register</param>
+        /// <param name="policyId"> The name of the world. This is useful for identification
+        /// and for training.</param>
+        /// <param name="heuristic"> The Heuristic used to generate the actions.
+        /// Note that all agents in the world will receive the same action.</param>
+        /// <typeparam name="TH"> The type of the Action struct. It must match the Action
+        /// Size and Action Type of the world.</typeparam>
         public static void RegisterWorldWithHeuristicForceNoCommunication<TH>(
             this MLAgentsWorld world,
             string policyId,
@@ -47,10 +73,10 @@ namespace Unity.AI.MLAgents
             }
         }
 
-        public WorldCommand ProcessWorld()
+        public void ProcessWorld()
         {
             T action = heuristic.Invoke();
-            var totalCount = world.AgentCounter.Count;
+            var totalCount = world.DecisionCounter.Count;
 
             // TODO : This can be parallelized
             if (world.ActionType == ActionType.CONTINUOUS)
@@ -69,7 +95,6 @@ namespace Unity.AI.MLAgents
                     s[i] = action;
                 }
             }
-            return WorldCommand.DEFAULT;
         }
 
         public void Dispose()

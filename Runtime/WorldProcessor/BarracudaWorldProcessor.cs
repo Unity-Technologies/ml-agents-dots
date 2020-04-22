@@ -5,14 +5,37 @@ using Barracuda;
 
 namespace Unity.AI.MLAgents
 {
+    /// <summary>
+    /// Where to perform inference.
+    /// </summary>
     public enum InferenceDevice
     {
-        CPU,
-        GPU
+        /// <summary>
+        /// CPU inference
+        /// </summary>
+        CPU = 0,
+
+        /// <summary>
+        /// GPU inference
+        /// </summary>
+        GPU = 1
     }
 
     public static class BarracudaWorldProcessorRegistringExtension
     {
+        /// <summary>
+        /// Registers the given MLAgentsWorld to the Academy with a Neural
+        /// Network Model. If the input model is null, a default inactive
+        /// processor will be registered instead. Note that if the simulation
+        /// connects to Python, the Neural Network will be ignored and the world
+        /// will exchange data with Python instead.
+        /// </summary>
+        /// <param name="world"> The MLAgentsWorld to register</param>
+        /// <param name="policyId"> The name of the world. This is useful for identification
+        /// and for training.</param>
+        /// <param name="model"> The Neural Network model used by the processor</param>
+        /// <param name="inferenceDevice"> The inference device specifying where to run inference
+        /// (CPU or GPU)</param>
         public static void RegisterWorldWithBarracudaModel(
             this MLAgentsWorld world,
             string policyId,
@@ -31,6 +54,19 @@ namespace Unity.AI.MLAgents
             }
         }
 
+        /// <summary>
+        /// Registers the given MLAgentsWorld to the Academy with a Neural
+        /// Network Model. If the input model is null, a default inactive
+        /// processor will be registered instead. Note that if the simulation
+        /// connects to Python, the world will not connect to Python and run the
+        /// given Neural Network regardless.
+        /// </summary>
+        /// <param name="world"> The MLAgentsWorld to register</param>
+        /// <param name="policyId"> The name of the world. This is useful for identification
+        /// and for training.</param>
+        /// <param name="model"> The Neural Network model used by the processor</param>
+        /// <param name="inferenceDevice"> The inference device specifying where to run inference
+        /// (CPU or GPU)</param>
         public static void RegisterWorldWithBarracudaModelForceNoCommunication(
             this MLAgentsWorld world,
             string policyId,
@@ -49,6 +85,7 @@ namespace Unity.AI.MLAgents
             }
         }
     }
+
     internal unsafe class BarracudaWorldProcessor : IWorldProcessor
     {
         MLAgentsWorld world;
@@ -76,8 +113,9 @@ namespace Unity.AI.MLAgents
                 executionDevice, _barracudaModel, _verbose);
         }
 
-        public WorldCommand ProcessWorld()
+        public void ProcessWorld()
         {
+            // TODO : Cover all cases
             // FOR VECTOR OBS ONLY
             // For Continuous control only
             // No LSTM
@@ -90,19 +128,19 @@ namespace Unity.AI.MLAgents
 
             var input = new System.Collections.Generic.Dictionary<string, Tensor>();
 
-            var vectorObsArr = new float[world.AgentCounter.Count * obsSize];
-            var sensorData = world.Sensors.ToArray();
+            var vectorObsArr = new float[world.DecisionCounter.Count * obsSize];
+            var sensorData = world.DecisionObs.ToArray();
             int sensorOffset = 0;
             int vecObsOffset = 0;
             foreach (var shape in world.SensorShapes)
             {
                 if (shape.GetDimensions() == 1)
                 {
-                    for (int i = 0; i < world.AgentCounter.Count; i++)
+                    for (int i = 0; i < world.DecisionCounter.Count; i++)
                     {
                         Array.Copy(sensorData, sensorOffset + i * shape.GetTotalTensorSize(), vectorObsArr, i * obsSize + vecObsOffset, shape.GetTotalTensorSize());
                     }
-                    sensorOffset += world.AgentIds.Length * shape.GetTotalTensorSize();
+                    sensorOffset += world.DecisionAgentIds.Length * shape.GetTotalTensorSize();
                     vecObsOffset += shape.GetTotalTensorSize();
                 }
                 else
@@ -112,7 +150,7 @@ namespace Unity.AI.MLAgents
             }
 
             input["vector_observation"] = new Tensor(
-                new TensorShape(world.AgentCounter.Count, obsSize),
+                new TensorShape(world.DecisionCounter.Count, obsSize),
                 vectorObsArr,
                 "vector_observation");
 
@@ -123,7 +161,7 @@ namespace Unity.AI.MLAgents
             switch (world.ActionType)
             {
                 case ActionType.CONTINUOUS:
-                    int count = world.AgentCounter.Count * world.ActionSize;
+                    int count = world.DecisionCounter.Count * world.ActionSize;
                     var wholeData = actuatorT.data.Download(count);
                     var dest = new float[count];
                     Array.Copy(wholeData, dest, count);
@@ -135,8 +173,6 @@ namespace Unity.AI.MLAgents
                     break;
             }
             actuatorT.Dispose();
-
-            return WorldCommand.DEFAULT;
         }
 
         public void Dispose()

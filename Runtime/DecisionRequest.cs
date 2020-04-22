@@ -29,40 +29,7 @@ namespace Unity.AI.MLAgents
         /// <returns> The DecisionRequest struct </returns>
         public DecisionRequest SetReward(float r)
         {
-            world.Rewards[index] = r;
-            return this;
-        }
-
-        /// <summary>
-        /// Specifies if the Agent terminated after the last decision request.
-        /// </summary>
-        /// <param name="status">
-        /// The episode status for the Agent:
-        ///  - DEFAULT: The episode is ongoing.
-        ///  - TERMINATED: The episode is over because the Agent ended the task
-        ///          either by succeeding or failing the task.
-        ///  - INTERRUPTED: The episode is over because it was interrupted,
-        ///          the Agent could have been continuing the task and should not
-        ///          feel bad for terminating.
-        ///  </param>
-        /// <returns> The DecisionRequest struct </returns>
-        public DecisionRequest SetEpisodeStatus(EpisodeStatus status)
-        {
-            switch (status)
-            {
-                case EpisodeStatus.TERMINATED:
-                    world.DoneFlags[index] = true;
-                    world.MaxStepFlags[index] = false;
-                    break;
-                case EpisodeStatus.INTERRUPTED:
-                    world.DoneFlags[index] = true;
-                    world.MaxStepFlags[index] = true;
-                    break;
-                default:
-                    world.DoneFlags[index] = false;
-                    world.MaxStepFlags[index] = false;
-                    break;
-            }
+            world.DecisionRewards[index] = r;
             return this;
         }
 
@@ -90,7 +57,7 @@ namespace Unity.AI.MLAgents
             }
 #endif
             var trueMaskIndex = world.DiscreteActionBranches.CumSumAt(branch) + actionIndex;
-            world.ActionMasks[trueMaskIndex + world.DiscreteActionBranches.Sum() * index] = true;
+            world.DecisionActionMasks[trueMaskIndex + world.DiscreteActionBranches.Sum() * index] = true;
             return this;
         }
 
@@ -114,7 +81,7 @@ namespace Unity.AI.MLAgents
 #endif
             int start = world.ObservationOffsets[sensorNumber];
             start += inputSize * index;
-            var tmp = world.Sensors.Slice(start, inputSize).SliceConvert<T>();
+            var tmp = world.DecisionObs.Slice(start, inputSize).SliceConvert<T>();
             tmp[0] = sensor;
             return this;
         }
@@ -139,7 +106,7 @@ namespace Unity.AI.MLAgents
 #endif
             int start = world.ObservationOffsets[sensorNumber];
             start += inputSize * index;
-            world.Sensors.Slice(start, inputSize).CopyFrom(obs);
+            world.DecisionObs.Slice(start, inputSize).CopyFrom(obs);
             return this;
         }
     }

@@ -4,12 +4,13 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 using Random = UnityEngine.Random;
-using Barracuda;
 using Unity.AI.MLAgents;
 
 public class BalanceBallManager : MonoBehaviour
 {
     public MLAgentsWorldSpecs MyWorldSpecs;
+
+    public int NumberBalls = 1000;
 
     private EntityManager manager;
     public GameObject prefabPlatform;
@@ -18,38 +19,52 @@ public class BalanceBallManager : MonoBehaviour
     private Entity _prefabEntityBall;
     int currentIndex;
 
+    NativeArray<Entity> entitiesP;
+    NativeArray<Entity> entitiesB;
+    BlobAssetStore blob;
+
     void Awake()
     {
         var world = MyWorldSpecs.GetWorld();
         var ballSystem = World.DefaultGameObjectInjectionWorld.GetOrCreateSystem<BallSystem>();
         ballSystem.Enabled = true;
-        // var world = new MLAgentsWorld(1000, ActionType.CONTINUOUS, new int3[] { new int3(4, 0, 0), new int3(3, 0, 0) }, 2);
-        ballSystem.world = world;
-        // var mlsys = World.Active.GetOrCreateSystem<MLAgentsSystem>();
-        // mlsys.SubscribeWorldWithBarracudaModel("3DBallDOTS", world, model);
-
+        ballSystem.BallWorld = world;
 
         manager = World.DefaultGameObjectInjectionWorld.EntityManager;
 
-        BlobAssetStore blob = new BlobAssetStore();
+        blob = new BlobAssetStore();
         GameObjectConversionSettings settings = GameObjectConversionSettings.FromWorld(World.DefaultGameObjectInjectionWorld, blob);
         _prefabEntityPlatform = GameObjectConversionUtility.ConvertGameObjectHierarchy(prefabPlatform, settings);
         _prefabEntityBall = GameObjectConversionUtility.ConvertGameObjectHierarchy(prefabBall, settings);
 
-        Time.captureFramerate = 60;
-        Spawn(1000);
-        blob.Dispose();
+        Spawn(NumberBalls);
+
+        Academy.Instance.OnEnvironmentReset = () =>
+        {
+            foreach(Entity e in entitiesP)
+            {
+                manager.DestroyEntity(e);
+            }
+            entitiesP.Dispose();
+            foreach(Entity e in entitiesB)
+            {
+                manager.DestroyEntity(e);
+            }
+            entitiesB.Dispose();
+            Spawn(NumberBalls);
+        };
+
     }
 
     void Spawn(int amount)
     {
-        NativeArray<Entity> entitiesP = new NativeArray<Entity>(amount, Allocator.Temp);
-        NativeArray<Entity> entitiesB = new NativeArray<Entity>(amount, Allocator.Temp);
+        entitiesP = new NativeArray<Entity>(amount, Allocator.Persistent);
+        entitiesB = new NativeArray<Entity>(amount, Allocator.Persistent);
         manager.Instantiate(_prefabEntityPlatform, entitiesP);
         manager.Instantiate(_prefabEntityBall, entitiesB);
         for (int i = 0; i < amount; i++)
         {
-            float3 position = new float3((currentIndex % 10) - 5, (currentIndex / 10 % 10) - 5, currentIndex / 100) * 2f;
+            float3 position = new float3((currentIndex % 10) - 5, (currentIndex / 10 % 10) - 5, currentIndex / 100) * 5f;
             float valX = Random.Range(-0.1f, 0.1f);
             float valZ = Random.Range(-0.1f, 0.1f);
             manager.SetComponentData(entitiesP[i],
@@ -68,16 +83,22 @@ public class BalanceBallManager : MonoBehaviour
                 {
                     Value = quaternion.EulerXYZ(valX, 0, valZ)
                 });
-            manager.AddComponent<RefToPlatform>(entitiesB[i]);
-            manager.SetComponentData(entitiesB[i], new RefToPlatform { Value = entitiesP[i] });
-            manager.AddComponent<BallResetData>(entitiesB[i]);
-            manager.SetComponentData(entitiesB[i], new BallResetData { ResetPosition = position + new float3(0, 0.2f, 0) });
-            manager.AddComponent<BallData>(entitiesP[i]);
-            manager.AddComponent<AngularAcceleration>(entitiesP[i]);
+            manager.AddComponent<AgentData>(entitiesP[i]);
+            manager.SetComponentData(entitiesP[i], new AgentData { 
+                BallResetPosition = position + new float3(0, 0.2f, 0),
+                BallRef = entitiesB[i],
+                StepCount = 0
+             });
+            manager.AddComponent<Actuator>(entitiesP[i]);
             currentIndex++;
         }
+        currentIndex = 0;
+    }
 
+    void OnDestroy()
+    {
         entitiesP.Dispose();
         entitiesB.Dispose();
+        blob.Dispose();
     }
 }

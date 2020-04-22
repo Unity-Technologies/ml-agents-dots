@@ -13,6 +13,11 @@ namespace Unity.AI.MLAgents
         None
     }
 
+    /// <summary>
+    /// An editor friendly constructor for a MLAgentsWorld.
+    /// Keeps track of the behavior specs of a world, its name,
+    /// its processor type and Neural Network Model.
+    /// </summary>
     [Serializable]
     public struct MLAgentsWorldSpecs
     {
@@ -31,6 +36,12 @@ namespace Unity.AI.MLAgents
 
         private MLAgentsWorld m_World;
 
+        /// <summary>
+        /// Generates the world using the specified specs and registers its
+        /// processor to the Academy. The world is only created and registed once,
+        /// if subsequent calls are made, the created world will be returned.
+        /// </summary>
+        /// <returns></returns>
         public MLAgentsWorld GetWorld()
         {
             if (m_World.IsCreated)
