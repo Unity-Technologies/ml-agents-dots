@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using Unity.Collections;
+using Unity.Mathematics;
 
 namespace Unity.AI.MLAgents.Tests.Editor
 {
@@ -69,6 +70,26 @@ namespace Unity.AI.MLAgents.Tests.Editor
                 int actualCapacity = ArrayUtils.IncreaseArraySizeHeuristic(reqCapacity);
                 Assert.Greater(actualCapacity, reqCapacity);
             }
+        }
+
+        [Test]
+        public void TestGetTotalTensorSize()
+        {
+            Assert.AreEqual(new int3(0, 0, 0).GetTotalTensorSize(), 0);
+            Assert.AreEqual(new int3(1, 1, 1).GetTotalTensorSize(), 1);
+            Assert.AreEqual(new int3(3, 0, 0).GetTotalTensorSize(), 3);
+            Assert.AreEqual(new int3(4, 1, 0).GetTotalTensorSize(), 4);
+            Assert.AreEqual(new int3(4, 2, 0).GetTotalTensorSize(), 8);
+        }
+
+        [Test]
+        public void TestGetDimensions()
+        {
+            Assert.AreEqual(new int3(0, 0, 0).GetDimensions(), 0);
+            Assert.AreEqual(new int3(1, 1, 1).GetDimensions(), 3);
+            Assert.AreEqual(new int3(3, 0, 0).GetDimensions(), 1);
+            Assert.AreEqual(new int3(4, 1, 0).GetDimensions(), 2);
+            Assert.AreEqual(new int3(4, 2, 0).GetDimensions(), 2);
         }
     }
 }

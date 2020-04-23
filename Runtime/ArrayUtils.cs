@@ -39,11 +39,21 @@ namespace Unity.AI.MLAgents
 
         public static int GetTotalTensorSize(this int3 tensorShape)
         {
+            #if ENABLE_UNITY_COLLECTIONS_CHECKS
+            tensorShape.AssertIsShape();
+            #endif
             return tensorShape.x * math.max(1, tensorShape.y) * math.max(1, tensorShape.z);
         }
 
         public static int GetDimensions(this int3 tensorShape)
         {
+            #if ENABLE_UNITY_COLLECTIONS_CHECKS
+            tensorShape.AssertIsShape();
+            #endif
+            if (tensorShape.x == 0)
+            {
+                return 0;
+            }
             if (tensorShape.y == 0)
             {
                 return 1;
@@ -53,6 +63,28 @@ namespace Unity.AI.MLAgents
                 return 2;
             }
             return 3;
+        }
+
+        private static void AssertIsShape(this int3 shape)
+        {
+            if (shape.x == 0 && (shape.y != 0 || shape.y != 0))
+            {
+                throw new MLAgentsException(
+                    "Tensor shape cannot have first dimension be zero and other dimensions not be zero"
+                );
+            }
+            if (shape.y == 0 && shape.z != 0)
+            {
+                throw new MLAgentsException(
+                    "Tensor shape cannot have second dimension be zero and third dimensions not be zero"
+                );
+            }
+            if (shape.x < 0 || shape.y < 0 || shape.z < 0)
+            {
+                throw new MLAgentsException(
+                    "Tensor shape cannot have negative dimensions"
+                );
+            }
         }
     }
 }
