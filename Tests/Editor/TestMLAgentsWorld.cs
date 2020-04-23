@@ -116,6 +116,37 @@ namespace Unity.AI.MLAgents.Tests.Editor
         }
 
         [Test]
+        public void TestTerminateEpisode()
+        {
+            var world = new MLAgentsWorld(
+                20,
+                new int3[] { new int3(3, 0, 0), new int3(84, 84, 3) },
+                ActionType.DISCRETE,
+                2,
+                new int[] { 2, 3 });
+
+            world.RegisterWorldWithHeuristic("test", () => new int2(0, 1));
+
+            var entity = entityManager.CreateEntity();
+
+            world.RequestDecision(entity)
+                .SetObservation(0, new float3(1, 2, 3))
+                .SetReward(1f);
+
+            var hashMap = world.GenerateActionHashMap<DiscreteAction_TWO_THREE>(Allocator.Temp);
+            Assert.True(hashMap.TryGetValue(entity, out _));
+            hashMap.Dispose();
+
+            world.EndEpisode(entity);
+            hashMap = world.GenerateActionHashMap<DiscreteAction_TWO_THREE>(Allocator.Temp);
+            Assert.False(hashMap.TryGetValue(entity, out _));
+            hashMap.Dispose();
+
+            world.Dispose();
+            Academy.Instance.Dispose();
+        }
+
+        [Test]
         public void TestMultiWorld()
         {
             var world1 = new MLAgentsWorld(
