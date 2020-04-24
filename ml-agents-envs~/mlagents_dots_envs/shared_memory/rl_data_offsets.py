@@ -1,7 +1,7 @@
 import numpy as np
 
 from typing import Tuple, Optional, NamedTuple, List
-from mlagents_dots_envs.shared_memory.base_shared_mem import BasedSharedMem
+from mlagents_dots_envs.shared_memory.base_shared_memory import BaseSharedMemory
 
 
 class RLDataOffsets(NamedTuple):
@@ -35,7 +35,7 @@ class RLDataOffsets(NamedTuple):
     action_offset: int
 
     @staticmethod
-    def from_mem(mem: BasedSharedMem, offset: int) -> Tuple["RLDataOffsets", int]:
+    def from_mem(mem: BaseSharedMemory, offset: int) -> Tuple["RLDataOffsets", int]:
         # Generates the offsets
         # string : behavior name
         # int : 4 bytes : maximum number of Agents

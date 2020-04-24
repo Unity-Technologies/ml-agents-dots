@@ -8,7 +8,7 @@ import uuid
 from typing import Tuple
 
 
-class BasedSharedMem(ABC):
+class BaseSharedMemory(ABC):
     DIRECTORY = "ml-agents"
 
     def __init__(self, file_name: str, create_file: bool = False, size: int = 0):

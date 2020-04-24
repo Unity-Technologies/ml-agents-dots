@@ -4,14 +4,14 @@ import time
 import uuid
 from typing import Tuple, Dict
 
-from mlagents_dots_envs.shared_memory.master_shared_mem import MasterSharedMem
-from mlagents_dots_envs.shared_memory.data_shared_mem import DataSharedMem
+from mlagents_dots_envs.shared_memory.shared_memory_header import SharedMemoryHeader
+from mlagents_dots_envs.shared_memory.shared_memory_body import SharedMemoryBody
 
 from mlagents_envs.exception import UnityCommunicationException
 from mlagents_envs.base_env import DecisionSteps, TerminalSteps, BehaviorSpec
 
 
-class SharedMemCom:
+class SharedMemoryCommunicator:
     FILE_DEFAULT = "default"
     MAX_TIMEOUT_IN_SECONDS = 30
 
@@ -23,9 +23,9 @@ class SharedMemCom:
             while os.path.exists(file_name):
                 file_name = str(uuid.uuid1())
         self._base_file_name = file_name
-        self._master_mem = MasterSharedMem(file_name=file_name)
+        self._master_mem = SharedMemoryHeader(file_name=file_name)
         self._current_file_number = self._master_mem.file_number
-        self._data_mem = DataSharedMem(
+        self._data_mem = SharedMemoryBody(
             file_name + "_" * self._current_file_number,
             create_file=True,
             copy_from=None,
@@ -52,7 +52,7 @@ class SharedMemCom:
             self._current_file_number += 1
             self._master_mem.file_number = self._current_file_number
             tmp = self._data_mem
-            self._data_mem = DataSharedMem(
+            self._data_mem = SharedMemoryBody(
                 self._base_file_name + "_" * self._current_file_number,
                 create_file=True,
                 copy_from=tmp,
@@ -97,7 +97,7 @@ class SharedMemCom:
             # the file is out of date
             self._data_mem.delete()
             self._current_file_number += 1
-            self._data_mem = DataSharedMem(
+            self._data_mem = SharedMemoryBody(
                 self._base_file_name + "_" * self._current_file_number,
                 side_channel_buffer_size=self._master_mem.side_channel_size,
                 rl_data_buffer_size=self._master_mem.rl_data_size,

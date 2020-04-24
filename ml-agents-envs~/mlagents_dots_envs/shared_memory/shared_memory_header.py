@@ -1,9 +1,9 @@
 import os
 import glob
-from mlagents_dots_envs.shared_memory.base_shared_mem import BasedSharedMem
+from mlagents_dots_envs.shared_memory.base_shared_memory import BaseSharedMemory
 
 
-class MasterSharedMem(BasedSharedMem):
+class SharedMemoryHeader(BaseSharedMemory):
     """
     Always created by Python
     File organization:
@@ -24,7 +24,7 @@ class MasterSharedMem(BasedSharedMem):
         self, file_name: str, side_channel_size: int = 0, rl_data_size: int = 0
     ):
 
-        super(MasterSharedMem, self).__init__(
+        super(SharedMemoryHeader, self).__init__(
             file_name, create_file=True, size=self.SIZE
         )
         for f in glob.glob(file_name + "_"):
@@ -63,7 +63,7 @@ class MasterSharedMem(BasedSharedMem):
         if self.accessor is not None:
             offset = 15
             self.set_bool(offset, True)
-        super(MasterSharedMem, self).close()
+        super(SharedMemoryHeader, self).close()
 
     def mark_python_blocked(self):
         offset = 13

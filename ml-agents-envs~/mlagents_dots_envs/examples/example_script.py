@@ -5,14 +5,16 @@ from mlagents_dots_envs.unity_environment import UnityEnvironment
 from mlagents_envs.side_channel.engine_configuration_channel import (
     EngineConfigurationChannel,
 )
-from mlagents_envs.side_channel.float_properties_channel import FloatPropertiesChannel
+from mlagents_envs.side_channel.environment_parameters_channel import (
+    EnvironmentParametersChannel,
+)
 
 from mlagents_envs.logging_util import set_log_level, DEBUG
 
 set_log_level(DEBUG)
 
 sc = EngineConfigurationChannel()
-sc2 = FloatPropertiesChannel()
+sc2 = EnvironmentParametersChannel()
 env = UnityEnvironment(side_channels=[sc, sc2])
 sc.set_configuration_parameters()
 
@@ -38,9 +40,9 @@ print("RESET")
 env.reset()
 
 
-sc2.set_property("test", 2)
-sc2.set_property("test2", 2)
-sc2.set_property("test3", 2)
+sc2.set_float_parameter("test", 2)
+sc2.set_float_parameter("test2", 2)
+sc2.set_float_parameter("test3", 2)
 
 for _ in range(100):
     s = ""

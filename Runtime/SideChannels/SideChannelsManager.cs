@@ -171,7 +171,7 @@ namespace Unity.AI.MLAgents.SideChannels
                 }
             }
 
-            if (dataReceived.Length == 0)
+            if (dataReceived == null || dataReceived.Length == 0)
             {
                 return;
             }

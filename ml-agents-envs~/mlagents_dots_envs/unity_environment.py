@@ -15,7 +15,9 @@ from mlagents_envs.base_env import (
 from mlagents_envs.timers import timed
 from mlagents_envs.exception import UnityCommunicationException, UnityActionException
 
-from mlagents_dots_envs.shared_memory.shared_mem_com import SharedMemCom
+from mlagents_dots_envs.shared_memory.shared_memory_communicator import (
+    SharedMemoryCommunicator,
+)
 
 from mlagents_dots_envs.env_utils import (
     get_side_channels,
@@ -68,7 +70,7 @@ class UnityEnvironment(BaseEnv):
         if executable_name is None:
             assert args == []
         self._side_channels = get_side_channels(side_channels)
-        self._communicator = SharedMemCom(executable_name is None)
+        self._communicator = SharedMemoryCommunicator(executable_name is None)
 
         # The process that is started. If None, no process was started
         self.proc1 = None

@@ -1,6 +1,6 @@
 import numpy as np
-from mlagents_dots_envs.shared_memory.base_shared_mem import BasedSharedMem
-from mlagents_dots_envs.shared_memory.rl_data_offset import RLDataOffsets
+from mlagents_dots_envs.shared_memory.base_shared_memory import BaseSharedMemory
+from mlagents_dots_envs.shared_memory.rl_data_offsets import RLDataOffsets
 from typing import Dict, List
 from mlagents_envs.base_env import (
     DecisionSteps,
@@ -10,26 +10,26 @@ from mlagents_envs.base_env import (
 )
 
 
-class DataSharedMem(BasedSharedMem):
+class SharedMemoryBody(BaseSharedMemory):
     def __init__(
         self,
         file_name: str,
         create_file: bool = False,
-        copy_from: "DataSharedMem" = None,
+        copy_from: "SharedMemoryBody" = None,
         side_channel_buffer_size: int = 0,
         rl_data_buffer_size: int = 0,
     ):
         self._offset_dict: Dict[str, RLDataOffsets] = {}
         if create_file and copy_from is None:
             size = side_channel_buffer_size + rl_data_buffer_size
-            super(DataSharedMem, self).__init__(file_name, True, size)
+            super(SharedMemoryBody, self).__init__(file_name, True, size)
             self._side_channel_buffer_size = side_channel_buffer_size
             self._rl_data_buffer_size = rl_data_buffer_size
             return
         if create_file and copy_from is not None:
             # can only increase the size of the file
             size = side_channel_buffer_size + rl_data_buffer_size
-            super(DataSharedMem, self).__init__(file_name, True, size)
+            super(SharedMemoryBody, self).__init__(file_name, True, size)
             assert side_channel_buffer_size >= copy_from._side_channel_buffer_size
             assert rl_data_buffer_size >= copy_from._rl_data_buffer_size
             self._side_channel_buffer_size = side_channel_buffer_size
@@ -38,7 +38,7 @@ class DataSharedMem(BasedSharedMem):
             self.rl_data = copy_from.rl_data
         if not create_file:
             size = side_channel_buffer_size + rl_data_buffer_size
-            super(DataSharedMem, self).__init__(file_name, False, size)
+            super(SharedMemoryBody, self).__init__(file_name, False, size)
             self._side_channel_buffer_size = side_channel_buffer_size
             self._rl_data_buffer_size = rl_data_buffer_size
             self._refresh_offsets()
