@@ -88,29 +88,26 @@ namespace Unity.AI.MLAgents
 
     internal unsafe class BarracudaWorldProcessor : IWorldProcessor
     {
-        MLAgentsWorld world;
-        private NNModel _model;
-        public InferenceDevice inferenceDevice;
-        private Model _barracudaModel;
-        private IWorker _engine;
-        private const bool _verbose = false;
+        private MLAgentsWorld m_World;
+        private Model m_BarracudaModel;
+        private IWorker m_Engine;
+        private const bool k_Verbose = false;
 
         public bool IsConnected {get {return false;}}
 
         internal BarracudaWorldProcessor(MLAgentsWorld world, NNModel model, InferenceDevice inferenceDevice)
         {
-            this.world = world;
-            _model = model;
-            D.logEnabled = _verbose;
-            _engine?.Dispose();
+            this.m_World = world;
+            D.logEnabled = k_Verbose;
+            m_Engine?.Dispose();
 
-            _barracudaModel = ModelLoader.Load(model);
+            m_BarracudaModel = ModelLoader.Load(model);
             var executionDevice = inferenceDevice == InferenceDevice.GPU
                 ? WorkerFactory.Type.ComputePrecompiled
                 : WorkerFactory.Type.CSharp;
 
-            _engine = WorkerFactory.CreateWorker(
-                executionDevice, _barracudaModel, _verbose);
+            m_Engine = WorkerFactory.CreateWorker(
+                executionDevice, m_BarracudaModel, k_Verbose);
         }
 
         public void ProcessWorld()
@@ -120,27 +117,27 @@ namespace Unity.AI.MLAgents
             // For Continuous control only
             // No LSTM
             int obsSize = 0;
-            for (int i = 0; i < world.SensorShapes.Length; i++)
+            for (int i = 0; i < m_World.SensorShapes.Length; i++)
             {
-                if (world.SensorShapes[i].GetDimensions() == 1)
-                    obsSize += world.SensorShapes[i].GetTotalTensorSize();
+                if (m_World.SensorShapes[i].GetDimensions() == 1)
+                    obsSize += m_World.SensorShapes[i].GetTotalTensorSize();
             }
 
             var input = new System.Collections.Generic.Dictionary<string, Tensor>();
 
-            var vectorObsArr = new float[world.DecisionCounter.Count * obsSize];
-            var sensorData = world.DecisionObs.ToArray();
+            var vectorObsArr = new float[m_World.DecisionCounter.Count * obsSize];
+            var sensorData = m_World.DecisionObs.ToArray();
             int sensorOffset = 0;
             int vecObsOffset = 0;
-            foreach (var shape in world.SensorShapes)
+            foreach (var shape in m_World.SensorShapes)
             {
                 if (shape.GetDimensions() == 1)
                 {
-                    for (int i = 0; i < world.DecisionCounter.Count; i++)
+                    for (int i = 0; i < m_World.DecisionCounter.Count; i++)
                     {
                         Array.Copy(sensorData, sensorOffset + i * shape.GetTotalTensorSize(), vectorObsArr, i * obsSize + vecObsOffset, shape.GetTotalTensorSize());
                     }
-                    sensorOffset += world.DecisionAgentIds.Length * shape.GetTotalTensorSize();
+                    sensorOffset += m_World.DecisionAgentIds.Length * shape.GetTotalTensorSize();
                     vecObsOffset += shape.GetTotalTensorSize();
                 }
                 else
@@ -150,22 +147,22 @@ namespace Unity.AI.MLAgents
             }
 
             input["vector_observation"] = new Tensor(
-                new TensorShape(world.DecisionCounter.Count, obsSize),
+                new TensorShape(m_World.DecisionCounter.Count, obsSize),
                 vectorObsArr,
                 "vector_observation");
 
-            _engine.ExecuteAndWaitForCompletion(input);
+            m_Engine.ExecuteAndWaitForCompletion(input);
 
-            var actuatorT = _engine.CopyOutput("action");
+            var actuatorT = m_Engine.CopyOutput("action");
 
-            switch (world.ActionType)
+            switch (m_World.ActionType)
             {
                 case ActionType.CONTINUOUS:
-                    int count = world.DecisionCounter.Count * world.ActionSize;
+                    int count = m_World.DecisionCounter.Count * m_World.ActionSize;
                     var wholeData = actuatorT.data.Download(count);
                     var dest = new float[count];
                     Array.Copy(wholeData, dest, count);
-                    world.ContinuousActuators.Slice(0, count).CopyFrom(dest);
+                    m_World.ContinuousActuators.Slice(0, count).CopyFrom(dest);
                     break;
                 case ActionType.DISCRETE:
                     throw new MLAgentsException("TODO : Inference only works for continuous control and vector obs");
@@ -177,7 +174,7 @@ namespace Unity.AI.MLAgents
 
         public void Dispose()
         {
-            _engine.Dispose();
+            m_Engine.Dispose();
         }
     }
 }

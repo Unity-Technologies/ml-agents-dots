@@ -14,9 +14,9 @@ namespace Unity.AI.MLAgents
         /// <param name="group">The group whose UpdateCallback will be configured with a fixed time step update call</param>
         /// <param name="timeStep">The fixed time step (in seconds)</param>
         /// <param name="timeScale">How much time passes in the group compared to other systems</param>
-        public static void EnableFixedRateWithCatchUp(ComponentSystemGroup group, float timeStep, float timeScale)
+        public static void EnableFixedRateWithCatchUpAndMultiplier(ComponentSystemGroup group, float timeStep, float timeScale)
         {
-            var manager = new FixedRateTimeScaleCatchUpManager(timeStep, timeScale);
+            var manager = new FixedRateTimeScaleCatchUpAndMultiplierManager(timeStep, timeScale);
             group.UpdateCallback = manager.UpdateCallback;
         }
 
@@ -31,7 +31,7 @@ namespace Unity.AI.MLAgents
     }
 
 
-    internal class FixedRateTimeScaleCatchUpManager
+    internal class FixedRateTimeScaleCatchUpAndMultiplierManager
     {
         protected float m_TimeScale;
         protected float m_FixedTimeStep;
@@ -39,7 +39,7 @@ namespace Unity.AI.MLAgents
         protected int m_FixedUpdateCount;
         protected bool m_DidPushTime;
 
-        internal FixedRateTimeScaleCatchUpManager(float fixedStep, float timeScale)
+        internal FixedRateTimeScaleCatchUpAndMultiplierManager(float fixedStep, float timeScale)
         {
             m_FixedTimeStep = fixedStep;
             m_TimeScale = timeScale;

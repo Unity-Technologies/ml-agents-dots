@@ -1,10 +1,4 @@
 using System;
-using System.IO.MemoryMappedFiles;
-using System.IO;
-using Unity.Collections.LowLevel.Unsafe;
-using Unity.Mathematics;
-using Unity.Collections;
-using Unity.Entities;
 #if UNITY_EDITOR
 using UnityEditor; // TODO : Delete
 #endif
@@ -13,19 +7,19 @@ using UnityEngine;// TODO : Delete
 
 namespace Unity.AI.MLAgents
 {
-    internal unsafe class SharedMemoryCom : IDisposable
+    internal unsafe class SharedMemoryCommunicator : IDisposable
     {
         private const float k_TimeOutInSeconds = 15;
 
 
         private string m_BaseFileName;
         private int m_CurrentFileNumber = 1;
-        private MasterSharedMem m_MasterSharedMem;
-        private DataSharedMem m_DataSharedMem;
+        private SharedMemoryHeader m_SharedMemoryHeader;
+        private SharedMemoryBody m_ShareMemoryBody;
 
         public bool Active;
 
-        public SharedMemoryCom(string filePath)
+        public SharedMemoryCommunicator(string filePath)
         {
             if (filePath == null)
             {
@@ -33,51 +27,51 @@ namespace Unity.AI.MLAgents
                 return;
             }
             m_BaseFileName = filePath;
-            m_MasterSharedMem = new MasterSharedMem(filePath);
-            if (!m_MasterSharedMem.Active || !m_MasterSharedMem.CheckVersion())
+            m_SharedMemoryHeader = new SharedMemoryHeader(filePath);
+            if (!m_SharedMemoryHeader.Active || !m_SharedMemoryHeader.CheckVersion())
             {
-                m_MasterSharedMem.Close(); // Python will delete it if it needs it
+                m_SharedMemoryHeader.Close(); // Python will delete it if it needs it
                 Active = false;
                 return;
             }
-            m_DataSharedMem = new DataSharedMem(
+            m_ShareMemoryBody = new SharedMemoryBody(
                 m_BaseFileName.PadRight(m_BaseFileName.Length + m_CurrentFileNumber, '_'),
                 false,
                 null,
-                m_MasterSharedMem.SideChannelBufferSize,
-                m_MasterSharedMem.RLDataBufferSize);
+                m_SharedMemoryHeader.SideChannelBufferSize,
+                m_SharedMemoryHeader.RLDataBufferSize);
 
-            m_MasterSharedMem.UnblockPython();
+            m_SharedMemoryHeader.UnblockPython();
             Active = true;
         }
 
         public byte[] ReadAndClearSideChannelData()
         {
-            return m_DataSharedMem.SideChannelData;
+            return m_ShareMemoryBody.SideChannelData;
         }
 
         public void WriteSideChannelData(byte[] data)
         {
-            int oldCapacity = m_MasterSharedMem.SideChannelBufferSize;
+            int oldCapacity = m_SharedMemoryHeader.SideChannelBufferSize;
             if (data.Length > oldCapacity - 4) // 4 is the int for the size of the data
             {
                 // Add extra capacity with a simple heuristic
                 int newCapacity = ArrayUtils.IncreaseArraySizeHeuristic(data.Length);
                 m_CurrentFileNumber += 1;
-                m_MasterSharedMem.FileNumber = m_CurrentFileNumber;
-                byte[] rlData = m_DataSharedMem.RlData;
-                m_DataSharedMem.Close();
-                m_DataSharedMem = new DataSharedMem(
+                m_SharedMemoryHeader.FileNumber = m_CurrentFileNumber;
+                byte[] rlData = m_ShareMemoryBody.RlData;
+                m_ShareMemoryBody.Close();
+                m_ShareMemoryBody = new SharedMemoryBody(
                     m_BaseFileName.PadRight(m_BaseFileName.Length + m_CurrentFileNumber, '_'),
                     true,
                     null,
                     newCapacity,
-                    m_MasterSharedMem.RLDataBufferSize
+                    m_SharedMemoryHeader.RLDataBufferSize
                 );
-                m_MasterSharedMem.SideChannelBufferSize = newCapacity;
-                m_DataSharedMem.RlData = rlData;
+                m_SharedMemoryHeader.SideChannelBufferSize = newCapacity;
+                m_ShareMemoryBody.RlData = rlData;
             }
-            m_DataSharedMem.SideChannelData = data;
+            m_ShareMemoryBody.SideChannelData = data;
         }
 
         /// <summary>
@@ -85,43 +79,43 @@ namespace Unity.AI.MLAgents
         /// </summary>
         public void WriteWorld(string worldName, MLAgentsWorld world)
         {
-            if (!m_MasterSharedMem.Active)
+            if (!m_SharedMemoryHeader.Active)
             {
                 return;
             }
-            if (m_DataSharedMem.ContainsWorld(worldName))
+            if (m_ShareMemoryBody.ContainsWorld(worldName))
             {
-                m_DataSharedMem.WriteWorld(worldName, world);
+                m_ShareMemoryBody.WriteWorld(worldName, world);
             }
             else
             {
                 // The world needs to register
-                int oldTotalCapacity = m_MasterSharedMem.RLDataBufferSize;
+                int oldTotalCapacity = m_SharedMemoryHeader.RLDataBufferSize;
                 int worldMemorySize = RLDataOffsets.FromWorld(world, worldName, 0).EndOfDataOffset;
                 m_CurrentFileNumber += 1;
-                m_MasterSharedMem.FileNumber = m_CurrentFileNumber;
-                byte[] channelData = m_DataSharedMem.SideChannelData;
-                byte[] rlData = m_DataSharedMem.RlData;
-                m_DataSharedMem.Close();
-                m_DataSharedMem = new DataSharedMem(
+                m_SharedMemoryHeader.FileNumber = m_CurrentFileNumber;
+                byte[] channelData = m_ShareMemoryBody.SideChannelData;
+                byte[] rlData = m_ShareMemoryBody.RlData;
+                m_ShareMemoryBody.Close();
+                m_ShareMemoryBody = new SharedMemoryBody(
                     m_BaseFileName.PadRight(m_BaseFileName.Length + m_CurrentFileNumber, '_'),
                     true,
                     null,
-                    m_MasterSharedMem.SideChannelBufferSize,
+                    m_SharedMemoryHeader.SideChannelBufferSize,
                     oldTotalCapacity + worldMemorySize
                 );
-                m_MasterSharedMem.RLDataBufferSize = oldTotalCapacity + worldMemorySize;
+                m_SharedMemoryHeader.RLDataBufferSize = oldTotalCapacity + worldMemorySize;
                 if (channelData != null)
                 {
-                    m_DataSharedMem.SideChannelData = channelData;
+                    m_ShareMemoryBody.SideChannelData = channelData;
                 }
                 if (rlData != null)
                 {
-                    m_DataSharedMem.RlData = rlData;
+                    m_ShareMemoryBody.RlData = rlData;
                 }
                 // TODO Need to write the offsets
-                m_DataSharedMem.WriteWorldSpecs(worldName, world);
-                m_DataSharedMem.WriteWorld(worldName, world);
+                m_ShareMemoryBody.WriteWorldSpecs(worldName, world);
+                m_ShareMemoryBody.WriteWorld(worldName, world);
             }
         }
 
@@ -135,7 +129,7 @@ namespace Unity.AI.MLAgents
             int checkTimeoutIteration = 20000000;
             var t0 = DateTime.Now.Ticks;
 #endif
-            while (m_MasterSharedMem.Active && m_MasterSharedMem.Blocked)
+            while (m_SharedMemoryHeader.Active && m_SharedMemoryHeader.Blocked)
             {
 #if UNITY_EDITOR
                 if (iteration % checkTimeoutIteration == 0)
@@ -144,45 +138,45 @@ namespace Unity.AI.MLAgents
                     {
                         Debug.LogError("Timeout");
                         Active = false;
-                        m_MasterSharedMem.Delete();
-                        m_DataSharedMem.Delete();
+                        m_SharedMemoryHeader.Delete();
+                        m_ShareMemoryBody.Delete();
                         EditorApplication.isPlaying = false;
                     }
                 }
 #endif
             }
-            if (!m_MasterSharedMem.Active)
+            if (!m_SharedMemoryHeader.Active)
             {
                 Debug.LogError("Communication was closed.");
                 Active = false;
-                m_MasterSharedMem.Delete();
-                m_DataSharedMem.Delete();
+                m_SharedMemoryHeader.Delete();
+                m_ShareMemoryBody.Delete();
                 QuitUnity();
                 return;
             }
-            while (m_CurrentFileNumber < m_MasterSharedMem.FileNumber)
+            while (m_CurrentFileNumber < m_SharedMemoryHeader.FileNumber)
             {
-                var tmpData = m_DataSharedMem;
+                var tmpData = m_ShareMemoryBody;
                 m_CurrentFileNumber += 1;
-                m_DataSharedMem = new DataSharedMem(
+                m_ShareMemoryBody = new SharedMemoryBody(
                     m_BaseFileName.PadRight(m_BaseFileName.Length + m_CurrentFileNumber, '_'),
                     false,
                     tmpData,
-                    m_MasterSharedMem.SideChannelBufferSize,
-                    m_MasterSharedMem.RLDataBufferSize);
+                    m_SharedMemoryHeader.SideChannelBufferSize,
+                    m_SharedMemoryHeader.RLDataBufferSize);
                 tmpData.Delete();
             }
         }
 
         public bool ReadAndClearResetCommand()
         {
-            return m_MasterSharedMem.ReadAndClearResetCommand();
+            return m_SharedMemoryHeader.ReadAndClearResetCommand();
         }
 
         public void SetUnityReady()
         {
-            m_MasterSharedMem.MarkUnityBlocked();
-            m_MasterSharedMem.UnblockPython();
+            m_SharedMemoryHeader.MarkUnityBlocked();
+            m_SharedMemoryHeader.UnblockPython();
         }
 
         /// <summary>
@@ -190,14 +184,14 @@ namespace Unity.AI.MLAgents
         /// </summary>
         public void LoadWorld(string worldName, MLAgentsWorld world)
         {
-            m_DataSharedMem.ReadWorld(worldName, world);
+            m_ShareMemoryBody.ReadWorld(worldName, world);
         }
 
         public void Dispose()
         {
             Active = false;
-            m_MasterSharedMem.Close();
-            m_DataSharedMem.Delete();
+            m_SharedMemoryHeader.Close();
+            m_ShareMemoryBody.Delete();
         }
 
         private void QuitUnity()

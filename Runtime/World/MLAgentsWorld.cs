@@ -1,12 +1,10 @@
 using Unity.Collections;
 using Unity.Mathematics;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using System;
 
 namespace Unity.AI.MLAgents
 {
-
     /// <summary>
     /// MLAgentsWorld is a data container on which the user requests decisions.
     /// </summary>

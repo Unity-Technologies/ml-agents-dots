@@ -3,7 +3,7 @@ namespace Unity.AI.MLAgents
     /// <summary>
     /// Always created by Python
     /// </summary>
-    internal class MasterSharedMem : BaseSharedMem
+    internal class SharedMemoryHeader : BaseSharedMemory
     {
         private const int k_MajorVersion = 0;
         private const int k_MinorVersion = 3;
@@ -11,7 +11,7 @@ namespace Unity.AI.MLAgents
 
         private const int k_Size = 16;
 
-        public MasterSharedMem(string fileName) : base(fileName, false) {}
+        public SharedMemoryHeader(string fileName) : base(fileName, false) {}
 
         public bool Active
         {

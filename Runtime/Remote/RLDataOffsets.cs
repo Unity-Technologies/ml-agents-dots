@@ -31,29 +31,29 @@ namespace Unity.AI.MLAgents
         // End of file
         public int EndOfDataOffset;
 
-        public static RLDataOffsets FromMem(BaseSharedMem mem, int offset, out string name)
+        public static RLDataOffsets FromSharedMemory(BaseSharedMemory sharedMemory, int offset, out string name)
         {
             var startOffset = offset;
-            name = mem.GetString(ref offset);
-            int maxAgents = mem.GetInt(ref offset);
-            bool isContinuous = mem.GetBool(ref offset);
-            int actionSize = mem.GetInt(ref offset);
+            name = sharedMemory.GetString(ref offset);
+            int maxAgents = sharedMemory.GetInt(ref offset);
+            bool isContinuous = sharedMemory.GetBool(ref offset);
+            int actionSize = sharedMemory.GetInt(ref offset);
             int totalNumberMasks = 0;
             if (!isContinuous)
             {
                 for (int i = 0; i < actionSize; i++)
                 {
-                    totalNumberMasks += mem.GetInt(ref offset);
+                    totalNumberMasks += sharedMemory.GetInt(ref offset);
                 }
             }
-            int NObs = mem.GetInt(ref offset);
+            int NObs = sharedMemory.GetInt(ref offset);
             int totalObsLength = 0; // The number of floats contained in an Agent's observations
             for (int i = 0; i < NObs; i++)
             {
                 int prod = 1; // For observation i, what is the number of floats in this obs
-                prod *= math.max(1,  mem.GetInt(ref offset));
-                prod *= math.max(1,  mem.GetInt(ref offset));
-                prod *= math.max(1,  mem.GetInt(ref offset));
+                prod *= math.max(1,  sharedMemory.GetInt(ref offset));
+                prod *= math.max(1,  sharedMemory.GetInt(ref offset));
+                prod *= math.max(1,  sharedMemory.GetInt(ref offset));
                 totalObsLength += prod;
             }
 

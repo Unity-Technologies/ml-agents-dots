@@ -13,13 +13,13 @@ namespace Unity.AI.MLAgents
     /// </summary>
     public struct DecisionRequest
     {
-        private int index;
-        private MLAgentsWorld world;
+        private int m_Index;
+        private MLAgentsWorld m_World;
 
         internal DecisionRequest(int index, MLAgentsWorld world)
         {
-            this.index = index;
-            this.world = world;
+            this.m_Index = index;
+            this.m_World = world;
         }
 
         /// <summary>
@@ -29,7 +29,7 @@ namespace Unity.AI.MLAgents
         /// <returns> The DecisionRequest struct </returns>
         public DecisionRequest SetReward(float r)
         {
-            world.DecisionRewards[index] = r;
+            m_World.DecisionRewards[m_Index] = r;
             return this;
         }
 
@@ -43,21 +43,21 @@ namespace Unity.AI.MLAgents
         public DecisionRequest SetDiscreteActionMask(int branch, int actionIndex)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            if (world.ActionType == ActionType.CONTINUOUS)
+            if (m_World.ActionType == ActionType.CONTINUOUS)
             {
                 throw new MLAgentsException("SetDiscreteActionMask can only be used with discrete acton space.");
             }
-            if (branch > world.DiscreteActionBranches.Length)
+            if (branch > m_World.DiscreteActionBranches.Length)
             {
                 throw new MLAgentsException("Unknown action branch used when setting mask.");
             }
-            if (actionIndex > world.DiscreteActionBranches[branch])
+            if (actionIndex > m_World.DiscreteActionBranches[branch])
             {
                 throw new MLAgentsException("Index is out of bounds for requested action mask.");
             }
 #endif
-            var trueMaskIndex = world.DiscreteActionBranches.CumSumAt(branch) + actionIndex;
-            world.DecisionActionMasks[trueMaskIndex + world.DiscreteActionBranches.Sum() * index] = true;
+            var trueMaskIndex = m_World.DiscreteActionBranches.CumSumAt(branch) + actionIndex;
+            m_World.DecisionActionMasks[trueMaskIndex + m_World.DiscreteActionBranches.Sum() * m_Index] = true;
             return this;
         }
 
@@ -71,7 +71,7 @@ namespace Unity.AI.MLAgents
         {
             int inputSize = UnsafeUtility.SizeOf<T>() / sizeof(float);
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            int3 s = world.SensorShapes[sensorNumber];
+            int3 s = m_World.SensorShapes[sensorNumber];
             int expectedInputSize = s.x * math.max(1, s.y) * math.max(1, s.z);
             if (inputSize != expectedInputSize)
             {
@@ -79,9 +79,9 @@ namespace Unity.AI.MLAgents
                     $"Cannot set observation due to incompatible size of the input. Expected size : { expectedInputSize }, received size : { inputSize}");
             }
 #endif
-            int start = world.ObservationOffsets[sensorNumber];
-            start += inputSize * index;
-            var tmp = world.DecisionObs.Slice(start, inputSize).SliceConvert<T>();
+            int start = m_World.ObservationOffsets[sensorNumber];
+            start += inputSize * m_Index;
+            var tmp = m_World.DecisionObs.Slice(start, inputSize).SliceConvert<T>();
             tmp[0] = sensor;
             return this;
         }
@@ -96,7 +96,7 @@ namespace Unity.AI.MLAgents
         {
             int inputSize = obs.Length;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            int3 s = world.SensorShapes[sensorNumber];
+            int3 s = m_World.SensorShapes[sensorNumber];
             int expectedInputSize = s.x * math.max(1, s.y) * math.max(1, s.z);
             if (inputSize != expectedInputSize)
             {
@@ -104,9 +104,9 @@ namespace Unity.AI.MLAgents
                     $"Cannot set observation due to incompatible size of the input. Expected size : {expectedInputSize}, received size : { inputSize}");
             }
 #endif
-            int start = world.ObservationOffsets[sensorNumber];
-            start += inputSize * index;
-            world.DecisionObs.Slice(start, inputSize).CopyFrom(obs);
+            int start = m_World.ObservationOffsets[sensorNumber];
+            start += inputSize * m_Index;
+            m_World.DecisionObs.Slice(start, inputSize).CopyFrom(obs);
             return this;
         }
     }

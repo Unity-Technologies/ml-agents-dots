@@ -7,16 +7,16 @@ namespace Unity.AI.MLAgents
     /// <summary>
     /// Only C# can add new data, but both C# and python can edit it
     /// </summary>
-    internal class DataSharedMem : BaseSharedMem
+    internal class SharedMemoryBody : BaseSharedMemory
     {
         private Dictionary<string, RLDataOffsets> m_OffsetDict = new Dictionary<string, RLDataOffsets>();
         private int m_SideChannelBufferSize;
         private int m_RlDataBufferSize;
         private int m_CurrentEndOffset;
-        public DataSharedMem(
+        public SharedMemoryBody(
             string fileName,
             bool createFile,
-            DataSharedMem copyFrom,
+            SharedMemoryBody copyFrom,
             int sideChannelBufferSize,
             int rlDataBufferSize) : base(fileName, createFile, sideChannelBufferSize + rlDataBufferSize)
         {
@@ -45,7 +45,7 @@ namespace Unity.AI.MLAgents
                 {
                     return;
                 }
-                var dataOffset = RLDataOffsets.FromMem(this, offset, out name);
+                var dataOffset = RLDataOffsets.FromSharedMemory(this, offset, out name);
                 m_OffsetDict[name] = dataOffset;
                 offset = dataOffset.EndOfDataOffset;
                 m_CurrentEndOffset = offset;

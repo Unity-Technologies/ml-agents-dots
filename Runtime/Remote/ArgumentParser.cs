@@ -3,7 +3,7 @@ using System.IO;
 
 namespace Unity.AI.MLAgents
 {
-    internal static class ArgParser
+    internal static class ArgumentParser
     {
         private const string k_MemoryFileArgument = "--memory-path";
         private const string k_MemoryFilesDirectory = "ml-agents";

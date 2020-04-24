@@ -56,15 +56,15 @@ namespace Unity.AI.MLAgents
 
     internal class HeuristicWorldProcessor<T> : IWorldProcessor where T : struct
     {
-        private Func<T> heuristic;
-        private MLAgentsWorld world;
+        private Func<T> m_Heuristic;
+        private MLAgentsWorld m_World;
 
         public bool IsConnected {get {return false;}}
 
         internal HeuristicWorldProcessor(MLAgentsWorld world, Func<T> heuristic)
         {
-            this.world = world;
-            this.heuristic = heuristic;
+            this.m_World = world;
+            this.m_Heuristic = heuristic;
             var structSize = UnsafeUtility.SizeOf<T>() / sizeof(float);
             if (structSize != world.ActionSize)
             {
@@ -75,13 +75,13 @@ namespace Unity.AI.MLAgents
 
         public void ProcessWorld()
         {
-            T action = heuristic.Invoke();
-            var totalCount = world.DecisionCounter.Count;
+            T action = m_Heuristic.Invoke();
+            var totalCount = m_World.DecisionCounter.Count;
 
             // TODO : This can be parallelized
-            if (world.ActionType == ActionType.CONTINUOUS)
+            if (m_World.ActionType == ActionType.CONTINUOUS)
             {
-                var s = world.ContinuousActuators.Slice(0, totalCount * world.ActionSize).SliceConvert<T>();
+                var s = m_World.ContinuousActuators.Slice(0, totalCount * m_World.ActionSize).SliceConvert<T>();
                 for (int i = 0; i < totalCount; i++)
                 {
                     s[i] = action;
@@ -89,7 +89,7 @@ namespace Unity.AI.MLAgents
             }
             else
             {
-                var s = world.DiscreteActuators.Slice(0, totalCount * world.ActionSize).SliceConvert<T>();
+                var s = m_World.DiscreteActuators.Slice(0, totalCount * m_World.ActionSize).SliceConvert<T>();
                 for (int i = 0; i < totalCount; i++)
                 {
                     s[i] = action;

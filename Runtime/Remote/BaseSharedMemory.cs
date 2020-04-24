@@ -7,12 +7,12 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace Unity.AI.MLAgents
 {
-    unsafe internal class BaseSharedMem
+    unsafe internal class BaseSharedMemory
     {
         private const string k_Directory = "ml-agents";
-        private MemoryMappedViewAccessor accessor;
-        private IntPtr accessorPointer;
-        private string filePath;
+        private MemoryMappedViewAccessor m_Accessor;
+        private IntPtr m_AccessorPointer;
+        private string m_FilePath;
 
         /// <summary>
         /// A bare bone shared memory wrapper that opens or create a new shared
@@ -24,40 +24,40 @@ namespace Unity.AI.MLAgents
         /// And error will be thrown if the file already exists.</param>
         /// <param name="size"> The size of the file to be created (will be ignored if
         /// <see cref="createFile"/> is true.</param>
-        public BaseSharedMem(string fileName, bool createFile, int size = 0)
+        public BaseSharedMemory(string fileName, bool createFile, int size = 0)
         {
             var directoryPath = Path.Combine(Path.GetTempPath(), k_Directory);
             if (!Directory.Exists(directoryPath))
             {
                 Directory.CreateDirectory(directoryPath);
             }
-            filePath = Path.Combine(directoryPath, fileName);
+            m_FilePath = Path.Combine(directoryPath, fileName);
             if (createFile)
             {
-                if (File.Exists(filePath))
+                if (File.Exists(m_FilePath))
                 {
-                    throw new MLAgentsException($"The file {filePath} already exists");
+                    throw new MLAgentsException($"The file {m_FilePath} already exists");
                 }
-                using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                using (var fs = new FileStream(m_FilePath, FileMode.Create, FileAccess.Write))
                 {
                     fs.Write(new byte[size], 0, size);
                 }
             }
-            long length = new System.IO.FileInfo(filePath).Length;
+            long length = new System.IO.FileInfo(m_FilePath).Length;
             var mmf = MemoryMappedFile.CreateFromFile(
-                File.Open(filePath, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite),
+                File.Open(m_FilePath, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite),
                 null,
                 length,
                 MemoryMappedFileAccess.ReadWrite,
                 HandleInheritability.None,
                 false
             );
-            accessor = mmf.CreateViewAccessor(0, length, MemoryMappedFileAccess.ReadWrite);
+            m_Accessor = mmf.CreateViewAccessor(0, length, MemoryMappedFileAccess.ReadWrite);
             mmf.Dispose();
 
             byte* ptr = (byte*)0;
-            accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref ptr);
-            accessorPointer = new IntPtr(ptr);
+            m_Accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref ptr);
+            m_AccessorPointer = new IntPtr(ptr);
         }
 
         /// <summary>
@@ -68,7 +68,7 @@ namespace Unity.AI.MLAgents
         /// <returns></returns>
         public int GetInt(ref int offset)
         {
-            var result =  accessor.ReadInt32(offset);
+            var result =  m_Accessor.ReadInt32(offset);
             offset += 4;
             return result;
         }
@@ -81,7 +81,7 @@ namespace Unity.AI.MLAgents
         /// <returns></returns>
         public float GetFloat(ref int offset)
         {
-            var result = accessor.ReadSingle(offset);
+            var result = m_Accessor.ReadSingle(offset);
             offset += 4;
             return result;
         }
@@ -94,7 +94,7 @@ namespace Unity.AI.MLAgents
         /// <returns></returns>
         public bool GetBool(ref int offset)
         {
-            var result = accessor.ReadBoolean(offset);
+            var result = m_Accessor.ReadBoolean(offset);
             offset += 1;
             return result;
         }
@@ -110,10 +110,10 @@ namespace Unity.AI.MLAgents
         /// <returns></returns>
         public string GetString(ref int offset)
         {
-            var length = accessor.ReadSByte(offset);
+            var length = m_Accessor.ReadSByte(offset);
             var bytes = new byte[length];
             offset += 1;
-            accessor.ReadArray(offset, bytes, 0, length);
+            m_Accessor.ReadArray(offset, bytes, 0, length);
             offset += length;
             return Encoding.ASCII.GetString(bytes);
         }
@@ -129,7 +129,7 @@ namespace Unity.AI.MLAgents
         /// </summary>
         public void GetArray<T>(ref int offset, NativeArray<T> array, int length) where T : struct
         {
-            IntPtr src = IntPtr.Add(accessorPointer, offset);
+            IntPtr src = IntPtr.Add(m_AccessorPointer, offset);
             IntPtr dst = new IntPtr(array.GetUnsafePtr());
             Buffer.MemoryCopy(src.ToPointer(), dst.ToPointer(), length, length);
             offset += length;
@@ -145,7 +145,7 @@ namespace Unity.AI.MLAgents
         public byte[] GetBytes(ref int offset, int length)
         {
             var result = new byte[length];
-            accessor.ReadArray(offset, result, 0, length);
+            m_Accessor.ReadArray(offset, result, 0, length);
             offset += length;
             return result;
         }
@@ -157,7 +157,7 @@ namespace Unity.AI.MLAgents
         /// <returns></returns>
         public int GetInt(int offset)
         {
-            return accessor.ReadInt32(offset);
+            return m_Accessor.ReadInt32(offset);
         }
 
         /// <summary>
@@ -167,7 +167,7 @@ namespace Unity.AI.MLAgents
         /// <returns></returns>
         public float GetFloat(int offset)
         {
-            return accessor.ReadSingle(offset);
+            return m_Accessor.ReadSingle(offset);
         }
 
         /// <summary>
@@ -177,7 +177,7 @@ namespace Unity.AI.MLAgents
         /// <returns></returns>
         public bool GetBool(int offset)
         {
-            return accessor.ReadBoolean(offset);
+            return m_Accessor.ReadBoolean(offset);
         }
 
         /// <summary>
@@ -190,10 +190,10 @@ namespace Unity.AI.MLAgents
         /// <returns></returns>
         public string GetString(int offset)
         {
-            var length = accessor.ReadSByte(offset);
+            var length = m_Accessor.ReadSByte(offset);
             var bytes = new byte[length];
             offset +=  1;
-            accessor.ReadArray(offset, bytes, 0, length);
+            m_Accessor.ReadArray(offset, bytes, 0, length);
             return Encoding.ASCII.GetString(bytes);
         }
 
@@ -207,7 +207,7 @@ namespace Unity.AI.MLAgents
         /// </summary>
         public void GetArray<T>(int offset, NativeArray<T> array, int length) where T : struct
         {
-            IntPtr src = IntPtr.Add(accessorPointer, offset);
+            IntPtr src = IntPtr.Add(m_AccessorPointer, offset);
             IntPtr dst = new IntPtr(array.GetUnsafePtr());
             Buffer.MemoryCopy(src.ToPointer(), dst.ToPointer(), length, length);
         }
@@ -223,7 +223,7 @@ namespace Unity.AI.MLAgents
             var result = new byte[length];
             if (length > 0)
             {
-                accessor.ReadArray(offset, result, 0, length);
+                m_Accessor.ReadArray(offset, result, 0, length);
             }
             return result;
         }
@@ -236,7 +236,7 @@ namespace Unity.AI.MLAgents
         /// <returns> The offset right after the written value.</returns>
         public int SetInt(int offset, int value)
         {
-            accessor.Write(offset, value);
+            m_Accessor.Write(offset, value);
             return offset + 4;
         }
 
@@ -248,7 +248,7 @@ namespace Unity.AI.MLAgents
         /// <returns> The offset right after the written value.</returns>
         public int SetFloat(int offset, float value)
         {
-            accessor.Write(offset, value);
+            m_Accessor.Write(offset, value);
             return offset + 4;
         }
 
@@ -260,7 +260,7 @@ namespace Unity.AI.MLAgents
         /// <returns> The offset right after the written value.</returns>
         public int SetBool(int offset, bool value)
         {
-            accessor.Write(offset, value);
+            m_Accessor.Write(offset, value);
             return offset + 1;
         }
 
@@ -276,9 +276,9 @@ namespace Unity.AI.MLAgents
         {
             var bytes = Encoding.ASCII.GetBytes(value);
             int length = bytes.Length;
-            accessor.Write(offset, (sbyte)length);
+            m_Accessor.Write(offset, (sbyte)length);
             offset += 1;
-            accessor.WriteArray(offset, bytes, 0, length);
+            m_Accessor.WriteArray(offset, bytes, 0, length);
             offset += length;
             return offset;
         }
@@ -293,7 +293,7 @@ namespace Unity.AI.MLAgents
         /// <returns> The offset right after the written value.</returns>
         public int SetArray<T>(int offset, NativeArray<T> array, int length) where T : struct
         {
-            IntPtr dst = IntPtr.Add(accessorPointer, offset);
+            IntPtr dst = IntPtr.Add(m_AccessorPointer, offset);
             IntPtr src = new IntPtr(array.GetUnsafePtr());
             Buffer.MemoryCopy(src.ToPointer(), dst.ToPointer(), length, length);
             return offset + length;
@@ -307,7 +307,7 @@ namespace Unity.AI.MLAgents
         /// <returns> The offset right after the written value.</returns>
         public int SetBytes(int offset, byte[] value)
         {
-            accessor.WriteArray(offset, value, 0, value.Length);
+            m_Accessor.WriteArray(offset, value, 0, value.Length);
             return offset + value.Length;
         }
 
@@ -317,15 +317,15 @@ namespace Unity.AI.MLAgents
         /// </summary>
         public void Close()
         {
-            if (accessor.CanWrite)
+            if (m_Accessor.CanWrite)
             {
-                accessor.SafeMemoryMappedViewHandle.ReleasePointer();
-                accessor.Dispose();
+                m_Accessor.SafeMemoryMappedViewHandle.ReleasePointer();
+                m_Accessor.Dispose();
             }
         }
 
         /// <summary>
-        /// Indicates wether the <see cref="BaseSharedMem"/> has write access to the file.
+        /// Indicates wether the <see cref="BaseSharedMemory"/> has write access to the file.
         /// If it does not, it means the accessor was closed or the file was deleted.
         /// </summary>
         /// <value></value>
@@ -333,7 +333,7 @@ namespace Unity.AI.MLAgents
         {
             get
             {
-                return accessor.CanWrite;
+                return m_Accessor.CanWrite;
             }
         }
 
@@ -343,7 +343,7 @@ namespace Unity.AI.MLAgents
         public void Delete()
         {
             Close();
-            File.Delete(filePath);
+            File.Delete(m_FilePath);
         }
     }
 }

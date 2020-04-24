@@ -7,25 +7,25 @@ namespace Unity.AI.MLAgents
 {
     internal class RemoteWorldProcessor : IWorldProcessor
     {
-        private MLAgentsWorld world;
-        private SharedMemoryCom com;
-        private string policyId;
+        private MLAgentsWorld m_World;
+        private SharedMemoryCommunicator m_Communicator;
+        private string m_PolicyId;
 
         public bool IsConnected {get {return true;}}
 
-        internal RemoteWorldProcessor(MLAgentsWorld world, string policyId, SharedMemoryCom com)
+        internal RemoteWorldProcessor(MLAgentsWorld world, string policyId, SharedMemoryCommunicator com)
         {
-            this.world = world;
-            this.com = com;
-            this.policyId = policyId;
+            this.m_World = world;
+            this.m_Communicator = com;
+            this.m_PolicyId = policyId;
         }
 
         public void ProcessWorld()
         {
-            com.WriteWorld(policyId, world);
-            com.SetUnityReady();
-            com.WaitForPython();
-            com.LoadWorld(policyId, world);
+            m_Communicator.WriteWorld(m_PolicyId, m_World);
+            m_Communicator.SetUnityReady();
+            m_Communicator.WaitForPython();
+            m_Communicator.LoadWorld(m_PolicyId, m_World);
         }
 
         public void Dispose()

@@ -13,13 +13,13 @@ namespace Unity.AI.MLAgents
     /// </summary>
     public struct EpisodeTermination
     {
-        private int index;
-        private MLAgentsWorld world;
+        private int m_Index;
+        private MLAgentsWorld m_World;
 
         internal EpisodeTermination(int index, MLAgentsWorld world)
         {
-            this.index = index;
-            this.world = world;
+            this.m_Index = index;
+            this.m_World = world;
         }
 
         /// <summary>
@@ -30,7 +30,7 @@ namespace Unity.AI.MLAgents
         /// <returns> The EpisodeTermination struct </returns>
         public EpisodeTermination SetReward(float r)
         {
-            world.TerminationRewards[index] = r;
+            m_World.TerminationRewards[m_Index] = r;
             return this;
         }
 
@@ -44,7 +44,7 @@ namespace Unity.AI.MLAgents
         {
             int inputSize = UnsafeUtility.SizeOf<T>() / sizeof(float);
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            int3 s = world.SensorShapes[sensorNumber];
+            int3 s = m_World.SensorShapes[sensorNumber];
             int expectedInputSize = s.x * math.max(1, s.y) * math.max(1, s.z);
             if (inputSize != expectedInputSize)
             {
@@ -52,9 +52,9 @@ namespace Unity.AI.MLAgents
                     $"Cannot set observation due to incompatible size of the input. Expected size : { expectedInputSize }, received size : { inputSize}");
             }
 #endif
-            int start = world.ObservationOffsets[sensorNumber];
-            start += inputSize * index;
-            var tmp = world.TerminationObs.Slice(start, inputSize).SliceConvert<T>();
+            int start = m_World.ObservationOffsets[sensorNumber];
+            start += inputSize * m_Index;
+            var tmp = m_World.TerminationObs.Slice(start, inputSize).SliceConvert<T>();
             tmp[0] = sensor;
             return this;
         }
@@ -69,7 +69,7 @@ namespace Unity.AI.MLAgents
         {
             int inputSize = obs.Length;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            int3 s = world.SensorShapes[sensorNumber];
+            int3 s = m_World.SensorShapes[sensorNumber];
             int expectedInputSize = s.x * math.max(1, s.y) * math.max(1, s.z);
             if (inputSize != expectedInputSize)
             {
@@ -77,9 +77,9 @@ namespace Unity.AI.MLAgents
                     $"Cannot set observation due to incompatible size of the input. Expected size : {expectedInputSize}, received size : { inputSize}");
             }
 #endif
-            int start = world.ObservationOffsets[sensorNumber];
-            start += inputSize * index;
-            world.TerminationObs.Slice(start, inputSize).CopyFrom(obs);
+            int start = m_World.ObservationOffsets[sensorNumber];
+            start += inputSize * m_Index;
+            m_World.TerminationObs.Slice(start, inputSize).CopyFrom(obs);
             return this;
         }
     }
