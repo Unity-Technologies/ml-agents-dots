@@ -149,7 +149,7 @@ namespace Unity.AI.MLAgents
 
             if (path == null)
             {
-                Debug.Log("Could not connect");
+                Debug.Log("ML-Agents could not connect with the Python training process.");
             }
             else
             {
