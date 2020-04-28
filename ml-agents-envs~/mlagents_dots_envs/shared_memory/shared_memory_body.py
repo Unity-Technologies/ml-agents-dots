@@ -102,7 +102,7 @@ class SharedMemoryBody(BaseSharedMemory):
             agent_id=self.get_ndarray(
                 offsets.decision_agent_id_offset, (n_agents), np.int32
             ),
-            action_mask=None,  # TODO
+            action_mask=self._generate_action_masks(offsets, n_agents),
         )
 
     def get_terminal_steps(self, key: str) -> TerminalSteps:
@@ -158,4 +158,17 @@ class SharedMemoryBody(BaseSharedMemory):
             if action_type == ActionType.DISCRETE:
                 action_shape = offsets.discrete_branches
             result[key] = BehaviorSpec(observation_shape, action_type, action_shape)
+        return result
+
+    def _generate_action_masks(
+        self, offsets: RLDataOffsets, n_agents: int
+    ) -> np.ndarray:
+        if offsets.is_action_continuous:
+            return None
+        branches = offsets.discrete_branches
+        start = offsets.masks_offset
+        result: List[np.ndarray] = []
+        for branch_size in branches:
+            result += [self.get_ndarray(start, (n_agents, branch_size), np.bool)]
+            start += offsets.max_n_agents * branch_size
         return result
