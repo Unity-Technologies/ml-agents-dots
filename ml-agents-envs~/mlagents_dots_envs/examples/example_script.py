@@ -1,60 +1,67 @@
 import numpy as np
-
+import argparse
 from mlagents_dots_envs.unity_environment import UnityEnvironment
-
 from mlagents_envs.side_channel.engine_configuration_channel import (
     EngineConfigurationChannel,
 )
 from mlagents_envs.side_channel.environment_parameters_channel import (
     EnvironmentParametersChannel,
 )
-
 from mlagents_envs.logging_util import set_log_level, DEBUG
+
 
 set_log_level(DEBUG)
 
-sc = EngineConfigurationChannel()
-sc2 = EnvironmentParametersChannel()
-env = UnityEnvironment(side_channels=[sc, sc2])
-sc.set_configuration_parameters()
+
+def perform_steps(n):
+    for _ in range(n):
+        s = ""
+        for name in env.get_behavior_names():
+            s += (
+                name
+                + " : "
+                + str(len(env.get_steps(name)[0]))
+                + " : "
+                + str(len(env.get_steps(name)[1]))
+                + "|"
+            )
+            env.set_actions(
+                name,
+                np.ones(
+                    (
+                        len(env.get_steps(name)[0]),
+                        env.get_behavior_spec(name).action_size,
+                    )
+                ),
+            )
+        print(s)
+        env.step()
 
 
-for _ in range(10):
-    s = ""
-    for name in env.get_behavior_names():
-        s += (
-            name
-            + " : "
-            + str(len(env.get_steps(name)[0]))
-            + " : "
-            + str(len(env.get_steps(name)[1]))
-            + "|"
-        )
-        env.set_actions(name, np.ones((len(env.get_steps(name)[0]), 2)))
-    print(s)
-    env.step()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--env", default=None, type=str, help="The width of the image to display."
+    )
+    args = parser.parse_args()
 
-print(env.get_steps("Ball_DOTS")[0].obs[0])
+    sc = EngineConfigurationChannel()
+    sc2 = EnvironmentParametersChannel()
+    env = UnityEnvironment(file_name=args.env, side_channels=[sc, sc2])
+    sc.set_configuration_parameters()
 
-print("RESET")
-env.reset()
+    print("RESET")
+    env.reset()
 
+    perform_steps(100)
 
-sc2.set_float_parameter("test", 2)
-sc2.set_float_parameter("test2", 2)
-sc2.set_float_parameter("test3", 2)
+    print("RESET")
+    env.reset()
 
-for _ in range(100):
-    s = ""
-    for name in env.get_behavior_names():
-        s += (
-            name
-            + " : "
-            + str(len(env.get_steps(name)[0]))
-            + " : "
-            + str(len(env.get_steps(name)[1]))
-            + "|"
-        )
-    print(s)
-    env.step()
-env.close()
+    sc2.set_float_parameter("test", 2)
+    sc2.set_float_parameter("test2", 2)
+    sc2.set_float_parameter("test3", 2)
+
+    perform_steps(100)
+
+    env.close()

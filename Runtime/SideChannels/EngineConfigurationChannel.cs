@@ -46,8 +46,9 @@ namespace Unity.AI.MLAgents.SideChannels
                     break;
                 case ConfigurationType.TimeScale:
                     var timeScale = msg.ReadFloat32();
-                    timeScale = Mathf.Clamp(timeScale, 0.01f, 100f);
+                    timeScale = Mathf.Clamp(timeScale, 1f, 100f);
                     Time.timeScale = timeScale;
+                    SetSimulationGroupTime();
                     break;
                 case ConfigurationType.TargetFrameRate:
                     var targetFrameRate = msg.ReadInt32();
@@ -56,22 +57,22 @@ namespace Unity.AI.MLAgents.SideChannels
                 case ConfigurationType.CaptureFrameRate:
                     var captureFrameRate = msg.ReadInt32();
                     Time.captureFramerate = captureFrameRate;
-
-                    // Need to fix the deltaTime of the Simulation group
-                    var simGroup = World.DefaultGameObjectInjectionWorld.GetOrCreateSystem<SimulationSystemGroup>();
-#if UNITY_EDITOR
-                    // When using the Unity Editor, we do not increase number of updates
-                    // This is to ensure the user still has control over the editor
-                    TimeUtils.EnableFixedRateWithCatchUpAndMultiplier(simGroup, 1 / 60f, 1f);
-#else
-                    TimeUtils.EnableFixedRateWithCatchUp(simGroup, 1 / 60f, 100f);
-#endif
+                    SetSimulationGroupTime();
                     break;
                 default:
                     Debug.LogWarning(
                         "Unknown engine configuration received from Python. Make sure" +
                         " your Unity and Python versions are compatible.");
                     break;
+            }
+        }
+
+        private void SetSimulationGroupTime()
+        {
+            var simGroup = World.DefaultGameObjectInjectionWorld.GetOrCreateSystem<SimulationSystemGroup>();
+            if (Time.captureDeltaTime > 0)
+            {
+                TimeUtils.EnableFixedRateWithRepeat(simGroup, 1 / Time.captureDeltaTime, (int)Time.timeScale + 1);
             }
         }
     }

@@ -114,6 +114,18 @@ namespace Unity.AI.MLAgents
             get { return m_StatsRecorder; }
         }
 
+        /// <summary>
+        /// Reports whether or not the communicator is on.
+        /// </summary>
+        /// <seealso cref="ICommunicator"/>
+        /// <value>
+        /// <c>True</c>, if communicator is on, <c>false</c> otherwise.
+        /// </value>
+        public bool IsCommunicatorOn
+        {
+            get { return m_Communicator != null; }
+        }
+
         private void LazyInitialize()
         {
             if (!m_Initialized)

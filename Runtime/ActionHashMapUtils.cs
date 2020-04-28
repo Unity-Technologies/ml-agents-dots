@@ -6,7 +6,7 @@ namespace Unity.AI.MLAgents
 {
     // TODO : A potential API to retrieve the actions on the main thread for projects allergic to jobs ?
     // TODO : Make faster and parallel
-    internal static class ActionHashMapUtils
+    public static class ActionHashMapUtils
     {
         /// <summary>
         /// Retrieves the action data for a world in puts it into a HashMap.

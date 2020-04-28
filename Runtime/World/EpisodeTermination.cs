@@ -60,6 +60,35 @@ namespace Unity.AI.MLAgents
         }
 
         /// <summary>
+        /// Sets the observation for a termination request using a categorical value.
+        /// </summary>
+        /// <param name="sensorNumber"> The index of the observation as provided when creating the associated MLAgentsWorld </param>
+        /// <param name="sensor"> An integer containing the index of the categorical observation </param>
+        /// <returns> The EpisodeTermination struct </returns>
+        public EpisodeTermination SetObservation(int sensorNumber, int sensor)
+        {
+            int3 s = m_World.SensorShapes[sensorNumber];
+            int maxValue = s.x;
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+
+            if (s.y != 0 || s.z != 0)
+            {
+                throw new MLAgentsException(
+                    $"Categorical observation must have a shape (max_category, 0, 0)");
+            }
+            if (sensor > maxValue)
+            {
+                throw new MLAgentsException(
+                    $"Categorical observation is out of bound for observation {sensorNumber} with maximum {maxValue} (received {sensor}.");
+            }
+#endif
+            int start = m_World.ObservationOffsets[sensorNumber];
+            start += maxValue * m_Index;
+            m_World.TerminationObs[start + sensor] = 1.0f;
+            return this;
+        }
+
+        /// <summary>
         /// Sets the last observation the Agent perceives before ending the episode.
         /// </summary>
         /// <param name="sensorNumber"> The index of the observation as provided when creating the associated MLAgentsWorld </param>

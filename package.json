@@ -19,16 +19,10 @@
       "path":"Samples~/3DBall"
     },
     {
-      "displayName":"Simple System",
-      "description": "A System that uses a heuristic for simple decisions",
+      "displayName":"Basic",
+      "description": "Example of a MonoBehavior example integrated with the package",
       "createSeparatePackage": false,
-      "path":"Samples~/SimpleSystem"
-    },
-    {
-      "displayName":"Space Magic",
-      "description": "Simple environment where the motion of floating spheres is controlled by a Heuristic",
-      "createSeparatePackage": false,
-      "path":"Samples~/SpaceMagic"
+      "path":"Samples~/Basic"
     },
     {
       "displayName":"String Side Channel",

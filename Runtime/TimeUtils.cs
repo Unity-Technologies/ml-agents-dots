@@ -7,16 +7,14 @@ namespace Unity.AI.MLAgents
     {
         /// <summary>
         /// Configure the given ComponentSystemGroup to update at a fixed timestep, given by timeStep.
-        /// If the interval between the current time and the last update is bigger than the timestep
-        /// multiplied by the time scale,
-        /// the group's systems will be updated more than once.
+        /// The group will be updated multiple times.
         /// </summary>
         /// <param name="group">The group whose UpdateCallback will be configured with a fixed time step update call</param>
         /// <param name="timeStep">The fixed time step (in seconds)</param>
-        /// <param name="timeScale">How much time passes in the group compared to other systems</param>
-        public static void EnableFixedRateWithCatchUpAndMultiplier(ComponentSystemGroup group, float timeStep, float timeScale)
+        /// <param name="numberOfRepeat">How many times the system will be updated per updates</param>
+        public static void EnableFixedRateWithRepeat(ComponentSystemGroup group, float timeStep, int numberOfRepeat)
         {
-            var manager = new FixedRateTimeScaleCatchUpAndMultiplierManager(timeStep, timeScale);
+            var manager = new FixedRateRepeatManager(timeStep, numberOfRepeat);
             group.UpdateCallback = manager.UpdateCallback;
         }
 
@@ -30,19 +28,20 @@ namespace Unity.AI.MLAgents
         }
     }
 
-
-    internal class FixedRateTimeScaleCatchUpAndMultiplierManager
+    internal class FixedRateRepeatManager
     {
-        protected float m_TimeScale;
+        protected int m_NumberOfRepeat;
+        protected int m_CurrentRepeat;
         protected float m_FixedTimeStep;
         protected double m_LastFixedUpdateTime;
         protected int m_FixedUpdateCount;
         protected bool m_DidPushTime;
 
-        internal FixedRateTimeScaleCatchUpAndMultiplierManager(float fixedStep, float timeScale)
+        internal FixedRateRepeatManager(float fixedStep, int numberOfRepeat)
         {
             m_FixedTimeStep = fixedStep;
-            m_TimeScale = timeScale;
+            m_NumberOfRepeat = numberOfRepeat;
+            m_CurrentRepeat = 0;
         }
 
         internal bool UpdateCallback(ComponentSystemGroup group)
@@ -53,18 +52,20 @@ namespace Unity.AI.MLAgents
                 group.World.PopTime();
             }
 
-            var elapsedTime = group.World.Time.ElapsedTime * m_TimeScale;
+            var elapsedTime = group.World.Time.ElapsedTime;
             if (m_LastFixedUpdateTime == 0.0)
                 m_LastFixedUpdateTime = elapsedTime - m_FixedTimeStep;
 
-            if (elapsedTime - m_LastFixedUpdateTime >= m_FixedTimeStep)
+            if (m_CurrentRepeat < m_NumberOfRepeat)
             {
                 // Note that m_FixedTimeStep of 0.0f will never update
                 m_LastFixedUpdateTime += m_FixedTimeStep;
                 m_FixedUpdateCount++;
+                m_CurrentRepeat++;
             }
             else
             {
+                m_CurrentRepeat = 0;
                 m_DidPushTime = false;
                 return false;
             }
