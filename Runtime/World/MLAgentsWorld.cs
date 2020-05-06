@@ -38,9 +38,9 @@ namespace Unity.AI.MLAgents
         [NativeDisableParallelForRestriction][WriteOnly] internal NativeArray<bool> TerminationStatus;
 
         //https://forum.unity.com/threads/is-it-okay-to-read-a-nativecounter-concurrents-value-in-a-parallel-job.533037/
-        [NativeDisableParallelForRestriction] internal NativeCounter DecisionCounter;
-        [NativeDisableParallelForRestriction] internal NativeCounter TerminationCounter;
-        [NativeDisableParallelForRestriction] internal NativeCounter ActionCounter;
+        [NativeDisableParallelForRestriction] internal Counter DecisionCounter;
+        [NativeDisableParallelForRestriction] internal Counter TerminationCounter;
+        [NativeDisableParallelForRestriction] internal Counter ActionCounter;
 
         [NativeDisableParallelForRestriction] internal NativeArray<float> ContinuousActuators;
         [NativeDisableParallelForRestriction] internal NativeArray<int> DiscreteActuators;
@@ -107,13 +107,13 @@ namespace Unity.AI.MLAgents
                 nMasks = DiscreteActionBranches.Sum();
             }
             DecisionActionMasks = new NativeArray<bool>(maximumNumberAgents * nMasks, Allocator.Persistent);
-            DecisionCounter = new NativeCounter(Allocator.Persistent);
+            DecisionCounter = new Counter(Allocator.Persistent);
 
             TerminationObs = new NativeArray<float>(currentOffset, Allocator.Persistent, NativeArrayOptions.ClearMemory);
             TerminationRewards = new NativeArray<float>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.ClearMemory);
             TerminationAgentIds = new NativeArray<int>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             TerminationStatus = new NativeArray<bool>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.ClearMemory);
-            TerminationCounter = new NativeCounter(Allocator.Persistent);
+            TerminationCounter = new Counter(Allocator.Persistent);
 
             int daSize = 0;
             int caSize = 0;
@@ -126,7 +126,7 @@ namespace Unity.AI.MLAgents
                 caSize = ActionSize;
             }
 
-            ActionCounter = new NativeCounter(Allocator.Persistent);
+            ActionCounter = new Counter(Allocator.Persistent);
 
             ContinuousActuators = new NativeArray<float>(maximumNumberAgents * caSize, Allocator.Persistent, NativeArrayOptions.ClearMemory);
             DiscreteActuators = new NativeArray<int>(maximumNumberAgents * daSize, Allocator.Persistent, NativeArrayOptions.ClearMemory);
@@ -199,7 +199,7 @@ namespace Unity.AI.MLAgents
                 throw new MLAgentsException($"Invalid operation, cannot request a decision on a non-initialized MLAgentsWorld");
             }
 #endif
-            var index = DecisionCounter.ToConcurrent().Increment() - 1;
+            var index = DecisionCounter.Increment() - 1;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (index > DecisionAgentIds.Length)
             {
@@ -227,7 +227,7 @@ namespace Unity.AI.MLAgents
                 throw new MLAgentsException($"Invalid operation, cannot end episode on a non-initialized MLAgentsWorld");
             }
 #endif
-            var index = TerminationCounter.ToConcurrent().Increment() - 1;
+            var index = TerminationCounter.Increment() - 1;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (index > TerminationAgentIds.Length)
             {
@@ -255,7 +255,7 @@ namespace Unity.AI.MLAgents
                 throw new MLAgentsException($"Invalid operation, cannot end episode on a non-initialized MLAgentsWorld");
             }
 #endif
-            var index = TerminationCounter.ToConcurrent().Increment() - 1;
+            var index = TerminationCounter.Increment() - 1;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (index > TerminationAgentIds.Length)
             {

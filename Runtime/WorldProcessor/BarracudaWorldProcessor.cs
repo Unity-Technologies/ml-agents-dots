@@ -93,6 +93,9 @@ namespace Unity.AI.MLAgents
         private IWorker m_Engine;
         private const bool k_Verbose = false;
 
+        int obsSize;
+        float[] vectorObsArr;
+
         public bool IsConnected {get {return false;}}
 
         internal BarracudaWorldProcessor(MLAgentsWorld world, NNModel model, InferenceDevice inferenceDevice)
@@ -108,6 +111,12 @@ namespace Unity.AI.MLAgents
 
             m_Engine = WorkerFactory.CreateWorker(
                 executionDevice, m_BarracudaModel, k_Verbose);
+            for (int i = 0; i < m_World.SensorShapes.Length; i++)
+            {
+                if (m_World.SensorShapes[i].GetDimensions() == 1)
+                    obsSize += m_World.SensorShapes[i].GetTotalTensorSize();
+            }
+            vectorObsArr = new float[m_World.DecisionAgentIds.Length * obsSize];
         }
 
         public void ProcessWorld()
@@ -116,17 +125,10 @@ namespace Unity.AI.MLAgents
             // FOR VECTOR OBS ONLY
             // For Continuous control only
             // No LSTM
-            int obsSize = 0;
-            for (int i = 0; i < m_World.SensorShapes.Length; i++)
-            {
-                if (m_World.SensorShapes[i].GetDimensions() == 1)
-                    obsSize += m_World.SensorShapes[i].GetTotalTensorSize();
-            }
 
             var input = new System.Collections.Generic.Dictionary<string, Tensor>();
 
-            var vectorObsArr = new float[m_World.DecisionCounter.Count * obsSize];
-            var sensorData = m_World.DecisionObs.ToArray();
+            // var sensorData = m_World.DecisionObs.ToArray();
             int sensorOffset = 0;
             int vecObsOffset = 0;
             foreach (var shape in m_World.SensorShapes)
@@ -135,7 +137,16 @@ namespace Unity.AI.MLAgents
                 {
                     for (int i = 0; i < m_World.DecisionCounter.Count; i++)
                     {
-                        Array.Copy(sensorData, sensorOffset + i * shape.GetTotalTensorSize(), vectorObsArr, i * obsSize + vecObsOffset, shape.GetTotalTensorSize());
+                        fixed(void* arrPtr = vectorObsArr)
+                        {
+                            UnsafeUtility.MemCpy(
+                                (byte*)arrPtr + 4 * i * obsSize + 4 * vecObsOffset,
+                                (byte*)m_World.DecisionObs.GetUnsafePtr() + 4 * sensorOffset + 4 * i * shape.GetTotalTensorSize(),
+                                shape.GetTotalTensorSize() * 4
+                            );
+                        }
+
+                        // Array.Copy(sensorData, sensorOffset + i * shape.GetTotalTensorSize(), vectorObsArr, i * obsSize + vecObsOffset, shape.GetTotalTensorSize());
                     }
                     sensorOffset += m_World.DecisionAgentIds.Length * shape.GetTotalTensorSize();
                     vecObsOffset += shape.GetTotalTensorSize();
@@ -160,9 +171,17 @@ namespace Unity.AI.MLAgents
                 case ActionType.CONTINUOUS:
                     int count = m_World.DecisionCounter.Count * m_World.ActionSize;
                     var wholeData = actuatorT.data.Download(count);
-                    var dest = new float[count];
-                    Array.Copy(wholeData, dest, count);
-                    m_World.ContinuousActuators.Slice(0, count).CopyFrom(dest);
+                    // var dest = new float[count];
+                    // Array.Copy(wholeData, dest, count);
+                    // m_World.ContinuousActuators.Slice(0, count).CopyFrom(dest);
+                    fixed(void* arrPtr = wholeData)
+                    {
+                        UnsafeUtility.MemCpy(
+                            m_World.ContinuousActuators.GetUnsafePtr(),
+                            arrPtr,
+                            count * 4
+                        );
+                    }
                     break;
                 case ActionType.DISCRETE:
                     throw new MLAgentsException("TODO : Inference only works for continuous control and vector obs");
