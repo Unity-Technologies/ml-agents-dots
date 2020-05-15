@@ -16,7 +16,7 @@ set_log_level(DEBUG)
 def perform_steps(n):
     for _ in range(n):
         s = ""
-        for name in env.get_behavior_names():
+        for name, specs in env.behavior_specs.items():
             s += (
                 name
                 + " : "
@@ -26,13 +26,7 @@ def perform_steps(n):
                 + "|"
             )
             env.set_actions(
-                name,
-                np.ones(
-                    (
-                        len(env.get_steps(name)[0]),
-                        env.get_behavior_spec(name).action_size,
-                    )
-                ),
+                name, np.ones((len(env.get_steps(name)[0]), specs.action_size))
             )
         print(s)
         env.step()

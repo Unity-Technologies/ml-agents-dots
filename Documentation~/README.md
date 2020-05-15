@@ -21,7 +21,7 @@ Please note that this package is available as a preview, so it is not ready for 
 
 ### Install ML-Agents DOTS Python code
  * Clone this repository in a new folder
- * Checkout release-0.2.0 
+ * Checkout release-0.2.0
  ```
  git clone --branch release-0.2.0 https://github.com/Unity-Technologies/ml-agents-dots.git
  ```

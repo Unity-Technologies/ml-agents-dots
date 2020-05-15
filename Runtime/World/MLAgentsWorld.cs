@@ -2,6 +2,9 @@ using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Entities;
 using System;
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+using Unity.Collections.LowLevel.Unsafe;
+#endif
 
 namespace Unity.AI.MLAgents
 {
@@ -46,6 +49,11 @@ namespace Unity.AI.MLAgents
         [NativeDisableParallelForRestriction] internal NativeArray<int> DiscreteActuators;
         [NativeDisableParallelForRestriction] internal NativeArray<Entity> ActionAgentEntityIds; // Keep track of the Ids for the next action step
 
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+        internal AtomicSafetyHandle       m_Safety;
+        [NativeSetClassTypeToNullOnSchedule]
+        internal DisposeSentinel          m_DisposeSentinel;
+#endif
 
         /// <summary>
         /// Creates a data container used to write data needed for decisions and retrieve action data.
@@ -131,6 +139,10 @@ namespace Unity.AI.MLAgents
             ContinuousActuators = new NativeArray<float>(maximumNumberAgents * caSize, Allocator.Persistent, NativeArrayOptions.ClearMemory);
             DiscreteActuators = new NativeArray<int>(maximumNumberAgents * daSize, Allocator.Persistent, NativeArrayOptions.ClearMemory);
             ActionAgentEntityIds = new NativeArray<Entity>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            DisposeSentinel.Create(out m_Safety, out m_DisposeSentinel, 0, Allocator.Persistent);
+#endif
         }
 
         internal void ResetActionsCounter()
@@ -160,6 +172,9 @@ namespace Unity.AI.MLAgents
             {
                 return;
             }
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            DisposeSentinel.Dispose(ref m_Safety, ref m_DisposeSentinel);
+#endif
             SensorShapes.Dispose();
             DiscreteActionBranches.Dispose();
             ObservationOffsets.Dispose();

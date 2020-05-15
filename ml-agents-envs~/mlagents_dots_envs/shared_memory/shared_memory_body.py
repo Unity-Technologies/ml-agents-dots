@@ -124,7 +124,7 @@ class SharedMemoryBody(BaseSharedMemory):
             agent_id=self.get_ndarray(
                 offsets.termination_agent_id_offset, (n_agents), np.int32
             ),
-            max_step=self.get_ndarray(
+            interrupted=self.get_ndarray(
                 offsets.termination_status_offset, (n_agents), np.bool
             ),
         )

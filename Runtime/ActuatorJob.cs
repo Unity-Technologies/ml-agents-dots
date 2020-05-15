@@ -123,6 +123,7 @@ namespace Unity.AI.MLAgents
                     jobReflectionData = JobsUtility.CreateJobReflectionData(typeof(ActionEventJobData<T>), typeof(T), JobType.Single, (ExecuteJobFunction)Execute);
                 return jobReflectionData;
             }
+
             #endregion
 
 
@@ -148,7 +149,6 @@ namespace Unity.AI.MLAgents
                         });
                     }
                 }
-
                 // Discrete Case
                 else
                 {

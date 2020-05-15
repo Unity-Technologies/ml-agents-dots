@@ -13,9 +13,8 @@ from mlagents_envs.base_env import DecisionSteps, TerminalSteps, BehaviorSpec
 
 class SharedMemoryCommunicator:
     FILE_DEFAULT = "default"
-    MAX_TIMEOUT_IN_SECONDS = 30
 
-    def __init__(self, use_default: bool = False):
+    def __init__(self, use_default: bool = False, timeout_wait: int = 60):
         if use_default:
             file_name = self.FILE_DEFAULT
         else:
@@ -32,6 +31,7 @@ class SharedMemoryCommunicator:
             side_channel_buffer_size=4,
             rl_data_buffer_size=0,
         )
+        self._timeout_wait = timeout_wait
 
     @property
     def communicator_id(self):
@@ -81,7 +81,7 @@ class SharedMemoryCommunicator:
         t0 = time.time()
         while self._master_mem.blocked and self._master_mem.active:
             if iteration % check_timeout_iteration == 0:
-                if time.time() - t0 > self.MAX_TIMEOUT_IN_SECONDS:
+                if time.time() - t0 > self._timeout_wait:
                     self.close()
                     self._master_mem.delete()
                     raise TimeoutError("The Unity Environment took too long to respond")
