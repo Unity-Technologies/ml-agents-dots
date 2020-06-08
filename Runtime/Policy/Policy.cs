@@ -9,14 +9,14 @@ using Unity.Collections.LowLevel.Unsafe;
 namespace Unity.AI.MLAgents
 {
     /// <summary>
-    /// MLAgentsWorld is a data container on which the user requests decisions.
+    /// Policy is a data container on which the user requests decisions.
     /// </summary>
-    public struct MLAgentsWorld : IDisposable
+    public struct Policy : IDisposable
     {
         /// <summary>
-        /// Indicates if the MLAgentsWorld has been instantiated
+        /// Indicates if the Policy has been instantiated
         /// </summary>
-        /// <value> True if MLAgentsWorld was instantiated, False otherwise</value>
+        /// <value> True if the Policy was instantiated, False otherwise</value>
         public bool IsCreated
         {
             get { return DecisionAgentIds.IsCreated;}
@@ -60,13 +60,13 @@ namespace Unity.AI.MLAgents
         /// </summary>
         /// <param name="maximumNumberAgents"> The maximum number of decisions that can be requested between each MLAgentsSystem update </param>
         /// <param name="obsShapes"> An array of int3 corresponding to the shape of the expected observations (one int3 per observation) </param>
-        /// <param name="actionType"> An ActionType enum (DISCRETE / CONTINUOUS) specifying the type of actions the MLAgentsWorld will produce </param>
-        /// <param name="actionSize"> The number of actions the MLAgentsWorld is expected to generate for each decision.
+        /// <param name="actionType"> An ActionType enum (DISCRETE / CONTINUOUS) specifying the type of actions the Policy will produce </param>
+        /// <param name="actionSize"> The number of actions the Policy is expected to generate for each decision.
         ///  - If CONTINUOUS ActionType : The number of floats the action contains
         ///  - If DISCRETE ActionType : The number of branches (integer actions) the action contains </param>
         /// <param name="discreteActionBranches"> For DISCRETE ActionType only : an array of int specifying the number of possible int values each
         /// action branch has. (Must be of the same length as actionSize </param>
-        public MLAgentsWorld(
+        public Policy(
             int maximumNumberAgents,
             int3[] obsShapes,
             ActionType actionType,
@@ -164,7 +164,7 @@ namespace Unity.AI.MLAgents
         }
 
         /// <summary>
-        /// Dispose of the MLAgentsWorld.
+        /// Dispose of the Policy.
         /// </summary>
         public void Dispose()
         {
@@ -199,7 +199,7 @@ namespace Unity.AI.MLAgents
         }
 
         /// <summary>
-        /// Requests a decision for a specific Entity to the MLAgentsWorld. The DecisionRequest
+        /// Requests a decision for a specific Entity to the Policy. The DecisionRequest
         /// struct this method returns can be used to provide data necessary for the Agent to
         /// take a decision for the Entity.
         /// </summary>
@@ -211,7 +211,7 @@ namespace Unity.AI.MLAgents
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (!IsCreated)
             {
-                throw new MLAgentsException($"Invalid operation, cannot request a decision on a non-initialized MLAgentsWorld");
+                throw new MLAgentsException($"Invalid operation, cannot request a decision on a non-initialized Policy");
             }
 #endif
             var index = DecisionCounter.Increment() - 1;
@@ -239,7 +239,7 @@ namespace Unity.AI.MLAgents
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (!IsCreated)
             {
-                throw new MLAgentsException($"Invalid operation, cannot end episode on a non-initialized MLAgentsWorld");
+                throw new MLAgentsException($"Invalid operation, cannot end episode on a non-initialized Policy");
             }
 #endif
             var index = TerminationCounter.Increment() - 1;
@@ -267,7 +267,7 @@ namespace Unity.AI.MLAgents
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (!IsCreated)
             {
-                throw new MLAgentsException($"Invalid operation, cannot end episode on a non-initialized MLAgentsWorld");
+                throw new MLAgentsException($"Invalid operation, cannot end episode on a non-initialized Policy");
             }
 #endif
             var index = TerminationCounter.Increment() - 1;

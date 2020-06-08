@@ -5,8 +5,8 @@ using UnityEngine;
 
 public class BasicAgent : MonoBehaviour
 {
-    public MLAgentsWorldSpecs BasicSpecs;
-    private MLAgentsWorld m_World;
+    public PolicySpecs BasicSpecs;
+    private Policy m_Policy;
     private Entity m_Entity;
 
     public float timeBetweenDecisionsAtInference;
@@ -33,8 +33,8 @@ public class BasicAgent : MonoBehaviour
     void Start()
     {
         m_Entity = World.DefaultGameObjectInjectionWorld.EntityManager.CreateEntity();
-        m_World = BasicSpecs.GetWorld();
-        m_World.RegisterWorldWithHeuristic<int>("BASIC", () => { return 2; });
+        m_Policy = BasicSpecs.GetPolicy();
+        m_Policy.RegisterPolicyWithHeuristic<int>("BASIC", () => { return 2; });
         Academy.Instance.OnEnvironmentReset += BeginEpisode;
         BeginEpisode();
     }
@@ -62,12 +62,12 @@ public class BasicAgent : MonoBehaviour
     void StepAgent()
     {
         // Request a Decision for all agents
-        m_World.RequestDecision(m_Entity)
+        m_Policy.RequestDecision(m_Entity)
             .SetObservation(0, m_Position)
             .SetReward(-0.01f);
 
         // Get the action
-        NativeHashMap<Entity, int> actions = m_World.GenerateActionHashMap<int>(Allocator.Temp);
+        NativeHashMap<Entity, int> actions = m_Policy.GenerateActionHashMap<int>(Allocator.Temp);
         int action = 0;
         actions.TryGetValue(m_Entity, out action);
 
@@ -87,7 +87,7 @@ public class BasicAgent : MonoBehaviour
         // See if the Agent terminated
         if (m_Position == k_SmallGoalPosition)
         {
-            m_World.EndEpisode(m_Entity)
+            m_Policy.EndEpisode(m_Entity)
                 .SetObservation(0, m_Position)
                 .SetReward(0.1f);
             BeginEpisode();
@@ -95,7 +95,7 @@ public class BasicAgent : MonoBehaviour
 
         if (m_Position == k_LargeGoalPosition)
         {
-            m_World.EndEpisode(m_Entity)
+            m_Policy.EndEpisode(m_Entity)
                 .SetObservation(0, m_Position)
                 .SetReward(1f);
             BeginEpisode();
@@ -104,6 +104,6 @@ public class BasicAgent : MonoBehaviour
 
     void OnDestroy()
     {
-        m_World.Dispose();
+        m_Policy.Dispose();
     }
 }

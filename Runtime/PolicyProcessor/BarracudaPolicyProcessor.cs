@@ -21,23 +21,23 @@ namespace Unity.AI.MLAgents
         GPU = 1
     }
 
-    public static class BarracudaWorldProcessorRegistringExtension
+    public static class BarracudaPolicyProcessorRegistringExtension
     {
         /// <summary>
-        /// Registers the given MLAgentsWorld to the Academy with a Neural
+        /// Registers the given Policy to the Academy with a Neural
         /// Network Model. If the input model is null, a default inactive
         /// processor will be registered instead. Note that if the simulation
-        /// connects to Python, the Neural Network will be ignored and the world
+        /// connects to Python, the Neural Network will be ignored and the Policy
         /// will exchange data with Python instead.
         /// </summary>
-        /// <param name="world"> The MLAgentsWorld to register</param>
-        /// <param name="policyId"> The name of the world. This is useful for identification
+        /// <param name="policy"> The Policy to register</param>
+        /// <param name="policyId"> The name of the Policy. This is useful for identification
         /// and for training.</param>
         /// <param name="model"> The Neural Network model used by the processor</param>
         /// <param name="inferenceDevice"> The inference device specifying where to run inference
         /// (CPU or GPU)</param>
-        public static void RegisterWorldWithBarracudaModel(
-            this MLAgentsWorld world,
+        public static void RegisterPolicyWithBarracudaModel(
+            this Policy policy,
             string policyId,
             NNModel model,
             InferenceDevice inferenceDevice = InferenceDevice.CPU
@@ -45,30 +45,30 @@ namespace Unity.AI.MLAgents
         {
             if (model != null)
             {
-                var worldProcessor = new BarracudaWorldProcessor(world, model, inferenceDevice);
-                Academy.Instance.RegisterWorld(policyId, world, worldProcessor, true);
+                var policyProcessor = new BarracudaPolicyProcessor(policy, model, inferenceDevice);
+                Academy.Instance.RegisterPolicy(policyId, policy, policyProcessor, true);
             }
             else
             {
-                Academy.Instance.RegisterWorld(policyId, world, null, true);
+                Academy.Instance.RegisterPolicy(policyId, policy, null, true);
             }
         }
 
         /// <summary>
-        /// Registers the given MLAgentsWorld to the Academy with a Neural
+        /// Registers the given Policy to the Academy with a Neural
         /// Network Model. If the input model is null, a default inactive
         /// processor will be registered instead. Note that if the simulation
-        /// connects to Python, the world will not connect to Python and run the
+        /// connects to Python, the Policy will not connect to Python and run the
         /// given Neural Network regardless.
         /// </summary>
-        /// <param name="world"> The MLAgentsWorld to register</param>
-        /// <param name="policyId"> The name of the world. This is useful for identification
+        /// <param name="policy"> The Policy to register</param>
+        /// <param name="policyId"> The name of the Policy. This is useful for identification
         /// and for training.</param>
         /// <param name="model"> The Neural Network model used by the processor</param>
         /// <param name="inferenceDevice"> The inference device specifying where to run inference
         /// (CPU or GPU)</param>
-        public static void RegisterWorldWithBarracudaModelForceNoCommunication(
-            this MLAgentsWorld world,
+        public static void RegisterPolicyWithBarracudaModelForceNoCommunication(
+            this Policy policy,
             string policyId,
             NNModel model,
             InferenceDevice inferenceDevice = InferenceDevice.CPU
@@ -76,19 +76,19 @@ namespace Unity.AI.MLAgents
         {
             if (model != null)
             {
-                var worldProcessor = new BarracudaWorldProcessor(world, model, inferenceDevice);
-                Academy.Instance.RegisterWorld(policyId, world, worldProcessor, false);
+                var policyProcessor = new BarracudaPolicyProcessor(policy, model, inferenceDevice);
+                Academy.Instance.RegisterPolicy(policyId, policy, policyProcessor, false);
             }
             else
             {
-                Academy.Instance.RegisterWorld(policyId, world, null, false);
+                Academy.Instance.RegisterPolicy(policyId, policy, null, false);
             }
         }
     }
 
-    internal unsafe class BarracudaWorldProcessor : IWorldProcessor
+    internal unsafe class BarracudaPolicyProcessor : IPolicyProcessor
     {
-        private MLAgentsWorld m_World;
+        private Policy m_Policy;
         private Model m_BarracudaModel;
         private IWorker m_Engine;
         private const bool k_Verbose = false;
@@ -98,9 +98,9 @@ namespace Unity.AI.MLAgents
 
         public bool IsConnected {get {return false;}}
 
-        internal BarracudaWorldProcessor(MLAgentsWorld world, NNModel model, InferenceDevice inferenceDevice)
+        internal BarracudaPolicyProcessor(Policy policy, NNModel model, InferenceDevice inferenceDevice)
         {
-            this.m_World = world;
+            this.m_Policy = policy;
             D.logEnabled = k_Verbose;
             m_Engine?.Dispose();
 
@@ -111,15 +111,15 @@ namespace Unity.AI.MLAgents
 
             m_Engine = WorkerFactory.CreateWorker(
                 executionDevice, m_BarracudaModel, k_Verbose);
-            for (int i = 0; i < m_World.SensorShapes.Length; i++)
+            for (int i = 0; i < m_Policy.SensorShapes.Length; i++)
             {
-                if (m_World.SensorShapes[i].GetDimensions() == 1)
-                    obsSize += m_World.SensorShapes[i].GetTotalTensorSize();
+                if (m_Policy.SensorShapes[i].GetDimensions() == 1)
+                    obsSize += m_Policy.SensorShapes[i].GetTotalTensorSize();
             }
-            vectorObsArr = new float[m_World.DecisionAgentIds.Length * obsSize];
+            vectorObsArr = new float[m_Policy.DecisionAgentIds.Length * obsSize];
         }
 
-        public void ProcessWorld()
+        public void Process()
         {
             // TODO : Cover all cases
             // FOR VECTOR OBS ONLY
@@ -128,27 +128,27 @@ namespace Unity.AI.MLAgents
 
             var input = new System.Collections.Generic.Dictionary<string, Tensor>();
 
-            // var sensorData = m_World.DecisionObs.ToArray();
+            // var sensorData = m_Policy.DecisionObs.ToArray();
             int sensorOffset = 0;
             int vecObsOffset = 0;
-            foreach (var shape in m_World.SensorShapes)
+            foreach (var shape in m_Policy.SensorShapes)
             {
                 if (shape.GetDimensions() == 1)
                 {
-                    for (int i = 0; i < m_World.DecisionCounter.Count; i++)
+                    for (int i = 0; i < m_Policy.DecisionCounter.Count; i++)
                     {
                         fixed(void* arrPtr = vectorObsArr)
                         {
                             UnsafeUtility.MemCpy(
                                 (byte*)arrPtr + 4 * i * obsSize + 4 * vecObsOffset,
-                                (byte*)m_World.DecisionObs.GetUnsafePtr() + 4 * sensorOffset + 4 * i * shape.GetTotalTensorSize(),
+                                (byte*)m_Policy.DecisionObs.GetUnsafePtr() + 4 * sensorOffset + 4 * i * shape.GetTotalTensorSize(),
                                 shape.GetTotalTensorSize() * 4
                             );
                         }
 
                         // Array.Copy(sensorData, sensorOffset + i * shape.GetTotalTensorSize(), vectorObsArr, i * obsSize + vecObsOffset, shape.GetTotalTensorSize());
                     }
-                    sensorOffset += m_World.DecisionAgentIds.Length * shape.GetTotalTensorSize();
+                    sensorOffset += m_Policy.DecisionAgentIds.Length * shape.GetTotalTensorSize();
                     vecObsOffset += shape.GetTotalTensorSize();
                 }
                 else
@@ -158,7 +158,7 @@ namespace Unity.AI.MLAgents
             }
 
             input["vector_observation"] = new Tensor(
-                new TensorShape(m_World.DecisionCounter.Count, obsSize),
+                new TensorShape(m_Policy.DecisionCounter.Count, obsSize),
                 vectorObsArr,
                 "vector_observation");
 
@@ -166,18 +166,18 @@ namespace Unity.AI.MLAgents
 
             var actuatorT = m_Engine.CopyOutput("action");
 
-            switch (m_World.ActionType)
+            switch (m_Policy.ActionType)
             {
                 case ActionType.CONTINUOUS:
-                    int count = m_World.DecisionCounter.Count * m_World.ActionSize;
+                    int count = m_Policy.DecisionCounter.Count * m_Policy.ActionSize;
                     var wholeData = actuatorT.data.Download(count);
                     // var dest = new float[count];
                     // Array.Copy(wholeData, dest, count);
-                    // m_World.ContinuousActuators.Slice(0, count).CopyFrom(dest);
+                    // m_Policy.ContinuousActuators.Slice(0, count).CopyFrom(dest);
                     fixed(void* arrPtr = wholeData)
                     {
                         UnsafeUtility.MemCpy(
-                            m_World.ContinuousActuators.GetUnsafePtr(),
+                            m_Policy.ContinuousActuators.GetUnsafePtr(),
                             arrPtr,
                             count * 4
                         );

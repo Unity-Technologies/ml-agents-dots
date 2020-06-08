@@ -12,7 +12,7 @@ namespace Unity.AI.MLAgents.Editor
     internal static class SpecsPropertyNames
     {
         public const string k_Name = "Name";
-        public const string k_WorldProcessorType = "WorldProcessorType";
+        public const string k_PolicyProcessorType = "PolicyProcessorType";
         public const string k_NumberAgents = "NumberAgents";
         public const string k_ActionType = "ActionType";
         public const string k_ObservationShapes = "ObservationShapes";
@@ -27,8 +27,8 @@ namespace Unity.AI.MLAgents.Editor
     /// PropertyDrawer for BrainParameters. Defines how BrainParameters are displayed in the
     /// Inspector.
     /// </summary>
-    [CustomPropertyDrawer(typeof(MLAgentsWorldSpecs))]
-    internal class MLAgentsWorldSpecsDrawer : PropertyDrawer
+    [CustomPropertyDrawer(typeof(PolicySpecs))]
+    internal class PolicySpecsDrawer : PropertyDrawer
     {
         // The height of a line in the Unity Inspectors
         const float k_LineHeight = 21f;
@@ -66,7 +66,7 @@ namespace Unity.AI.MLAgents.Editor
                 new Rect(position.x - 3f, position.y, position.width + 6f, m_TotalHeight),
                 new Color(0f, 0f, 0f, 0.1f));
 
-            EditorGUI.LabelField(position, "ML-Agents World Specs : " + label.text);
+            EditorGUI.LabelField(position, "Policy Specs : " + label.text);
             position.y += k_LineHeight;
             EditorGUI.indentLevel++;
 
@@ -74,13 +74,13 @@ namespace Unity.AI.MLAgents.Editor
             // Name
             EditorGUI.PropertyField(position,
                 property.FindPropertyRelative(SpecsPropertyNames.k_Name),
-                new GUIContent("World Name", "The name of the World"));
+                new GUIContent("Name", "The name of the Policy"));
             position.y += k_LineHeight;
 
-            // WorldProcessorType
+            // PolicyProcessorType
             EditorGUI.PropertyField(position,
-                property.FindPropertyRelative(SpecsPropertyNames.k_WorldProcessorType),
-                new GUIContent("Processor Type", "The Policy for the World"));
+                property.FindPropertyRelative(SpecsPropertyNames.k_PolicyProcessorType),
+                new GUIContent("Policy Type", "The type of Policy"));
             position.y += k_LineHeight;
 
             // Number of Agents
@@ -224,7 +224,7 @@ namespace Unity.AI.MLAgents.Editor
             var name = nameProperty.stringValue;
             if (name == "")
             {
-                m_Warnings.Add("Your World must have a non-empty name");
+                m_Warnings.Add("Your Policy must have a non-empty name");
             }
 
             // Max number of agents is not zero
@@ -232,14 +232,14 @@ namespace Unity.AI.MLAgents.Editor
             var nAgents = nAgentsProperty.intValue;
             if (nAgents == 0)
             {
-                m_Warnings.Add("Your World must have a non-zero maximum number of Agents");
+                m_Warnings.Add("Your Policy must have a non-zero maximum number of Agents");
             }
 
             // At least one observation
             var observationShapes = property.FindPropertyRelative(SpecsPropertyNames.k_ObservationShapes);
             if (observationShapes.arraySize == 0)
             {
-                m_Warnings.Add("Your World must have at least one observation");
+                m_Warnings.Add("Your Policy must have at least one observation");
             }
 
             // Action Size is not zero
@@ -247,7 +247,7 @@ namespace Unity.AI.MLAgents.Editor
             var actionSize = actionSizeProperty.intValue;
             if (actionSize == 0)
             {
-                m_Warnings.Add("Your World must have non-zero action size");
+                m_Warnings.Add("Your Policy must have non-zero action size");
             }
 
             //Model is not empty
