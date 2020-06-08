@@ -70,30 +70,30 @@ Please note that this package is available as a preview, so it is not ready for 
 
 
 ## API
-One approach to designing ml-agents to be compativle with DOTS would be to use typical API used for example in [Unity.Physics](https://github.com/Unity-Technologies/Unity.Physics) where a "MLAgents World" holds data, processes it and the data can then be retrieved.
-The user would access the `MLAgentsWorld` in the main thread :
+One approach to designing ml-agents to be compatible with DOTS would be to use typical API used for example in [Unity.Physics](https://github.com/Unity-Technologies/Unity.Physics) where a `Policy` holds data, processes it and the data can then be retrieved.
+The user would access the `Policy` in the main thread :
 
 ```csharp
-var world = new MLAgentsWorld(
+var policy = new Policy(
   100,                              // The maximum number of agents that can request a decision per step
   new int3[] { new int3(3, 0, 0) }, // The observation shapes (here, one observation of shape (3,0,0))
   ActionType.CONTINUOUS,            // Continuous = float, Discrete = int
   3);                               // The number of actions
 
-world.SubscribeWorldWithBarracudaModel(Name, Model, InferenceDevice);
+policy.SubscribePolicyWithBarracudaModel(Name, Model, InferenceDevice);
 ```
 
-The user could then in his own jobs add and retrieve data from the world. Here is an example of a job in which the user populates the sensor data :
+The user could then in his own jobs add and retrieve data from the `Policy`. Here is an example of a job in which the user populates the sensor data :
 
 ```csharp
 public struct UserCreateSensingJob : IJobParallelFor
     {
         public NativeArray<Entity> entities;
-        public MLAgentsWorld world;
+        public Policy policy;
 
         public void Execute(int i)
         {
-            world.RequestDecision(entities[i])
+            policy.RequestDecision(entities[i])
                 .SetReward(1.0f)
                 .SetObservation(0, new float3(3.0f, 0, 0)); // observation index and then observation struct
 
@@ -107,7 +107,7 @@ The job would be called this way or use the `Entities.ForEach` API :
 protected override JobHandle OnUpdate(JobHandle inputDeps)
 {
     var job = new MyPopulationJob{
-	    world = myWorld,
+	    policy = myPolicy,
 	    entities = ...,
 	    sensors = ...,
 	    reward = ...,
@@ -120,7 +120,7 @@ Note that this API can also be called outside of a job and used in the main thre
 
 ```csharp
 var visObs = VisualObservationUtility.GetVisObs(camera, 84, 84, Allocator.TempJob);
-world.RequestDecision(entities[i])
+policy.RequestDecision(entities[i])
   .SetReward(1.0f)
   .SetObservationFromSlice(1, visObs.Slice());
 ```
@@ -139,46 +139,12 @@ public struct UserCreatedActionEventJob : IActuatorJob
 ```
 The ActuatorEvent data contains a key (here an entity) to identify the Agent and a `GetAction` method to retrieve the data in the event. This is very similar to how collisions are currently handled in the Physics package.
 
-## UI to create MLAgentsWorld
+## UI to create a Policy
 
-We currently offer a `MLAgentsWorldSpecs` struct that has a custom inspector drawer (you can add it to a MonoBehaviour to edit the properties of your MLAgentsWorld and even add a neural network for its behavior).
-To generate the MLAgentsWorld with the given settings call `MLAgentsWorldSpecs.GetWorld()`.
+We currently offer a `PolicySpecs` struct that has a custom inspector drawer (you can add it to a MonoBehaviour to edit the properties of your Policy and even add a neural network for its behavior).
+To generate the Policy with the given settings call `PolicySpecs.GetPolicy()`.
 
 ## Communication Between C# and Python
 In order to exchange data with Python, we use shared memory. Python will create a small file that contains information required for starting the communication. The path to the file will be randomly generated and passed by Python to the Unity Executable as command line argument. For in editor training, a default file will be used. Using shared memory allows for faster data exchange and will remove the need to serialize the data to an intermediate format.
 
 __Note__ : The python code for communication is located in [ml-agents-envs~](./ml-agents-envs~).
-
-### Shared memory layout
-#### Header
-
- - int : 4 bytes : File Length : Size of the file (will change as the file grows) (start at 22)
- - int : 4 bytes : Version number : Unity and Python expecting the same memory layout
- - bool : 1 byte : mutex : Is it Python or Unity’s turn to edit the file (Unity blocked = True, Python Blocked = False) (start at `False`)
- - ushort : 1 byte : Command : [step, reset, change file, close] (starts at `step`)
-   - step : DEFAULT : Nothing special
-   - reset : RESET : Only from Python to Unity to signal a reset
-   - change file : CHANGE_FILE : Can be sent by both C# and Python : Means the file is too short and needs to be changed. Both processes will switch to a new file (append `_` at the end of the old path) and delete the old one after reading the message. Note that to change file, the process must : Create the new file (with more capacity), copy the content of the file at appropriate location, add contexts to the file recompute the offsets to specific locations in the file, set the change file command, flip the mutex on the old file, use the new file and only flip the mutex when ready
- - int : 4 bytes : The total amount of data in the side channel (starts at 4 for the next message length int)
- - int : 4 bytes : The length of the side channel data in bytes for the current step
-
-#### Side channel data
-
- - int : 4 bytes : The length of the side channel data for the current step (starts at 0)
- - ??? : Side channel data (Size = total side channel capacity - 4 bytes )
-
-#### RL Data section
-
- - int : 4 bytes : The number of Agent groups in the simulation (starts at 0)
- - For each group :
-
-   - string : 64 byte : group name
-   - int : 4 bytes : maximum number of Agents
-   - bool : 1 byte : is action discrete (False) or continuous (True)
-   - int : 4 bytes : action space size (continuous) / number of branches (discrete)
-     - If discrete only : array of action sizes for each branch (size = n_branches x 4)
-   - int : 4 bytes : number of observations
-   - For each observation :
-     - 3 int : shape (the shape of the tensor observation for one agent)
-   - 4 bytes : n_agents at current step
-   - ??? bytes : the data : obs,reward,done,max_step,agent_id,masks,action

@@ -249,9 +249,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 99c8505fda4844b5b8a9505d069fdd8c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MyWorldSpecs:
-    Name: Ball_DOTS
-    WorldProcessorType: 0
+  MyPolicySpecs:
+    Name: 3DBall
+    PolicyProcessorType: 0
     NumberAgents: 1000
     ActionType: 1
     ObservationShapes:
@@ -268,7 +268,7 @@ MonoBehaviour:
       y: 0
       z: 0
     ActionSize: 2
-    DiscreteActionBranches: 
+    DiscreteActionBranches: 0000000000000000
     Model: {fileID: 5022602860645237092, guid: 10312addcce7c4e508c30d95eaf1a2ff, type: 3}
     InferenceDevice: 0
   NumberBalls: 1000

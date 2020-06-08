@@ -5,18 +5,18 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace Unity.AI.MLAgents
 {
-    internal class NullWorldProcessor : IWorldProcessor
+    internal class NullPolicyProcessor : IPolicyProcessor
     {
-        private MLAgentsWorld m_World;
+        private Policy m_Policy;
 
         public bool IsConnected {get {return false;}}
 
-        internal NullWorldProcessor(MLAgentsWorld world)
+        internal NullPolicyProcessor(Policy policy)
         {
-            this.m_World = world;
+            this.m_Policy = policy;
         }
 
-        public void ProcessWorld()
+        public void Process()
         {
         }
 

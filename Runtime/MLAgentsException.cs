@@ -12,6 +12,6 @@ namespace Unity.AI.MLAgents
         /// </summary>
         /// <param name="message">Text message for the error</param>
         /// <returns></returns>
-        public MLAgentsException(string message) : base(message){}
+        public MLAgentsException(string message) : base(message) {}
     }
 }

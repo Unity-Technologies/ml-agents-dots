@@ -75,23 +75,23 @@ namespace Unity.AI.MLAgents
         }
 
         /// <summary>
-        /// Writes the data of a world into the shared memory file.
+        /// Writes the data of a worPolicyld into the shared memory file.
         /// </summary>
-        public void WriteWorld(string worldName, MLAgentsWorld world)
+        public void WritePolicy(string policyName, Policy policy)
         {
             if (!m_SharedMemoryHeader.Active)
             {
                 return;
             }
-            if (m_ShareMemoryBody.ContainsWorld(worldName))
+            if (m_ShareMemoryBody.ContainsPolicy(policyName))
             {
-                m_ShareMemoryBody.WriteWorld(worldName, world);
+                m_ShareMemoryBody.WritePolicy(policyName, policy);
             }
             else
             {
-                // The world needs to register
+                // The policy needs to register
                 int oldTotalCapacity = m_SharedMemoryHeader.RLDataBufferSize;
-                int worldMemorySize = RLDataOffsets.FromWorld(world, worldName, 0).EndOfDataOffset;
+                int policyMemorySize = RLDataOffsets.FromPolicy(policy, policyName, 0).EndOfDataOffset;
                 m_CurrentFileNumber += 1;
                 m_SharedMemoryHeader.FileNumber = m_CurrentFileNumber;
                 byte[] channelData = m_ShareMemoryBody.SideChannelData;
@@ -102,9 +102,9 @@ namespace Unity.AI.MLAgents
                     true,
                     null,
                     m_SharedMemoryHeader.SideChannelBufferSize,
-                    oldTotalCapacity + worldMemorySize
+                    oldTotalCapacity + policyMemorySize
                 );
-                m_SharedMemoryHeader.RLDataBufferSize = oldTotalCapacity + worldMemorySize;
+                m_SharedMemoryHeader.RLDataBufferSize = oldTotalCapacity + policyMemorySize;
                 if (channelData != null)
                 {
                     m_ShareMemoryBody.SideChannelData = channelData;
@@ -114,8 +114,8 @@ namespace Unity.AI.MLAgents
                     m_ShareMemoryBody.RlData = rlData;
                 }
                 // TODO Need to write the offsets
-                m_ShareMemoryBody.WriteWorldSpecs(worldName, world);
-                m_ShareMemoryBody.WriteWorld(worldName, world);
+                m_ShareMemoryBody.WritePolicySpecs(policyName, policy);
+                m_ShareMemoryBody.WritePolicy(policyName, policy);
             }
         }
 
@@ -180,11 +180,11 @@ namespace Unity.AI.MLAgents
         }
 
         /// <summary>
-        /// Loads the action data form the shared memory file to the world
+        /// Loads the action data form the shared memory file to the policy
         /// </summary>
-        public void LoadWorld(string worldName, MLAgentsWorld world)
+        public void LoadPolicy(string policyName, Policy policy)
         {
-            m_ShareMemoryBody.ReadWorld(worldName, world);
+            m_ShareMemoryBody.ReadPolicy(policyName, policy);
         }
 
         public void Dispose()

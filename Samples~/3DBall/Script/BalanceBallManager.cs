@@ -8,7 +8,7 @@ using Unity.AI.MLAgents;
 
 public class BalanceBallManager : MonoBehaviour
 {
-    public MLAgentsWorldSpecs MyWorldSpecs;
+    public PolicySpecs MyPolicySpecs;
 
     public int NumberBalls = 1000;
 
@@ -23,12 +23,13 @@ public class BalanceBallManager : MonoBehaviour
     NativeArray<Entity> entitiesB;
     BlobAssetStore blob;
 
+
     void Awake()
     {
-        var world = MyWorldSpecs.GetWorld();
+        var policy = MyPolicySpecs.GetPolicy();
         var ballSystem = World.DefaultGameObjectInjectionWorld.GetOrCreateSystem<BallSystem>();
         ballSystem.Enabled = true;
-        ballSystem.BallWorld = world;
+        ballSystem.BallPolicy = policy;
 
         manager = World.DefaultGameObjectInjectionWorld.EntityManager;
 

@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Unity.AI.MLAgents
 {
-    internal enum WorldProcessorType
+    internal enum PolicyProcessorType
     {
         Default,
         InferenceOnly,
@@ -14,16 +14,16 @@ namespace Unity.AI.MLAgents
     }
 
     /// <summary>
-    /// An editor friendly constructor for a MLAgentsWorld.
-    /// Keeps track of the behavior specs of a world, its name,
+    /// An editor friendly constructor for a Policy.
+    /// Keeps track of the behavior specs of a Policy, its name,
     /// its processor type and Neural Network Model.
     /// </summary>
     [Serializable]
-    public struct MLAgentsWorldSpecs
+    public struct PolicySpecs
     {
         [SerializeField] internal string Name;
 
-        [SerializeField] internal WorldProcessorType WorldProcessorType;
+        [SerializeField] internal PolicyProcessorType PolicyProcessorType;
 
         [SerializeField] internal int NumberAgents;
         [SerializeField] internal ActionType ActionType;
@@ -34,47 +34,47 @@ namespace Unity.AI.MLAgents
         [SerializeField] internal NNModel Model;
         [SerializeField] internal InferenceDevice InferenceDevice;
 
-        private MLAgentsWorld m_World;
+        private Policy m_Policy;
 
         /// <summary>
-        /// Generates the world using the specified specs and registers its
-        /// processor to the Academy. The world is only created and registed once,
-        /// if subsequent calls are made, the created world will be returned.
+        /// Generates a Policy using the specified specs and registers its
+        /// processor to the Academy. The policy is only created and registed once,
+        /// if subsequent calls are made, the created policy will be returned.
         /// </summary>
         /// <returns></returns>
-        public MLAgentsWorld GetWorld()
+        public Policy GetPolicy()
         {
-            if (m_World.IsCreated)
+            if (m_Policy.IsCreated)
             {
-                return m_World;
+                return m_Policy;
             }
-            m_World = new MLAgentsWorld(
+            m_Policy = new Policy(
                 NumberAgents,
                 ObservationShapes,
                 ActionType,
                 ActionSize,
                 DiscreteActionBranches
             );
-            switch (WorldProcessorType)
+            switch (PolicyProcessorType)
             {
-                case WorldProcessorType.Default:
-                    m_World.RegisterWorldWithBarracudaModel(Name, Model, InferenceDevice);
+                case PolicyProcessorType.Default:
+                    m_Policy.RegisterPolicyWithBarracudaModel(Name, Model, InferenceDevice);
                     break;
-                case WorldProcessorType.InferenceOnly:
+                case PolicyProcessorType.InferenceOnly:
                     if (Model == null)
                     {
                         throw new MLAgentsException($"No model specified for {Name}");
                     }
-                    m_World.RegisterWorldWithBarracudaModelForceNoCommunication(Name, Model, InferenceDevice);
+                    m_Policy.RegisterPolicyWithBarracudaModelForceNoCommunication(Name, Model, InferenceDevice);
                     break;
-                case WorldProcessorType.None:
-                    Academy.Instance.RegisterWorld(Name, m_World, new NullWorldProcessor(m_World), false);
+                case PolicyProcessorType.None:
+                    Academy.Instance.RegisterPolicy(Name, m_Policy, new NullPolicyProcessor(m_Policy), false);
                     break;
                 default:
-                    throw new MLAgentsException($"Unknown WorldProcessor Type");
+                    throw new MLAgentsException($"Unknown IPolicyProcessor Type");
             }
 
-            return m_World;
+            return m_Policy;
         }
     }
 }

@@ -5,7 +5,6 @@ namespace Unity.AI.MLAgents
     /// </summary>
     public enum ActionType : int
     {
-
         /// <summary>
         /// The Action is expected to be a struct of int or int enums.
         /// More precisely, struct must be convertible to an array of ints by

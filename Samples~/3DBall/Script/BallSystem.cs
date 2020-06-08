@@ -33,17 +33,17 @@ public class BallSystem : JobComponentSystem
         }
     }
 
-    public MLAgentsWorld BallWorld;
+    public Policy BallPolicy;
 
 
     // Update is called once per frame
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
 
-        if (!BallWorld.IsCreated){
+        if (!BallPolicy.IsCreated){
             return inputDeps;
         }
-        var world = BallWorld;
+        var policy = BallPolicy;
 
         ComponentDataFromEntity<Translation> TranslationFromEntity = GetComponentDataFromEntity<Translation>(isReadOnly: false);
         ComponentDataFromEntity<PhysicsVelocity> VelFromEntity = GetComponentDataFromEntity<PhysicsVelocity>(isReadOnly: false);
@@ -52,7 +52,7 @@ public class BallSystem : JobComponentSystem
         .WithNativeDisableParallelForRestriction(VelFromEntity)
         .ForEach((Entity entity, ref Rotation rot, ref AgentData agentData) =>
         {
-            
+
             var ballPos = TranslationFromEntity[agentData.BallRef].Value;
             var ballVel = VelFromEntity[agentData.BallRef].Linear;
             var platformVel = VelFromEntity[entity];
@@ -70,7 +70,7 @@ public class BallSystem : JobComponentSystem
             }
             if (!interruption && !taskFailed)
             {
-                world.RequestDecision(entity)
+                policy.RequestDecision(entity)
                         .SetObservation(0, rot.Value)
                         .SetObservation(1, ballPos - agentData.BallResetPosition)
                         .SetObservation(2, ballVel)
@@ -79,7 +79,7 @@ public class BallSystem : JobComponentSystem
             }
             if (taskFailed)
             {
-                world.EndEpisode(entity)
+                policy.EndEpisode(entity)
                     .SetObservation(0, rot.Value)
                     .SetObservation(1, ballPos - agentData.BallResetPosition)
                     .SetObservation(2, ballVel)
@@ -88,7 +88,7 @@ public class BallSystem : JobComponentSystem
             }
             else if (interruption)
             {
-                world.InterruptEpisode(entity)
+                policy.InterruptEpisode(entity)
                     .SetObservation(0, rot.Value)
                     .SetObservation(1, ballPos - agentData.BallResetPosition)
                     .SetObservation(2, ballVel)
@@ -109,7 +109,7 @@ public class BallSystem : JobComponentSystem
         {
             ComponentDataFromEntity = GetComponentDataFromEntity<Actuator>(isReadOnly: false)
         };
-        inputDeps = reactiveJob.Schedule(world, inputDeps);
+        inputDeps = reactiveJob.Schedule(policy, inputDeps);
 
         inputDeps = Entities.ForEach((Actuator act, ref Rotation rotation) =>
         {
@@ -122,6 +122,6 @@ public class BallSystem : JobComponentSystem
 
     protected override void OnDestroy()
     {
-        BallWorld.Dispose();
+        BallPolicy.Dispose();
     }
 }

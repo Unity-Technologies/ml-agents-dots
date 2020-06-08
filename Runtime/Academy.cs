@@ -11,7 +11,7 @@ namespace Unity.AI.MLAgents
     /// <summary>
     /// The Academy is a singleton that orchestrates the decision making of the
     /// decision making of the Agents.
-    /// It is used to register WorldProcessors to Worlds and to keep track of the
+    /// It is used to register PolicyProcessors to Policy and to keep track of the
     /// reset logic of the simulation.
     /// </summary>
     public class Academy : IDisposable
@@ -50,7 +50,8 @@ namespace Unity.AI.MLAgents
         private bool m_FirstMessageReceived;
         private SharedMemoryCommunicator m_Communicator;
 
-        internal Dictionary<MLAgentsWorld, IWorldProcessor> m_WorldToProcessor; // Maybe we can put the processor in the world with an unsafe unmanaged memory pointer ?
+        internal Dictionary<Policy, IPolicyProcessor> m_PolicyToProcessor;
+        // TODO : Maybe we can put the processor in the policy with an unsafe unmanaged memory pointer ?
 
         private EnvironmentParameters m_EnvironmentParameters;
         private StatsRecorder m_StatsRecorder;
@@ -63,33 +64,29 @@ namespace Unity.AI.MLAgents
         public Action OnEnvironmentReset;
 
         /// <summary>
-        /// Registers a MLAgentsWorld to a decision making mechanism.
-        /// By default, the MLAgentsWorld will use a remote process for decision making when available.
+        /// Registers a Policy to a decision making mechanism.
+        /// By default, the Policy will use a remote process for decision making when available.
         /// </summary>
-        /// <param name="policyId"> The string identifier of the MLAgentsWorld. There can only be one world per unique id.</param>
-        /// <param name="world"> The MLAgentsWorld that is being subscribed.</param>
-        /// <param name="worldProcessor"> If the remote process is not available, the MLAgentsWorld will use this World processor for decision making.</param>
-        /// <param name="defaultRemote"> If true, the MLAgentsWorld will default to using the remote process for communication making and use the fallback worldProcessor otherwise.</param>
-        public void RegisterWorld(string policyId, MLAgentsWorld world, IWorldProcessor worldProcessor = null, bool defaultRemote = true)
+        /// <param name="policyId"> The string identifier of the Policy. There can only be one Policy per unique id.</param>
+        /// <param name="policy"> The Policy that is being subscribed.</param>
+        /// <param name="policyProcessor"> If the remote process is not available, the Policy will use this IPolicyProcessor for decision making.</param>
+        /// <param name="defaultRemote"> If true, the Policy will default to using the remote process for communication making and use the fallback IPolicyProcessor otherwise.</param>
+        public void RegisterPolicy(string policyId, Policy policy, IPolicyProcessor policyProcessor = null, bool defaultRemote = true)
         {
-            // Need to find a way to deregister ?
-            // Need a way to modify the World processor on the fly
-            // Automagically register world on creation ?
-
-            IWorldProcessor processor = null;
+            IPolicyProcessor processor = null;
             if (m_Communicator != null && defaultRemote)
             {
-                processor = new RemoteWorldProcessor(world, policyId, m_Communicator);
+                processor = new RemotePolicyProcessor(policy, policyId, m_Communicator);
             }
-            else if (worldProcessor != null)
+            else if (policyProcessor != null)
             {
-                processor = worldProcessor;
+                processor = policyProcessor;
             }
             else
             {
-                processor = new NullWorldProcessor(world);
+                processor = new NullPolicyProcessor(policy);
             }
-            m_WorldToProcessor[world] = processor;
+            m_PolicyToProcessor[policy] = processor;
         }
 
         /// <summary>
@@ -133,7 +130,7 @@ namespace Unity.AI.MLAgents
                 Application.quitting += Dispose;
                 OnEnvironmentReset = () => {};
 
-                m_WorldToProcessor = new Dictionary<MLAgentsWorld, IWorldProcessor>();
+                m_PolicyToProcessor = new Dictionary<Policy, IPolicyProcessor>();
 
                 TryInitializeCommunicator();
                 SideChannelsManager.RegisterSideChannel(new EngineConfigurationChannel());
@@ -162,8 +159,8 @@ namespace Unity.AI.MLAgents
             }
         }
 
-        // We will make the assumption that a world can only be updated one at a time
-        internal void UpdateWorld(MLAgentsWorld world)
+        // We will make the assumption that a policy can only be updated one at a time
+        internal void UpdatePolicy(Policy policy)
         {
             if (!m_Initialized)
             {
@@ -171,23 +168,23 @@ namespace Unity.AI.MLAgents
             }
 
             // If no agents requested a decision return
-            if (world.DecisionCounter.Count == 0 && world.TerminationCounter.Count == 0)
+            if (policy.DecisionCounter.Count == 0 && policy.TerminationCounter.Count == 0)
             {
                 return;
             }
 
-            // Ensure the world does not have lingering actions:
-            if (world.ActionCounter.Count != 0)
+            // Ensure the policy does not have lingering actions:
+            if (policy.ActionCounter.Count != 0)
             {
                 // This means something in the execution went wrong, this error should never appear
                 throw new MLAgentsException("TODO : ActionCount is not 0");
             }
 
-            var processor = m_WorldToProcessor[world];
+            var processor = m_PolicyToProcessor[policy];
             if (processor == null)
             {
                 // Raise error
-                throw new MLAgentsException($"A world has not been correctly registered.");
+                throw new MLAgentsException($"A Policy has not been correctly registered.");
             }
 
 
@@ -208,10 +205,10 @@ namespace Unity.AI.MLAgents
                 if (!reset) // TODO : Comment out if we do not want to reset on first env.reset()
                 {
                     m_Communicator.WriteSideChannelData(SideChannelsManager.GetSideChannelMessage());
-                    processor.ProcessWorld();
+                    processor.Process();
                     reset = m_Communicator.ReadAndClearResetCommand();
-                    world.SetActionReady();
-                    world.ResetDecisionsAndTerminationCounters();
+                    policy.SetActionReady();
+                    policy.ResetDecisionsAndTerminationCounters();
                     SideChannelsManager.ProcessSideChannelData(m_Communicator.ReadAndClearSideChannelData());
                 }
                 if (reset)
@@ -222,16 +219,16 @@ namespace Unity.AI.MLAgents
             }
             else if (!processor.IsConnected)
             {
-                processor.ProcessWorld();
-                world.SetActionReady();
-                world.ResetDecisionsAndTerminationCounters();
+                processor.Process();
+                policy.SetActionReady();
+                policy.ResetDecisionsAndTerminationCounters();
                 // TODO com.ReadAndClearSideChannelData(); // Remove side channel data
             }
             else
             {
                 // The processor wants to communicate but the communicator is either null or inactive
-                world.ResetActionsCounter();
-                world.ResetDecisionsAndTerminationCounters();
+                policy.ResetActionsCounter();
+                policy.ResetDecisionsAndTerminationCounters();
             }
             if (m_Communicator == null)
             {
@@ -246,16 +243,16 @@ namespace Unity.AI.MLAgents
                 // Need to complete all of the jobs at this point.
                 ECSWorld.EntityManager.CompleteAllJobs();
             }
-            ResetAllWorlds();
+            ResetAllPolicies();
             OnEnvironmentReset?.Invoke();
         }
 
-        private void ResetAllWorlds() // This is problematic because it affects all worlds and is not thread safe...
+        private void ResetAllPolicies() // This is problematic because it affects all policies and is not thread safe...
         {
-            foreach (var w in m_WorldToProcessor.Keys)
+            foreach (var pol in m_PolicyToProcessor.Keys)
             {
-                w.ResetActionsCounter();
-                w.ResetDecisionsAndTerminationCounters();
+                pol.ResetActionsCounter();
+                pol.ResetDecisionsAndTerminationCounters();
             }
         }
 

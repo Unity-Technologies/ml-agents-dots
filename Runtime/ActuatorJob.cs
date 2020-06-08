@@ -34,7 +34,7 @@ namespace Unity.AI.MLAgents
         /// Retrieve the action that was decided for the Entity.
         /// This method uses a generic type, as such you must provide a
         /// type that is compatible with the Action Type and Action Size
-        /// for this MLAgentsWorld.
+        /// for this Policy.
         /// </summary>
         /// <typeparam name="T"> The type of action struct.</typeparam>
         /// <returns> The action struct for the Entity.</returns>
@@ -59,7 +59,7 @@ namespace Unity.AI.MLAgents
     }
 
     /// <summary>
-    /// The signature of the Job used to retrieve actuators values from a world
+    /// The signature of the Job used to retrieve actuators values from a Policy
     /// </summary>
     [JobProducerType(typeof(IActuatorJobExtensions.ActuatorDataJobProcess<>))]
     public interface IActuatorJob
@@ -73,31 +73,31 @@ namespace Unity.AI.MLAgents
         /// Schedule the Job that will generate the action data for the Entities that requested a decision.
         /// </summary>
         /// <param name="jobData"> The IActuatorJob struct.</param>
-        /// <param name="mlagentsWorld"> The MLAgentsWorld containing the data needed for decision making.</param>
+        /// <param name="policy"> The Policy containing the data needed for decision making.</param>
         /// <param name="inputDeps"> The jobHandle for the job.</param>
         /// <typeparam name="T"> The type of the IActuatorData struct.</typeparam>
         /// <returns> The updated jobHandle for the job.</returns>
-        public static unsafe JobHandle Schedule<T>(this T jobData, MLAgentsWorld mlagentsWorld, JobHandle inputDeps)
+        public static unsafe JobHandle Schedule<T>(this T jobData, Policy policy, JobHandle inputDeps)
             where T : struct, IActuatorJob
         {
-            inputDeps.Complete(); // TODO : FIND A BETTER WAY TO MAKE SURE ALL THE DATA IS IN THE WORLD
-            Academy.Instance.UpdateWorld(mlagentsWorld);
-            if (mlagentsWorld.ActionCounter.Count == 0)
+            inputDeps.Complete(); // TODO : FIND A BETTER WAY TO MAKE SURE ALL THE DATA IS IN THE POLICY
+            Academy.Instance.UpdatePolicy(policy);
+            if (policy.ActionCounter.Count == 0)
             {
                 return inputDeps;
             }
-            return ScheduleImpl(jobData, mlagentsWorld, inputDeps);
+            return ScheduleImpl(jobData, policy, inputDeps);
         }
 
         // Passing this along
-        internal static unsafe JobHandle ScheduleImpl<T>(this T jobData, MLAgentsWorld mlagentsWorld, JobHandle inputDeps)
+        internal static unsafe JobHandle ScheduleImpl<T>(this T jobData, Policy policy, JobHandle inputDeps)
             where T : struct, IActuatorJob
         {
             // Creating a data struct that contains the data the user passed into the job (This is what T is here)
             var data = new ActionEventJobData<T>
             {
                 UserJobData = jobData,
-                world = mlagentsWorld // Need to create this before hand with the actuator data
+                Policy = policy // Need to create this before hand with the actuator data
             };
 
             // Scheduling a Job out of thin air by using a pointer called jobReflectionData in the ActuatorSystemJobStruct
@@ -105,11 +105,11 @@ namespace Unity.AI.MLAgents
             return JobsUtility.Schedule(ref parameters);
         }
 
-        // This is the struct containing all the data needed from both the user and the MLAgents world
+        // This is the struct containing all the data needed from both the user and the Policy
         internal unsafe struct ActionEventJobData<T> where T : struct
         {
             public T UserJobData;
-            [NativeDisableContainerSafetyRestriction] public MLAgentsWorld world;
+            [NativeDisableContainerSafetyRestriction] public Policy Policy;
         }
 
         internal struct ActuatorDataJobProcess<T> where T : struct, IActuatorJob
@@ -132,11 +132,11 @@ namespace Unity.AI.MLAgents
             /// Calls the user implemented Execute method with ActuatorEvent struct
             public static unsafe void Execute(ref ActionEventJobData<T> jobData, IntPtr listDataPtr, IntPtr unusedPtr, ref JobRanges ranges, int jobIndex)
             {
-                int size = jobData.world.ActionSize;
-                int actionCount = jobData.world.ActionCounter.Count;
+                int size = jobData.Policy.ActionSize;
+                int actionCount = jobData.Policy.ActionCounter.Count;
 
                 // Continuous case
-                if (jobData.world.ActionType == ActionType.CONTINUOUS)
+                if (jobData.Policy.ActionType == ActionType.CONTINUOUS)
                 {
                     for (int i = 0; i < actionCount; i++)
                     {
@@ -144,8 +144,8 @@ namespace Unity.AI.MLAgents
                         {
                             ActionSize = size,
                             ActionType = ActionType.CONTINUOUS,
-                            Entity = jobData.world.ActionAgentEntityIds[i],
-                            ContinuousActionSlice = jobData.world.ContinuousActuators.Slice(i * size, size)
+                            Entity = jobData.Policy.ActionAgentEntityIds[i],
+                            ContinuousActionSlice = jobData.Policy.ContinuousActuators.Slice(i * size, size)
                         });
                     }
                 }
@@ -158,12 +158,12 @@ namespace Unity.AI.MLAgents
                         {
                             ActionSize = size,
                             ActionType = ActionType.DISCRETE,
-                            Entity = jobData.world.ActionAgentEntityIds[i],
-                            DiscreteActionSlice = jobData.world.DiscreteActuators.Slice(i * size, size)
+                            Entity = jobData.Policy.ActionAgentEntityIds[i],
+                            DiscreteActionSlice = jobData.Policy.DiscreteActuators.Slice(i * size, size)
                         });
                     }
                 }
-                jobData.world.ResetActionsCounter();
+                jobData.Policy.ResetActionsCounter();
             }
         }
     }

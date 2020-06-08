@@ -52,12 +52,12 @@ namespace Unity.AI.MLAgents
             }
         }
 
-        public bool ContainsWorld(string name)
+        public bool ContainsPolicy(string name)
         {
             return m_OffsetDict.ContainsKey(name);
         }
 
-        public void WriteWorld(string name, MLAgentsWorld world)
+        public void WritePolicy(string name, Policy policy)
         {
             if (!CanEdit)
             {
@@ -69,48 +69,48 @@ namespace Unity.AI.MLAgents
             }
             var dataOffsets = m_OffsetDict[name];
             int totalFloatObsPerAgent = 0;
-            foreach (int3 shape in world.SensorShapes)
+            foreach (int3 shape in policy.SensorShapes)
             {
                 totalFloatObsPerAgent += shape.GetTotalTensorSize();
             }
 
             // Decision data
-            var decisionCount = world.DecisionCounter.Count;
+            var decisionCount = policy.DecisionCounter.Count;
             SetInt(dataOffsets.DecisionNumberAgentsOffset, decisionCount);
-            SetArray(dataOffsets.DecisionObsOffset, world.DecisionObs, 4 * decisionCount * totalFloatObsPerAgent);
-            SetArray(dataOffsets.DecisionRewardsOffset, world.DecisionRewards, 4 * decisionCount);
-            SetArray(dataOffsets.DecisionAgentIdOffset, world.DecisionAgentIds, 4 * decisionCount);
-            if (world.ActionType == ActionType.DISCRETE)
+            SetArray(dataOffsets.DecisionObsOffset, policy.DecisionObs, 4 * decisionCount * totalFloatObsPerAgent);
+            SetArray(dataOffsets.DecisionRewardsOffset, policy.DecisionRewards, 4 * decisionCount);
+            SetArray(dataOffsets.DecisionAgentIdOffset, policy.DecisionAgentIds, 4 * decisionCount);
+            if (policy.ActionType == ActionType.DISCRETE)
             {
-                SetArray(dataOffsets.DecisionActionMasksOffset, world.DecisionActionMasks, decisionCount * world.DiscreteActionBranches.Sum());
+                SetArray(dataOffsets.DecisionActionMasksOffset, policy.DecisionActionMasks, decisionCount * policy.DiscreteActionBranches.Sum());
             }
 
             //Termination data
-            var terminationCount = world.TerminationCounter.Count;
+            var terminationCount = policy.TerminationCounter.Count;
             SetInt(dataOffsets.TerminationNumberAgentsOffset, terminationCount);
-            SetArray(dataOffsets.TerminationObsOffset, world.TerminationObs, 4 * terminationCount * totalFloatObsPerAgent);
-            SetArray(dataOffsets.TerminationRewardsOffset, world.TerminationRewards, 4 * terminationCount);
-            SetArray(dataOffsets.TerminationAgentIdOffset, world.TerminationAgentIds, 4 * terminationCount);
-            SetArray(dataOffsets.TerminationStatusOffset, world.TerminationStatus, terminationCount);
+            SetArray(dataOffsets.TerminationObsOffset, policy.TerminationObs, 4 * terminationCount * totalFloatObsPerAgent);
+            SetArray(dataOffsets.TerminationRewardsOffset, policy.TerminationRewards, 4 * terminationCount);
+            SetArray(dataOffsets.TerminationAgentIdOffset, policy.TerminationAgentIds, 4 * terminationCount);
+            SetArray(dataOffsets.TerminationStatusOffset, policy.TerminationStatus, terminationCount);
         }
 
-        public void WriteWorldSpecs(string name, MLAgentsWorld world)
+        public void WritePolicySpecs(string name, Policy policy)
         {
-            m_OffsetDict[name] = RLDataOffsets.FromWorld(world, name, m_CurrentEndOffset);
+            m_OffsetDict[name] = RLDataOffsets.FromPolicy(policy, name, m_CurrentEndOffset);
             var offset = m_CurrentEndOffset;
             offset = SetString(offset, name); // Name
-            offset = SetInt(offset, world.DecisionAgentIds.Length); // Max Agents
-            offset = SetBool(offset, world.ActionType == ActionType.CONTINUOUS);
-            offset = SetInt(offset, world.ActionSize);
-            if (world.ActionType == ActionType.DISCRETE)
+            offset = SetInt(offset, policy.DecisionAgentIds.Length); // Max Agents
+            offset = SetBool(offset, policy.ActionType == ActionType.CONTINUOUS);
+            offset = SetInt(offset, policy.ActionSize);
+            if (policy.ActionType == ActionType.DISCRETE)
             {
-                foreach (int branchSize in world.DiscreteActionBranches)
+                foreach (int branchSize in policy.DiscreteActionBranches)
                 {
                     offset = SetInt(offset, branchSize);
                 }
             }
-            offset = SetInt(offset, world.SensorShapes.Length);
-            foreach (int3 shape in world.SensorShapes)
+            offset = SetInt(offset, policy.SensorShapes.Length);
+            foreach (int3 shape in policy.SensorShapes)
             {
                 offset = SetInt(offset, shape.x);
                 offset = SetInt(offset, shape.y);
@@ -119,7 +119,7 @@ namespace Unity.AI.MLAgents
             m_CurrentEndOffset = offset;
         }
 
-        public void ReadWorld(string name, MLAgentsWorld world)
+        public void ReadPolicy(string name, Policy policy)
         {
             if (!CanEdit)
             {
@@ -127,18 +127,18 @@ namespace Unity.AI.MLAgents
             }
             if (!m_OffsetDict.ContainsKey(name))
             {
-                throw new MLAgentsException("World not registered");
+                throw new MLAgentsException("Policy not registered");
             }
             var dataOffsets = m_OffsetDict[name];
             SetInt(dataOffsets.DecisionNumberAgentsOffset, 0);
             SetInt(dataOffsets.TerminationNumberAgentsOffset, 0);
-            if (world.ActionType == ActionType.DISCRETE)
+            if (policy.ActionType == ActionType.DISCRETE)
             {
-                GetArray(dataOffsets.ActionOffset, world.DiscreteActuators, 4 * world.DecisionCounter.Count * world.ActionSize);
+                GetArray(dataOffsets.ActionOffset, policy.DiscreteActuators, 4 * policy.DecisionCounter.Count * policy.ActionSize);
             }
             else
             {
-                GetArray(dataOffsets.ActionOffset, world.ContinuousActuators, 4 * world.DecisionCounter.Count * world.ActionSize);
+                GetArray(dataOffsets.ActionOffset, policy.ContinuousActuators, 4 * policy.DecisionCounter.Count * policy.ActionSize);
             }
         }
 

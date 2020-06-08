@@ -68,26 +68,26 @@ namespace Unity.AI.MLAgents
                 startOffset);
         }
 
-        public static RLDataOffsets FromWorld(MLAgentsWorld world, string name, int offset)
+        public static RLDataOffsets FromPolicy(Policy policy, string name, int offset)
         {
-            bool isContinuous = world.ActionType == ActionType.CONTINUOUS;
+            bool isContinuous = policy.ActionType == ActionType.CONTINUOUS;
             int totalFloatObsPerAgent = 0;
-            foreach (int3 shape in world.SensorShapes)
+            foreach (int3 shape in policy.SensorShapes)
             {
                 totalFloatObsPerAgent += shape.GetTotalTensorSize();
             }
             int totalNumberOfMasks = 0;
             if (!isContinuous)
             {
-                totalNumberOfMasks = world.DiscreteActionBranches.Sum();
+                totalNumberOfMasks = policy.DiscreteActionBranches.Sum();
             }
 
             return ComputeOffsets(
                 name,
-                world.DecisionAgentIds.Length,
+                policy.DecisionAgentIds.Length,
                 isContinuous,
-                world.ActionSize,
-                world.SensorShapes.Length,
+                policy.ActionSize,
+                policy.SensorShapes.Length,
                 totalFloatObsPerAgent,
                 totalNumberOfMasks,
                 offset
