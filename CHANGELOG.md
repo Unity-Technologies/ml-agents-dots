@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - Updated the shared memory communication to be more modular
  - Added materials and textures to the 3DBall Sample
  - Modified the API to reflect changes made to mlagents_envs version 0.16.0
+ - Renamed MLAgentsWorld to Policy
 
 ## [0.2.0-preview] - 2019-02-24
 

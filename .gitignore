@@ -18,3 +18,8 @@
 .vscode
 setup.cfg
 setup.cfg.meta
+
+# API files
+*.api
+*.api.meta
+

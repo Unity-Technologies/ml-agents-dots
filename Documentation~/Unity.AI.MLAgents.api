@@ -1,15 +1,23 @@
 // This file is generated. Do not modify by hand.
+// XML documentation file not found. To check if public methods have XML comments,
+// make sure the XML doc file is present and located next to the scraped dll
 namespace Unity.AI.MLAgents
 {
     public class Academy : System.IDisposable
     {
-        public Unity.AI.MLAgents.SideChannels.IFloatProperties FloatProperties;
-        public event System.Action OnEnvironmentReset;
+        public System.Action OnEnvironmentReset;
+        public Unity.AI.MLAgents.EnvironmentParameters EnvironmentParameters { get; }
         public static Unity.AI.MLAgents.Academy Instance { get; }
+        public bool IsCommunicatorOn { get; }
         public static bool IsInitialized { get; }
+        public Unity.AI.MLAgents.StatsRecorder StatsRecorder { get; }
         public virtual void Dispose();
-        public void SubscribeSideChannel(Unity.AI.MLAgents.SideChannels.SideChannel channel);
-        public void SubscribeWorld(string policyId, Unity.AI.MLAgents.MLAgentsWorld world, Unity.AI.MLAgents.IWorldProcessor fallbackWorldProcessor = default(Unity.AI.MLAgents.IWorldProcessor), bool communicate = True);
+        public void RegisterPolicy(string policyId, Unity.AI.MLAgents.Policy policy, Unity.AI.MLAgents.IPolicyProcessor policyProcessor = default(Unity.AI.MLAgents.IPolicyProcessor), bool defaultRemote = True);
+    }
+
+    [System.Runtime.CompilerServices.Extension] public static class ActionHashMapUtils
+    {
+        [System.Runtime.CompilerServices.Extension] public static Unity.Collections.NativeHashMap<Unity.Entities.Entity, T> GenerateActionHashMap<T>(Unity.AI.MLAgents.Policy policy, Unity.Collections.Allocator allocator) where T : System.ValueType, new();
     }
 
     public enum ActionType
@@ -22,32 +30,45 @@ namespace Unity.AI.MLAgents
     public struct ActuatorEvent
     {
         [Unity.Collections.ReadOnly] public int ActionSize;
-        [Unity.Collections.ReadOnly] public Unity.Collections.NativeSlice<float> ContinuousActionSlice;
-        [Unity.Collections.ReadOnly] public Unity.Collections.NativeSlice<int> DiscreteActionSlice;
+        [Unity.Collections.ReadOnly] public Unity.AI.MLAgents.ActionType ActionType;
         [Unity.Collections.ReadOnly] public Unity.Entities.Entity Entity;
-        public void GetContinuousAction<T>(out T action) where T : System.ValueType, new();
-        public void GetDiscreteAction<T>(out T action) where T : System.ValueType, new();
+        public T GetAction<T>() where T : System.ValueType, new();
     }
 
-    [System.Runtime.CompilerServices.Extension] public static class BarracudaWorldProcessorRegistringExtension
+    [System.Runtime.CompilerServices.Extension] public static class BarracudaPolicyProcessorRegistringExtension
     {
-        [System.Runtime.CompilerServices.Extension] public static void SubscribeWorldWithBarracudaModel(Unity.AI.MLAgents.MLAgentsWorld world, string policyId, Barracuda.NNModel model, Unity.AI.MLAgents.InferenceDevice inferenceDevice = 0);
-        [System.Runtime.CompilerServices.Extension] public static void SubscribeWorldWithBarracudaModelForceNoCommunication<TH>(Unity.AI.MLAgents.MLAgentsWorld world, string policyId, Barracuda.NNModel model, Unity.AI.MLAgents.InferenceDevice inferenceDevice = 0);
+        [System.Runtime.CompilerServices.Extension] public static void RegisterPolicyWithBarracudaModel(Unity.AI.MLAgents.Policy policy, string policyId, Barracuda.NNModel model, Unity.AI.MLAgents.InferenceDevice inferenceDevice = 0);
+        [System.Runtime.CompilerServices.Extension] public static void RegisterPolicyWithBarracudaModelForceNoCommunication(Unity.AI.MLAgents.Policy policy, string policyId, Barracuda.NNModel model, Unity.AI.MLAgents.InferenceDevice inferenceDevice = 0);
     }
 
     public struct DecisionRequest
     {
-        public Unity.AI.MLAgents.DecisionRequest HasTerminated(bool doneStatus, bool timedOut);
         public Unity.AI.MLAgents.DecisionRequest SetDiscreteActionMask(int branch, int actionIndex);
+        public Unity.AI.MLAgents.DecisionRequest SetObservation(int sensorNumber, int sensor);
         public Unity.AI.MLAgents.DecisionRequest SetObservation<T>(int sensorNumber, T sensor) where T : System.ValueType, new();
         public Unity.AI.MLAgents.DecisionRequest SetObservationFromSlice(int sensorNumber, [Unity.Collections.ReadOnly] Unity.Collections.NativeSlice<float> obs);
         public Unity.AI.MLAgents.DecisionRequest SetReward(float r);
     }
 
-    [System.Runtime.CompilerServices.Extension] public static class HeristicWorldProcessorRegistringExtension
+    public sealed class EnvironmentParameters
     {
-        [System.Runtime.CompilerServices.Extension] public static void SubscribeWorldWithHeuristic<TH>(Unity.AI.MLAgents.MLAgentsWorld world, string policyId, System.Func<TH> heuristic) where TH : System.ValueType, new();
-        [System.Runtime.CompilerServices.Extension] public static void SubscribeWorldWithHeuristicForceNoCommunication<TH>(Unity.AI.MLAgents.MLAgentsWorld world, string policyId, System.Func<TH> heuristic) where TH : System.ValueType, new();
+        public float GetWithDefault(string key, float defaultValue);
+        public System.Collections.Generic.IList<string> Keys();
+        public void RegisterCallback(string key, System.Action<float> action);
+    }
+
+    public struct EpisodeTermination
+    {
+        public Unity.AI.MLAgents.EpisodeTermination SetObservation(int sensorNumber, int sensor);
+        public Unity.AI.MLAgents.EpisodeTermination SetObservation<T>(int sensorNumber, T sensor) where T : System.ValueType, new();
+        public Unity.AI.MLAgents.EpisodeTermination SetObservationFromSlice(int sensorNumber, [Unity.Collections.ReadOnly] Unity.Collections.NativeSlice<float> obs);
+        public Unity.AI.MLAgents.EpisodeTermination SetReward(float r);
+    }
+
+    [System.Runtime.CompilerServices.Extension] public static class HeristicPolicyProcessorRegistringExtension
+    {
+        [System.Runtime.CompilerServices.Extension] public static void RegisterPolicyWithHeuristic<TH>(Unity.AI.MLAgents.Policy policy, string policyId, System.Func<TH> heuristic) where TH : System.ValueType, new();
+        [System.Runtime.CompilerServices.Extension] public static void RegisterPolicyWithHeuristicForceNoCommunication<TH>(Unity.AI.MLAgents.Policy policy, string policyId, System.Func<TH> heuristic) where TH : System.ValueType, new();
     }
 
     [Unity.Jobs.LowLevel.Unsafe.JobProducerType(typeof(Unity.AI.MLAgents.IActuatorJobExtensions.ActuatorDataJobProcess<>))] public interface IActuatorJob
@@ -57,7 +78,7 @@ namespace Unity.AI.MLAgents
 
     [System.Runtime.CompilerServices.Extension] public static class IActuatorJobExtensions
     {
-        [System.Runtime.CompilerServices.Extension] public static Unity.Jobs.JobHandle Schedule<T>(T jobData, Unity.AI.MLAgents.MLAgentsWorld mlagentsWorld, Unity.Jobs.JobHandle inputDeps) where T : Unity.AI.MLAgents.IActuatorJob, System.ValueType, new();
+        [System.Runtime.CompilerServices.Extension] public static Unity.Jobs.JobHandle Schedule<T>(T jobData, Unity.AI.MLAgents.Policy policy, Unity.Jobs.JobHandle inputDeps) where T : System.ValueType, Unity.AI.MLAgents.IActuatorJob, new();
     }
 
     public enum InferenceDevice
@@ -67,41 +88,48 @@ namespace Unity.AI.MLAgents
         public int value__;
     }
 
-    public interface IWorldProcessor : System.IDisposable
+    public interface IPolicyProcessor : System.IDisposable
     {
         public abstract bool IsConnected { get; }
-        public abstract Unity.AI.MLAgents.RemoteCommand ProcessWorld();
+        public abstract void Process();
     }
 
-    public struct MLAgentsWorld : System.IDisposable
+    public class MLAgentsException : System.Exception
+    {
+        public MLAgentsException(string message) {}
+    }
+
+    public struct Policy : System.IDisposable
     {
         public bool IsCreated { get; }
-        public MLAgentsWorld(int maximumNumberAgents, Unity.AI.MLAgents.ActionType actionType, Unity.Mathematics.int3[] obsShapes, int actionSize, int[] discreteActionBranches = default(int[])) {}
+        public Policy(int maximumNumberAgents, Unity.Mathematics.int3[] obsShapes, Unity.AI.MLAgents.ActionType actionType, int actionSize, int[] discreteActionBranches = default(int[])) {}
         public virtual void Dispose();
+        public Unity.AI.MLAgents.EpisodeTermination EndEpisode(Unity.Entities.Entity entity);
+        public Unity.AI.MLAgents.EpisodeTermination InterruptEpisode(Unity.Entities.Entity entity);
         public Unity.AI.MLAgents.DecisionRequest RequestDecision(Unity.Entities.Entity entity);
     }
 
-    public struct MLAgentsWorldSpecs
+    public struct PolicySpecs
     {
-        public int ActionSize;
-        public Unity.AI.MLAgents.ActionType ActionType;
-        public int[] DiscreteActionBranches;
-        public Unity.AI.MLAgents.InferenceDevice InferenceDevice;
-        public Barracuda.NNModel Model;
-        public string Name;
-        public int NumberAgents;
-        public Unity.Mathematics.int3[] ObservationShapes;
-        public Unity.AI.MLAgents.MLAgentsWorld GenerateAndRegisterWorld();
-        public Unity.AI.MLAgents.MLAgentsWorld GenerateWorld();
+        public Unity.AI.MLAgents.Policy GetPolicy();
     }
 
-    public enum RemoteCommand
+    public enum StatAggregationMethod
     {
-        public const Unity.AI.MLAgents.RemoteCommand CHANGE_FILE = 2;
-        public const Unity.AI.MLAgents.RemoteCommand CLOSE = 3;
-        public const Unity.AI.MLAgents.RemoteCommand DEFAULT = 0;
-        public const Unity.AI.MLAgents.RemoteCommand RESET = 1;
-        public System.SByte value__;
+        public const Unity.AI.MLAgents.StatAggregationMethod Average = 0;
+        public const Unity.AI.MLAgents.StatAggregationMethod MostRecent = 1;
+        public int value__;
+    }
+
+    public sealed class StatsRecorder
+    {
+        public void Add(string key, float value, Unity.AI.MLAgents.StatAggregationMethod aggregationMethod = 0);
+    }
+
+    public static class TimeUtils
+    {
+        public static void DisableFixedRate(Unity.Entities.ComponentSystemGroup group);
+        public static void EnableFixedRateWithRepeat(Unity.Entities.ComponentSystemGroup group, float timeStep, int numberOfRepeat);
     }
 
     public static class VisualObservationUtility
@@ -112,66 +140,60 @@ namespace Unity.AI.MLAgents
 
 namespace Unity.AI.MLAgents.SideChannels
 {
-    public class EngineConfigurationChannel : Unity.AI.MLAgents.SideChannels.SideChannel
+    public class FloatPropertiesChannel : Unity.AI.MLAgents.SideChannels.SideChannel
     {
-        public EngineConfigurationChannel() {}
-        public virtual int ChannelType();
-        public virtual void OnMessageReceived(byte[] data);
+        public FloatPropertiesChannel(System.Guid channelId = default(System.Guid)) {}
+        public float GetWithDefault(string key, float defaultValue);
+        public System.Collections.Generic.IList<string> Keys();
+        protected virtual void OnMessageReceived(Unity.AI.MLAgents.SideChannels.IncomingMessage msg);
+        public void RegisterCallback(string key, System.Action<float> action);
+        public void Set(string key, float value);
     }
 
-    public class FloatPropertiesChannel : Unity.AI.MLAgents.SideChannels.SideChannel, Unity.AI.MLAgents.SideChannels.IFloatProperties
+    public class IncomingMessage : System.IDisposable
     {
-        public FloatPropertiesChannel() {}
-        public virtual int ChannelType();
-        public virtual float GetPropertyWithDefault(string key, float defaultValue);
-        public virtual System.Collections.Generic.IList<string> ListProperties();
-        public virtual void OnMessageReceived(byte[] data);
-        public virtual void RegisterCallback(string key, System.Action<float> action);
-        public virtual void SetProperty(string key, float value);
+        public IncomingMessage(byte[] data) {}
+        public virtual void Dispose();
+        public byte[] GetRawBytes();
+        public bool ReadBoolean(bool defaultValue = False);
+        public float ReadFloat32(float defaultValue = 0);
+        public System.Collections.Generic.IList<float> ReadFloatList(System.Collections.Generic.IList<float> defaultValue = default(System.Collections.Generic.IList<float>));
+        public int ReadInt32(int defaultValue = 0);
+        public string ReadString(string defaultValue = default(string));
     }
 
-    public interface IFloatProperties
+    public class OutgoingMessage : System.IDisposable
     {
-        public abstract float GetPropertyWithDefault(string key, float defaultValue);
-        public abstract System.Collections.Generic.IList<string> ListProperties();
-        public abstract void RegisterCallback(string key, System.Action<float> action);
-        public abstract void SetProperty(string key, float value);
+        public OutgoingMessage() {}
+        public virtual void Dispose();
+        public void SetRawBytes(byte[] data);
+        public void WriteBoolean(bool b);
+        public void WriteFloat32(float f);
+        public void WriteFloatList(System.Collections.Generic.IList<float> floatList);
+        public void WriteInt32(int i);
+        public void WriteString(string s);
     }
 
     public class RawBytesChannel : Unity.AI.MLAgents.SideChannels.SideChannel
     {
-        public RawBytesChannel(int channelId = 0) {}
-        public virtual int ChannelType();
+        public RawBytesChannel(System.Guid channelId) {}
         public System.Collections.Generic.IList<byte[]> GetAndClearReceivedMessages();
         public System.Collections.Generic.IList<byte[]> GetReceivedMessages();
-        public virtual void OnMessageReceived(byte[] data);
+        protected virtual void OnMessageReceived(Unity.AI.MLAgents.SideChannels.IncomingMessage msg);
         public void SendRawBytes(byte[] data);
     }
 
     public abstract class SideChannel
     {
-        public System.Collections.Generic.List<byte[]> MessageQueue;
+        public System.Guid ChannelId { get; protected set; }
         protected SideChannel() {}
-        public abstract int ChannelType();
-        public abstract void OnMessageReceived(byte[] data);
-        protected void QueueMessageToSend(byte[] data);
+        protected abstract void OnMessageReceived(Unity.AI.MLAgents.SideChannels.IncomingMessage msg);
+        protected void QueueMessageToSend(Unity.AI.MLAgents.SideChannels.OutgoingMessage msg);
     }
 
-    public enum SideChannelType
+    public static class SideChannelsManager
     {
-        public const Unity.AI.MLAgents.SideChannels.SideChannelType EngineSettings = 2;
-        public const Unity.AI.MLAgents.SideChannels.SideChannelType FloatProperties = 1;
-        public const Unity.AI.MLAgents.SideChannels.SideChannelType Invalid = 0;
-        public const Unity.AI.MLAgents.SideChannels.SideChannelType RawBytesChannelStart = 1000;
-        public const Unity.AI.MLAgents.SideChannels.SideChannelType UserSideChannelStart = 2000;
-        public int value__;
-    }
-
-    public class StringLogSideChannel : Unity.AI.MLAgents.SideChannels.SideChannel
-    {
-        public StringLogSideChannel() {}
-        public virtual int ChannelType();
-        public virtual void OnMessageReceived(byte[] data);
-        public void SendDebugStatementToPython(string logString, string stackTrace, UnityEngine.LogType type);
+        public static void RegisterSideChannel(Unity.AI.MLAgents.SideChannels.SideChannel sideChannel);
+        public static void UnregisterSideChannel(Unity.AI.MLAgents.SideChannels.SideChannel sideChannel);
     }
 }
