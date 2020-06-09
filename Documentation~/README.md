@@ -7,7 +7,7 @@ Please note that this package is available as a preview, so it is not ready for 
  * Create a new Project on Unity 2019.3.0f5
  * Navigate to the new created project folder and add the following entries into `Package/manifest.json` under "Dependencies":
  ```json
- "com.unity.ai.mlagents": "https://github.com/Unity-Technologies/ml-agents-dots.git#release-0.2.0",
+ "com.unity.ai.mlagents": "https://github.com/Unity-Technologies/ml-agents-dots.git#release-0.3.0",
  "com.unity.physics": "0.2.4-preview",
  "com.unity.rendering.hybrid": "0.3.3-preview.11",
  "com.unity.burst":"1.3.0-preview.2",
@@ -21,9 +21,9 @@ Please note that this package is available as a preview, so it is not ready for 
 
 ### Install ML-Agents DOTS Python code
  * Clone this repository in a new folder
- * Checkout release-0.2.0
+ * Checkout release-0.3.0
  ```
- git clone --branch release-0.2.0 https://github.com/Unity-Technologies/ml-agents-dots.git
+ git clone --branch release-0.3.0 https://github.com/Unity-Technologies/ml-agents-dots.git
  ```
  * Run the following command inside the cloned repository:
  ```

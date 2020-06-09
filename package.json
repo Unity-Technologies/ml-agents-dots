@@ -1,7 +1,7 @@
 {
   "name": "com.unity.ai.mlagents",
   "displayName": "DOTS ML-Agents",
-  "version": "0.2.0-preview",
+  "version": "0.3.0-preview",
   "unity": "2019.3",
   "description": "Add interactivity to your game with ML-Agents trained using Deep Reinforcement Learning.",
   "dependencies": {
