@@ -9,7 +9,7 @@ public class RegisterStringLogSideChannel : MonoBehaviour
     {
         stringChannel = new StringLogSideChannel();
 
-        SideChannelUtils.RegisterSideChannel(stringChannel);
+        SideChannelManager.RegisterSideChannel(stringChannel);
 
         Application.logMessageReceived += stringChannel.SendDebugStatementToPython;
     }
@@ -36,7 +36,7 @@ public class StringLogSideChannel : SideChannel
         ChannelId = new Guid("621f0a70-4f87-11ea-a6bf-784f4387d1f7");
     }
 
-    public override void OnMessageReceived(IncomingMessage message)
+    protected override void OnMessageReceived(IncomingMessage message)
     {
         var receivedString  = message.ReadString();
         Debug.Log("From Python : " + receivedString);
