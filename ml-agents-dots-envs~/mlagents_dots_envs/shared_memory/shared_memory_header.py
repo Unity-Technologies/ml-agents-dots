@@ -18,7 +18,7 @@ class SharedMemoryHeader(BaseSharedMemory):
     """
 
     SIZE = 28
-    VERSION = (0, 3, 0)
+    VERSION = (0, 3, 1)
 
     def __init__(
         self, file_name: str, side_channel_size: int = 0, rl_data_size: int = 0
@@ -27,7 +27,7 @@ class SharedMemoryHeader(BaseSharedMemory):
         super(SharedMemoryHeader, self).__init__(
             file_name, create_file=True, size=self.SIZE
         )
-        for f in glob.glob(file_name + "_"):
+        for f in glob.glob(self._file_path + "_*"):
             # Removing all the future files in case they were not correctly created
             os.remove(f)
         offset = 0
@@ -112,7 +112,7 @@ class SharedMemoryHeader(BaseSharedMemory):
         bug, offset = self.get_int(offset)
         if (major, minor, bug) != self.VERSION:
             raise Exception(
-                f"Incompatible versions of communicator between "
+                "Incompatible versions of communicator between "
                 + f"Unity {major}.{minor}.{bug} and Python "
                 f"{self.VERSION[0]}.{self.VERSION[1]}.{self.VERSION[2]}"
             )

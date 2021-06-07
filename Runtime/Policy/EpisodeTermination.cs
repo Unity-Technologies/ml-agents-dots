@@ -84,6 +84,10 @@ namespace Unity.AI.MLAgents
 #endif
             int start = m_Policy.ObservationOffsets[sensorNumber];
             start += maxValue * m_Index;
+            for (int i = 0; i < maxValue; i++)
+            {
+                m_Policy.TerminationObs[start + i] = 0.0f;
+            }
             m_Policy.TerminationObs[start + sensor] = 1.0f;
             return this;
         }

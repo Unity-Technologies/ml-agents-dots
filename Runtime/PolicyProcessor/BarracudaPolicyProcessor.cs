@@ -1,7 +1,7 @@
 using System;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
-using Barracuda;
+using Unity.Barracuda;
 
 namespace Unity.AI.MLAgents
 {
@@ -93,8 +93,8 @@ namespace Unity.AI.MLAgents
         private IWorker m_Engine;
         private const bool k_Verbose = false;
 
-        int obsSize;
-        float[] vectorObsArr;
+        System.Collections.Generic.List<float[]> obsArrays;
+        float[] maskArrays;
 
         public bool IsConnected {get {return false;}}
 
@@ -111,84 +111,130 @@ namespace Unity.AI.MLAgents
 
             m_Engine = WorkerFactory.CreateWorker(
                 executionDevice, m_BarracudaModel, k_Verbose);
+
+            obsArrays = new System.Collections.Generic.List<float[]>();
             for (int i = 0; i < m_Policy.SensorShapes.Length; i++)
             {
-                if (m_Policy.SensorShapes[i].GetDimensions() == 1)
-                    obsSize += m_Policy.SensorShapes[i].GetTotalTensorSize();
+                var obsSize = m_Policy.SensorShapes[i].GetTotalTensorSize();
+                obsArrays.Add(new float[m_Policy.DecisionAgentIds.Length * obsSize]);
             }
-            vectorObsArr = new float[m_Policy.DecisionAgentIds.Length * obsSize];
+            if (m_Policy.DiscreteActionBranches.Length > 0)
+            {
+                maskArrays = new float[m_Policy.DecisionAgentIds.Length * m_Policy.DiscreteActionBranches.Sum()];
+            }
         }
 
         public void Process()
         {
             // TODO : Cover all cases
             // FOR VECTOR OBS ONLY
-            // For Continuous control only
             // No LSTM
 
             var input = new System.Collections.Generic.Dictionary<string, Tensor>();
 
-            // var sensorData = m_Policy.DecisionObs.ToArray();
-            int sensorOffset = 0;
-            int vecObsOffset = 0;
-            foreach (var shape in m_Policy.SensorShapes)
+            var sensorOffset = 0;
+            for (int sensorIndex = 0; sensorIndex < m_Policy.SensorShapes.Length; sensorIndex++)
             {
-                if (shape.GetDimensions() == 1)
+                var shape = m_Policy.SensorShapes[sensorIndex];
+                // for (int i = 0; i < m_Policy.DecisionCounter.Count; i++)
+                // {
+                fixed(void* arrPtr = obsArrays[sensorIndex])
                 {
-                    for (int i = 0; i < m_Policy.DecisionCounter.Count; i++)
-                    {
-                        fixed(void* arrPtr = vectorObsArr)
-                        {
-                            UnsafeUtility.MemCpy(
-                                (byte*)arrPtr + 4 * i * obsSize + 4 * vecObsOffset,
-                                (byte*)m_Policy.DecisionObs.GetUnsafePtr() + 4 * sensorOffset + 4 * i * shape.GetTotalTensorSize(),
-                                shape.GetTotalTensorSize() * 4
-                            );
-                        }
+                    UnsafeUtility.MemCpy(
+                        (byte*)arrPtr,
+                        (byte*)m_Policy.DecisionObs.GetUnsafePtr() + 4 * sensorOffset,
+                        shape.GetTotalTensorSize() * 4 * m_Policy.DecisionCounter.Count
+                    );
+                }
+                // }
+                // Array.Copy(sensorData, sensorOffset + i * shape.GetTotalTensorSize(), vectorObsArr, i * obsSize + vecObsOffset, shape.GetTotalTensorSize());
+                sensorOffset += m_Policy.DecisionAgentIds.Length * shape.GetTotalTensorSize();
 
-                        // Array.Copy(sensorData, sensorOffset + i * shape.GetTotalTensorSize(), vectorObsArr, i * obsSize + vecObsOffset, shape.GetTotalTensorSize());
-                    }
-                    sensorOffset += m_Policy.DecisionAgentIds.Length * shape.GetTotalTensorSize();
-                    vecObsOffset += shape.GetTotalTensorSize();
+                if (shape.GetDimensions() == 1)
+                {// TODO : Support other obs
+                    input[$"obs_{sensorIndex}"] = new Tensor(
+                        new TensorShape(m_Policy.DecisionCounter.Count, shape.x),
+                        obsArrays[sensorIndex],
+                        $"obs_{sensorIndex}");
                 }
                 else
                 {
-                    throw new MLAgentsException("TODO : Inference only works for continuous control and vector obs");
+                    input[$"obs_{sensorIndex}"] = new Tensor(
+                        new TensorShape(m_Policy.DecisionCounter.Count, shape.x, shape.y, shape.z),
+                        obsArrays[sensorIndex],
+                        $"obs_{sensorIndex}");
                 }
             }
 
-            input["vector_observation"] = new Tensor(
-                new TensorShape(m_Policy.DecisionCounter.Count, obsSize),
-                vectorObsArr,
-                "vector_observation");
-
-            m_Engine.ExecuteAndWaitForCompletion(input);
-
-            var actuatorT = m_Engine.CopyOutput("action");
-
-            switch (m_Policy.ActionType)
+            if (m_Policy.DiscreteActionBranches.Length > 0)
             {
-                case ActionType.CONTINUOUS:
-                    int count = m_Policy.DecisionCounter.Count * m_Policy.ActionSize;
-                    var wholeData = actuatorT.data.Download(count);
-                    // var dest = new float[count];
-                    // Array.Copy(wholeData, dest, count);
-                    // m_Policy.ContinuousActuators.Slice(0, count).CopyFrom(dest);
-                    fixed(void* arrPtr = wholeData)
-                    {
-                        UnsafeUtility.MemCpy(
-                            m_Policy.ContinuousActuators.GetUnsafePtr(),
-                            arrPtr,
-                            count * 4
-                        );
-                    }
-                    break;
-                case ActionType.DISCRETE:
-                    throw new MLAgentsException("TODO : Inference only works for continuous control and vector obs");
-                default:
-                    break;
+                // fixed(void* arrPtr = maskArrays)
+                // {
+                //     UnsafeUtility.MemCpy(
+                //         (byte*)arrPtr,
+                //         (byte*)m_Policy.DecisionActionMasks.GetUnsafePtr() ,
+                //         m_Policy.DiscreteActionBranches.Sum() * 4 * m_Policy.DecisionCounter.Count
+                //     );
+                // }
+                for (int i = 0; i < m_Policy.DiscreteActionBranches.Sum() * m_Policy.DecisionCounter.Count; i++)
+                {
+                    maskArrays[i] = m_Policy.DecisionActionMasks[i] ? 0f : 1f; // masks are inverted
+                }
+
+                input[$"action_masks"] = new Tensor(
+                    new TensorShape(m_Policy.DecisionCounter.Count, m_Policy.DiscreteActionBranches.Sum()),
+                    maskArrays,
+                    $"action_masks");
             }
-            actuatorT.Dispose();
+
+
+            m_Engine.Execute(input);
+            // m_Engine.ExecuteAndWaitForCompletion(input);
+
+            // Continuous case
+            if (m_Policy.ContinuousActionSize > 0)
+            {
+                var actuatorTC = m_Engine.CopyOutput("continuous_actions");
+                int count = m_Policy.DecisionCounter.Count * m_Policy.ContinuousActionSize;
+                var shapeTC = new TensorShape(m_Policy.DecisionCounter.Count, m_Policy.ContinuousActionSize);
+                var wholeData = actuatorTC.data.Download(shapeTC);
+
+                fixed(void* arrPtr = wholeData)
+                {
+                    UnsafeUtility.MemCpy(
+                        m_Policy.ContinuousActuators.GetUnsafePtr(),
+                        arrPtr,
+                        count * 4
+                    );
+                }
+                actuatorTC.Dispose();
+            }
+            // discrete case
+            if (m_Policy.DiscreteActionBranches.Length > 0)
+            {
+                var actuatorTD = m_Engine.CopyOutput("discrete_actions");
+                int count = m_Policy.DecisionCounter.Count * m_Policy.DiscreteActionBranches.Length;
+                var shapeTD = new TensorShape(m_Policy.DecisionCounter.Count, m_Policy.DiscreteActionBranches.Length);
+                var wholeData = actuatorTD.data.Download(shapeTD);
+
+                // fixed(void* arrPtr = wholeData)
+                // {
+                //     UnsafeUtility.MemCpy(
+                //         m_Policy.DiscreteActuators.GetUnsafePtr(),
+                //         arrPtr,
+                //         count * 4
+                //     );
+                // }
+
+                // Very hack : Since the output tensors are not the right type, we must convert them to int manually :(
+
+                for (int i = 0; i < count; i++)
+                {
+                    m_Policy.DiscreteActuators[i] = (int)wholeData[i];
+                }
+
+                actuatorTD.Dispose();
+            }
         }
 
         public void Dispose()

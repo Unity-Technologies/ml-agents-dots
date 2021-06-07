@@ -11,6 +11,22 @@
 .pytest_cache
 *__pycache__
 
+# Mac hidden files
+*.DS_Store
+*/.ipynb_checkpoints
+*/.idea
+*.pyc
+*.idea/misc.xml
+*.idea/modules.xml
+*.idea/
+*.iml
+*.cache
+*/build/
+*/dist/
+*.egg-info*
+*.eggs*
+*.gitignore.swp
+
 # precommit
 .mypy_cache
 .pre-commit-config.yaml

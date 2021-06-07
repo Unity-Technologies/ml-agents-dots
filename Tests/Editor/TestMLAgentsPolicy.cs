@@ -56,8 +56,7 @@ namespace Unity.AI.MLAgents.Tests.Editor
             var policy = new Policy(
                 20,
                 new int3[] { new int3(3, 0, 0), new int3(84, 84, 3) },
-                ActionType.DISCRETE,
-                2,
+                0,
                 new int[] { 2, 3 });
             policy.Dispose();
         }
@@ -69,7 +68,7 @@ namespace Unity.AI.MLAgents.Tests.Editor
             public void Execute(ActuatorEvent data)
             {
                 ent[0] = data.Entity;
-                var act = data.GetAction<DiscreteAction_TWO_THREE>();
+                var act = data.GetDiscreteAction<DiscreteAction_TWO_THREE>();
                 action[0] = act;
             }
         }
@@ -80,11 +79,10 @@ namespace Unity.AI.MLAgents.Tests.Editor
             var policy = new Policy(
                 20,
                 new int3[] { new int3(3, 0, 0), new int3(84, 84, 3) },
-                ActionType.DISCRETE,
-                2,
+                0,
                 new int[] { 2, 3 });
 
-            policy.RegisterPolicyWithHeuristic("test", () => new int2(0, 1));
+            policy.RegisterPolicyWithHeuristic<float, int2>("test", discreteHeuristic: () => new int2(0, 1));
 
             var entity = entityManager.CreateEntity();
 
@@ -121,11 +119,10 @@ namespace Unity.AI.MLAgents.Tests.Editor
             var policy = new Policy(
                 20,
                 new int3[] { new int3(3, 0, 0), new int3(84, 84, 3) },
-                ActionType.DISCRETE,
-                2,
+                0,
                 new int[] { 2, 3 });
 
-            policy.RegisterPolicyWithHeuristic("test", () => new int2(0, 1));
+            policy.RegisterPolicyWithHeuristic<float, int2>("test", discreteHeuristic: () => new int2(0, 1));
 
             var entity = entityManager.CreateEntity();
 
@@ -133,12 +130,12 @@ namespace Unity.AI.MLAgents.Tests.Editor
                 .SetObservation(0, new float3(1, 2, 3))
                 .SetReward(1f);
 
-            var hashMap = policy.GenerateActionHashMap<DiscreteAction_TWO_THREE>(Allocator.Temp);
+            var hashMap = new NativeHashMap<Entity, DiscreteAction_TWO_THREE>(20, Allocator.Temp);
+            policy.GenerateDiscreteActionHashMap<DiscreteAction_TWO_THREE>(hashMap);
             Assert.True(hashMap.TryGetValue(entity, out _));
-            hashMap.Dispose();
 
             policy.EndEpisode(entity);
-            hashMap = policy.GenerateActionHashMap<DiscreteAction_TWO_THREE>(Allocator.Temp);
+            policy.GenerateDiscreteActionHashMap<DiscreteAction_TWO_THREE>(hashMap);
             Assert.False(hashMap.TryGetValue(entity, out _));
             hashMap.Dispose();
 
@@ -152,22 +149,20 @@ namespace Unity.AI.MLAgents.Tests.Editor
             var policy1 = new Policy(
                 20,
                 new int3[] { new int3(3, 0, 0) },
-                ActionType.DISCRETE,
-                2,
+                0,
                 new int[] { 2, 3 });
             var policy2 = new Policy(
                 20,
                 new int3[] { new int3(3, 0, 0) },
-                ActionType.DISCRETE,
-                2,
+                0,
                 new int[] { 2, 3 });
 
-            policy1.RegisterPolicyWithHeuristic("test1", () => new DiscreteAction_TWO_THREE
+            policy1.RegisterPolicyWithHeuristic<float, DiscreteAction_TWO_THREE>("test1", discreteHeuristic: () => new DiscreteAction_TWO_THREE
             {
                 action_ONE = TwoOptionEnum.Option_TWO,
                 action_TWO = ThreeOptionEnum.Option_ONE
             });
-            policy2.RegisterPolicyWithHeuristic("test2", () => new DiscreteAction_TWO_THREE
+            policy2.RegisterPolicyWithHeuristic<float, DiscreteAction_TWO_THREE>("test2", discreteHeuristic: () => new DiscreteAction_TWO_THREE
             {
                 action_ONE = TwoOptionEnum.Option_ONE,
                 action_TWO = ThreeOptionEnum.Option_TWO

@@ -3,6 +3,14 @@ import numpy as np
 from typing import Tuple, Optional, NamedTuple, List
 from mlagents_dots_envs.shared_memory.base_shared_memory import BaseSharedMemory
 
+from mlagents_envs.base_env import (
+    BehaviorSpec,
+    ObservationSpec,
+    DimensionProperty,
+    ObservationType,
+    ActionSpec,
+)
+
 
 class RLDataOffsets(NamedTuple):
     """
@@ -12,10 +20,7 @@ class RLDataOffsets(NamedTuple):
     # data
     name: str
     max_n_agents: int
-    is_action_continuous: bool
-    action_size: int
-    discrete_branches: Optional[Tuple[int, ...]]
-    obs_shapes: List[Tuple[int, ...]]
+    behavior_spec: BehaviorSpec
 
     # offsets: decision steps
     decision_n_agents_offset: int
@@ -32,43 +37,59 @@ class RLDataOffsets(NamedTuple):
     termination_agent_id_offset: int
 
     # offsets : actions
-    action_offset: int
+    continuous_action_offset: int
+    discrete_action_offset: int
 
     @staticmethod
     def from_mem(mem: BaseSharedMemory, offset: int) -> Tuple["RLDataOffsets", int]:
         # Generates the offsets
         # string : behavior name
         # int : 4 bytes : maximum number of Agents
-        # bool : 1 byte : is action discrete (False) or continuous (True)
-        # int : 4 bytes : action space size (continuous) / number of branches (discrete)
-        # -- If discrete only : array of action sizes for each branch
-        # int : 4 bytes : number of observations
-        # For each observation :
-        # 3 int : shape (the shape of the tensor observation for one agent
-        # start of the section that will change every step
+
+        # int: number_observations
+        # for each observation :
+        #     3 int : shape
+        #     3 int : dimension property
+        #     1 int : observation type
+        # int: number of continuous actions
+        # int: number discrete branches
+        # for each discrete branch :
+        #     1 int : number of discrete actions in branch
+
+        # end of specs
+
         # 4 bytes : n_agents at current step
         # ? Bytes : the data : obs,reward,done,max_step,agent_id,masks,action
 
         # Get the specs of the group
         name, offset = mem.get_string(offset)
         max_n_agents, offset = mem.get_int(offset)
-        is_continuous, offset = mem.get_bool(offset)
-        action_size, offset = mem.get_int(offset)
-        discrete_branches = None
-        if not is_continuous:
-            discrete_branches = ()  # type: ignore
-            for _ in range(action_size):
-                branch_size, offset = mem.get_int(offset)
-                discrete_branches += (branch_size,)  # type: ignore
+
         n_obs, offset = mem.get_int(offset)
-        obs_shapes: List[Tuple[int, ...]] = []
-        for _ in range(n_obs):
-            shape = ()  # type: ignore
+        obs_specs: List[ObservationSpec] = []
+        for i in range(n_obs):
+            shape: Tuple[int, ...] = ()
             for _ in range(3):
                 s, offset = mem.get_int(offset)
                 if s != 0:
-                    shape += (s,)  # type: ignore
-            obs_shapes += [shape]
+                    shape += (s,)
+            dim_prop: Tuple[DimensionProperty] = ()
+            for _ in range(3):
+                dp, offset = mem.get_int(offset)
+                if len(dim_prop) < len(shape):
+                    dim_prop += (DimensionProperty(dp),)
+            ot, offset = mem.get_int(offset)
+            obs_type = ObservationType(ot)
+            obs_specs.append(ObservationSpec(shape, dim_prop, obs_type, f"obs_{i}"))
+
+        n_c_action, offset = mem.get_int(offset)
+        n_d_action, offset = mem.get_int(offset)
+        d_action_branches: Tuple[int, ...] = ()
+        for _ in range(n_d_action):
+            a_size, offset = mem.get_int(offset)
+            d_action_branches += (a_size,)
+        act_specs = ActionSpec(n_c_action, d_action_branches)
+        behavior_spec = BehaviorSpec(obs_specs, act_specs)
 
         #  Compute the offsets for decision steps
         # n_agents
@@ -76,9 +97,9 @@ class RLDataOffsets(NamedTuple):
         _, offset = mem.get_int(offset)
         # observations
         decision_obs_offset: Tuple[int, ...] = ()
-        for s in obs_shapes:
+        for spec in obs_specs:
             decision_obs_offset += (offset,)
-            offset += 4 * max_n_agents * np.prod(s)
+            offset += 4 * max_n_agents * np.prod(spec.shape)
         # rewards
         decision_rewards_offset = offset
         offset += 4 * max_n_agents
@@ -86,11 +107,11 @@ class RLDataOffsets(NamedTuple):
         decision_agent_id_offset = offset
         offset += 4 * max_n_agents
         # mask
-        if is_continuous:
+        if act_specs.discrete_size == 0:
             mask_offset = None
         else:
             mask_offset = offset
-            offset += max_n_agents * int(np.sum(discrete_branches))
+            offset += max_n_agents * int(np.sum(act_specs.discrete_branches))
 
         #  Compute the offsets for termination steps
         # n_agents
@@ -98,9 +119,9 @@ class RLDataOffsets(NamedTuple):
         _, offset = mem.get_int(offset)
         # observations
         termination_obs_offset: Tuple[int, ...] = ()
-        for s in obs_shapes:
+        for spec in obs_specs:
             termination_obs_offset += (offset,)
-            offset += 4 * max_n_agents * np.prod(s)
+            offset += 4 * max_n_agents * np.prod(np.prod(spec.shape))
         # rewards
         termination_reward_offset = offset
         offset += 4 * max_n_agents
@@ -112,17 +133,16 @@ class RLDataOffsets(NamedTuple):
         offset += 4 * max_n_agents
 
         #  Compute the offsets for actions
-        act_offset = offset
-        offset += 4 * max_n_agents * action_size
+        c_act_offset = offset
+        offset += 4 * max_n_agents * act_specs.continuous_size
+        d_act_offset = offset
+        offset += 4 * max_n_agents * len(act_specs.discrete_branches)
 
         # Create the object
         result = RLDataOffsets(
             name=name,
             max_n_agents=max_n_agents,
-            is_action_continuous=is_continuous,
-            action_size=action_size,
-            discrete_branches=discrete_branches,
-            obs_shapes=obs_shapes,
+            behavior_spec=behavior_spec,
             # decision steps
             decision_n_agents_offset=decision_n_agents_offset,
             decision_obs_offset=decision_obs_offset,
@@ -136,6 +156,7 @@ class RLDataOffsets(NamedTuple):
             termination_status_offset=termination_status_offset,
             termination_agent_id_offset=termination_agent_id_offset,
             # actions
-            action_offset=act_offset,
+            continuous_action_offset=c_act_offset,
+            discrete_action_offset=d_act_offset,
         )
         return result, offset

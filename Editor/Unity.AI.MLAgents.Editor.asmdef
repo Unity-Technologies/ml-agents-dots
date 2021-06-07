@@ -2,8 +2,8 @@
     "name": "Unity.AI.MLAgents.Editor",
     "references": [
         "Unity.Mathematics",
-        "Barracuda",
-        "Unity.AI.MLAgents"
+        "Unity.AI.MLAgents",
+        "Unity.Barracuda"
     ],
     "includePlatforms": [
         "Editor"

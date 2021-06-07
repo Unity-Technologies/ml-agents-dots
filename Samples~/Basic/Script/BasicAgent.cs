@@ -8,6 +8,7 @@ public class BasicAgent : MonoBehaviour
     public PolicySpecs BasicSpecs;
     private Policy m_Policy;
     private Entity m_Entity;
+    private NativeHashMap<Entity, int> m_DiscreteAction;
 
     public float timeBetweenDecisionsAtInference;
     float m_TimeSinceDecision;
@@ -34,7 +35,11 @@ public class BasicAgent : MonoBehaviour
     {
         m_Entity = World.DefaultGameObjectInjectionWorld.EntityManager.CreateEntity();
         m_Policy = BasicSpecs.GetPolicy();
-        m_Policy.RegisterPolicyWithHeuristic<int>("BASIC", () => { return 2; });
+        m_DiscreteAction = new NativeHashMap<Entity, int>(1, Allocator.Persistent);
+        if (BasicSpecs.PolicyProcessorType == PolicyProcessorType.None){
+            m_Policy.RegisterPolicyWithHeuristic<float, int>(BasicSpecs.Name, discreteHeuristic:() => { return 1; });
+        }
+
         Academy.Instance.OnEnvironmentReset += BeginEpisode;
         BeginEpisode();
     }
@@ -67,9 +72,10 @@ public class BasicAgent : MonoBehaviour
             .SetReward(-0.01f);
 
         // Get the action
-        NativeHashMap<Entity, int> actions = m_Policy.GenerateActionHashMap<int>(Allocator.Temp);
+        m_Policy.GenerateDiscreteActionHashMap<int>(m_DiscreteAction);
         int action = 0;
-        actions.TryGetValue(m_Entity, out action);
+        m_DiscreteAction.TryGetValue(m_Entity, out action);
+
 
         // Apply the action
         if (action == 1)
@@ -105,5 +111,6 @@ public class BasicAgent : MonoBehaviour
     void OnDestroy()
     {
         m_Policy.Dispose();
+        m_DiscreteAction.Dispose();
     }
 }

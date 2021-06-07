@@ -11,6 +11,7 @@ from mlagents_envs.base_env import (
     TerminalSteps,
     BehaviorName,
     BehaviorMapping,
+    ActionTuple,
 )
 from mlagents_envs.timers import timed
 from mlagents_envs.exception import UnityCommunicationException, UnityActionException
@@ -23,6 +24,7 @@ from mlagents_envs.side_channel.side_channel_manager import SideChannelManager
 from mlagents_envs.env_utils import launch_executable
 
 from mlagents_envs.logging_util import get_logger
+from mlagents_envs.communicator_objects.capabilities_pb2 import UnityRLCapabilitiesProto
 
 
 logger = get_logger(__name__)
@@ -37,7 +39,7 @@ class UnityEnvironment(BaseEnv):
         self,
         file_name: Optional[str] = None,
         side_channels: Optional[List[SideChannel]] = None,
-        args: Optional[List[str]] = None,
+        additional_args: Optional[List[str]] = None,
         timeout_wait: int = 60,
         worker_id: Optional[int] = None,  # TODO : REMOVE
         seed: Optional[int] = None,  # TODO : REMOVE
@@ -53,7 +55,16 @@ class UnityEnvironment(BaseEnv):
         :list args: Addition Unity command line arguments
         :list side_channels: Additional side channel for not-rl communication with Unity
         """
-        args = args or []
+        self.academy_capabilities = UnityRLCapabilitiesProto()  # TODO : REMOVE
+        self.academy_capabilities.baseRLCapabilities = True
+        self.academy_capabilities.concatenatedPngObservations = True
+        self.academy_capabilities.compressedChannelMapping = True
+        self.academy_capabilities.hybridActions = True
+        self.academy_capabilities.trainingAnalytics = True
+        self.academy_capabilities.variableLengthObservation = True
+        self.academy_capabilities.multiAgentGroups = True
+
+        args = additional_args or []
         atexit.register(self.close)
         executable_name = file_name
 
@@ -112,7 +123,7 @@ class UnityEnvironment(BaseEnv):
                 f"in the environment"
             )
 
-    def set_actions(self, behavior_name: BehaviorName, action: np.array) -> None:
+    def set_actions(self, behavior_name: BehaviorName, action: ActionTuple) -> None:
         self._assert_behavior_exists(behavior_name)
         expected_n_agents = self._communicator.get_n_decisions_requested(behavior_name)
         if expected_n_agents == 0 and len(action) != 0:
@@ -120,19 +131,38 @@ class UnityEnvironment(BaseEnv):
                 f"The behavior {behavior_name} does not need an input this step"
             )
         spec = self._env_specs[behavior_name]
-        expected_type = np.float32 if spec.is_action_continuous() else np.int32
-        expected_shape = (expected_n_agents, spec.action_size)
-        if action.shape != expected_shape:
-            raise UnityActionException(
-                f"The behavior {behavior_name} needs an input of dimension"
-                f"{expected_shape} but received input of dimension {action.shape}"
+
+        # continuous
+        if action.continuous is not None:
+            expected_cont_shape = (expected_n_agents, spec.action_spec.continuous_size)
+            if action.continuous.shape != expected_cont_shape:
+                raise UnityActionException(
+                    f"The behavior {behavior_name} needs a continuous input of "
+                    f"dimension {expected_cont_shape} but received input of "
+                    f"dimension {action.continuous.shape}"
+                )
+            if action.continuous.dtype != np.float32:
+                action.continuous = action.continuous.astype(np.float32)
+
+        # discrete
+        if action.discrete is not None:
+            expected_disc_shape = (
+                expected_n_agents,
+                len(spec.action_spec.discrete_branches),
             )
-        if action.dtype != expected_type:
-            action = action.astype(expected_type)
+            if action.discrete.shape != expected_disc_shape:
+                raise UnityActionException(
+                    f"The behavior {behavior_name} needs a discrete input of "
+                    f"dimension {expected_disc_shape} but received input of "
+                    f"dimension {action.discrete.shape}"
+                )
+            if action.discrete.dtype != np.int32:
+                action.discrete = action.discrete.astype(np.int32)
+
         self._communicator.set_actions(behavior_name, action)
 
     def set_action_for_agent(
-        self, behavior_name: BehaviorName, agent_id: int, action: np.array
+        self, behavior_name: BehaviorName, agent_id: int, action: ActionTuple
     ) -> None:
         raise NotImplementedError("Method not implemented.")
 

@@ -1,5 +1,5 @@
 #define CUSTOM_EDITOR
-using Barracuda;
+using Unity.Barracuda;
 using UnityEditor;
 using UnityEngine;
 using System.Reflection;
@@ -11,15 +11,15 @@ namespace Unity.AI.MLAgents.Editor
 {
     internal static class SpecsPropertyNames
     {
-        public const string k_Name = "Name";
-        public const string k_PolicyProcessorType = "PolicyProcessorType";
-        public const string k_NumberAgents = "NumberAgents";
-        public const string k_ActionType = "ActionType";
-        public const string k_ObservationShapes = "ObservationShapes";
-        public const string k_ActionSize = "ActionSize";
-        public const string k_DiscreteActionBranches = "DiscreteActionBranches";
-        public const string k_Model = "Model";
-        public const string k_InferenceDevice = "InferenceDevice";
+        public const string k_Name = "m_Name";
+        public const string k_PolicyProcessorType = "m_PolicyProcessorType";
+        public const string k_NumberAgents = "m_NumberAgents";
+        public const string k_ObservationShapes = "m_ObservationShapes";
+        public const string k_ContinuousActionSize = "m_ContinuousActionSize";
+        public const string k_DiscreteActionSize = "m_DiscreteActionSize";
+        public const string k_DiscreteActionBranches = "m_DiscreteActionBranches";
+        public const string k_Model = "m_Model";
+        public const string k_InferenceDevice = "m_InferenceDevice";
     }
 
 
@@ -93,16 +93,16 @@ namespace Unity.AI.MLAgents.Editor
             DrawObservationShape(position, property);
             position.y += k_LineHeight * GetHeightObservationShape(property);
 
-            // Draw Action Type
+            // Draw Continuous Action Size
             EditorGUI.PropertyField(position,
-                property.FindPropertyRelative(SpecsPropertyNames.k_ActionType),
-                new GUIContent("Action Type", "The type of Action : Discrete or continuous"));
+                property.FindPropertyRelative(SpecsPropertyNames.k_ContinuousActionSize),
+                new GUIContent("Continuous Action Size", "TODO"));
             position.y += k_LineHeight;
 
-            // Draw Action Size
+            // Draw Discrete Action Size
             EditorGUI.PropertyField(position,
-                property.FindPropertyRelative(SpecsPropertyNames.k_ActionSize),
-                new GUIContent("Action Size", "TODO"));
+                property.FindPropertyRelative(SpecsPropertyNames.k_DiscreteActionSize),
+                new GUIContent("Discrete Action Size", "TODO"));
             position.y += k_LineHeight;
 
             // Draw discrete Action Branches
@@ -164,41 +164,30 @@ namespace Unity.AI.MLAgents.Editor
 
         static void DrawDiscreteActionBranches(Rect position, SerializedProperty property)
         {
-            var actionTypeProperty = property.FindPropertyRelative(SpecsPropertyNames.k_ActionType);
-            var actionType = (ActionType)actionTypeProperty.enumValueIndex;
-            var actionSizeProperty = property.FindPropertyRelative(SpecsPropertyNames.k_ActionSize);
+            var actionSizeProperty = property.FindPropertyRelative(SpecsPropertyNames.k_DiscreteActionSize);
             var actionSize = actionSizeProperty.intValue;
-            if (actionType == ActionType.DISCRETE)
+            EditorGUI.indentLevel++;
+            EditorGUI.LabelField(position, "Discrete Action Options");
+            position.y += k_LineHeight;
+
+            var actionBranchesProperty = property.FindPropertyRelative(SpecsPropertyNames.k_DiscreteActionBranches);
+            actionBranchesProperty.arraySize = actionSize;
+
+            for (int i = 0; i < actionSize; i++)
             {
-                EditorGUI.indentLevel++;
-                EditorGUI.LabelField(position, "Discrete Action Options");
+                EditorGUI.PropertyField(position,
+                    actionBranchesProperty.GetArrayElementAtIndex(i),
+                    new GUIContent("Branch " + i));
                 position.y += k_LineHeight;
-
-                var actionBranchesProperty = property.FindPropertyRelative(SpecsPropertyNames.k_DiscreteActionBranches);
-                actionBranchesProperty.arraySize = actionSize;
-
-                for (int i = 0; i < actionSize; i++)
-                {
-                    EditorGUI.PropertyField(position,
-                        actionBranchesProperty.GetArrayElementAtIndex(i),
-                        new GUIContent("Branch " + i));
-                    position.y += k_LineHeight;
-                }
-                EditorGUI.indentLevel--;
             }
+            EditorGUI.indentLevel--;
         }
 
         static int GetHeightDiscreteAction(SerializedProperty property)
         {
-            var actionTypeProperty = property.FindPropertyRelative(SpecsPropertyNames.k_ActionType);
-            var actionType = (ActionType)actionTypeProperty.enumValueIndex;
-            var actionSizeProperty = property.FindPropertyRelative(SpecsPropertyNames.k_ActionSize);
+            var actionSizeProperty = property.FindPropertyRelative(SpecsPropertyNames.k_DiscreteActionSize);
             var actionSize = actionSizeProperty.intValue;
-            if (actionType == ActionType.DISCRETE)
-            {
-                return actionSize + 1;
-            }
-            return 0;
+            return actionSize + 1;
         }
 
         void DrawWarnings(Rect position, SerializedProperty property)
@@ -243,11 +232,21 @@ namespace Unity.AI.MLAgents.Editor
             }
 
             // Action Size is not zero
-            var actionSizeProperty = property.FindPropertyRelative(SpecsPropertyNames.k_ActionSize);
-            var actionSize = actionSizeProperty.intValue;
-            if (actionSize == 0)
+            var contActionSizeProperty = property.FindPropertyRelative(SpecsPropertyNames.k_ContinuousActionSize);
+            var conActionSize = contActionSizeProperty.intValue;
+            var discActionSizeProperty = property.FindPropertyRelative(SpecsPropertyNames.k_DiscreteActionSize);
+            var discActionSize = discActionSizeProperty.intValue;
+            if (conActionSize + discActionSize == 0)
             {
                 m_Warnings.Add("Your Policy must have non-zero action size");
+            }
+            var actionBranchesProperty = property.FindPropertyRelative(SpecsPropertyNames.k_DiscreteActionBranches);
+            for (int i = 0; i < actionBranchesProperty.arraySize; i++)
+            {
+                if (actionBranchesProperty.GetArrayElementAtIndex(i).intValue <= 1)
+                {
+                    m_Warnings.Add("Each discrete action must have more than 1 option");
+                }
             }
 
             //Model is not empty

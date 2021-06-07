@@ -80,10 +80,7 @@ namespace Unity.AI.MLAgents
             SetArray(dataOffsets.DecisionObsOffset, policy.DecisionObs, 4 * decisionCount * totalFloatObsPerAgent);
             SetArray(dataOffsets.DecisionRewardsOffset, policy.DecisionRewards, 4 * decisionCount);
             SetArray(dataOffsets.DecisionAgentIdOffset, policy.DecisionAgentIds, 4 * decisionCount);
-            if (policy.ActionType == ActionType.DISCRETE)
-            {
-                SetArray(dataOffsets.DecisionActionMasksOffset, policy.DecisionActionMasks, decisionCount * policy.DiscreteActionBranches.Sum());
-            }
+            SetArray(dataOffsets.DecisionActionMasksOffset, policy.DecisionActionMasks, decisionCount * policy.DiscreteActionBranches.Sum());
 
             //Termination data
             var terminationCount = policy.TerminationCounter.Count;
@@ -100,22 +97,26 @@ namespace Unity.AI.MLAgents
             var offset = m_CurrentEndOffset;
             offset = SetString(offset, name); // Name
             offset = SetInt(offset, policy.DecisionAgentIds.Length); // Max Agents
-            offset = SetBool(offset, policy.ActionType == ActionType.CONTINUOUS);
-            offset = SetInt(offset, policy.ActionSize);
-            if (policy.ActionType == ActionType.DISCRETE)
-            {
-                foreach (int branchSize in policy.DiscreteActionBranches)
-                {
-                    offset = SetInt(offset, branchSize);
-                }
-            }
+
             offset = SetInt(offset, policy.SensorShapes.Length);
             foreach (int3 shape in policy.SensorShapes)
             {
                 offset = SetInt(offset, shape.x);
                 offset = SetInt(offset, shape.y);
                 offset = SetInt(offset, shape.z);
+                offset = SetInt(offset, 0); // TODO : implement dimension properties
+                offset = SetInt(offset, 0);
+                offset = SetInt(offset, 0);
+                offset = SetInt(offset, 0);
             }
+
+            offset = SetInt(offset, policy.ContinuousActionSize);
+            offset = SetInt(offset, policy.DiscreteActionBranches.Length);
+            foreach (int branchSize in policy.DiscreteActionBranches)
+            {
+                offset = SetInt(offset, branchSize);
+            }
+
             m_CurrentEndOffset = offset;
         }
 
@@ -132,14 +133,8 @@ namespace Unity.AI.MLAgents
             var dataOffsets = m_OffsetDict[name];
             SetInt(dataOffsets.DecisionNumberAgentsOffset, 0);
             SetInt(dataOffsets.TerminationNumberAgentsOffset, 0);
-            if (policy.ActionType == ActionType.DISCRETE)
-            {
-                GetArray(dataOffsets.ActionOffset, policy.DiscreteActuators, 4 * policy.DecisionCounter.Count * policy.ActionSize);
-            }
-            else
-            {
-                GetArray(dataOffsets.ActionOffset, policy.ContinuousActuators, 4 * policy.DecisionCounter.Count * policy.ActionSize);
-            }
+            GetArray(dataOffsets.ContinuousActionOffset, policy.ContinuousActuators, 4 * policy.DecisionCounter.Count * policy.ContinuousActionSize);
+            GetArray(dataOffsets.DiscreteActionOffset, policy.DiscreteActuators, 4 * policy.DecisionCounter.Count * policy.DiscreteActionBranches.Length);
         }
 
         public byte[] SideChannelData
