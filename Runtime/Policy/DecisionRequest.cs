@@ -43,10 +43,6 @@ namespace Unity.AI.MLAgents
         public DecisionRequest SetDiscreteActionMask(int branch, int actionIndex)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            if (m_Policy.ActionType == ActionType.CONTINUOUS)
-            {
-                throw new MLAgentsException("SetDiscreteActionMask can only be used with discrete acton space.");
-            }
             if (branch > m_Policy.DiscreteActionBranches.Length)
             {
                 throw new MLAgentsException("Unknown action branch used when setting mask.");
@@ -109,8 +105,13 @@ namespace Unity.AI.MLAgents
                     $"Categorical observation is out of bound for observation {sensorNumber} with maximum {maxValue} (received {sensor}.");
             }
 #endif
+
             int start = m_Policy.ObservationOffsets[sensorNumber];
             start += maxValue * m_Index;
+            for (int i = 0; i < maxValue; i++)
+            {
+                m_Policy.DecisionObs[start + i] = 0.0f;
+            }
             m_Policy.DecisionObs[start + sensor] = 1.0f;
             return this;
         }

@@ -42,7 +42,7 @@ namespace Unity.AI.MLAgents
         internal StatsRecorder()
         {
             m_Channel = new StatsSideChannel();
-            SideChannelsManager.RegisterSideChannel(m_Channel);
+            SideChannelManager.RegisterSideChannel(m_Channel);
         }
 
         /// <summary>
@@ -65,7 +65,7 @@ namespace Unity.AI.MLAgents
 
         internal void Dispose()
         {
-            SideChannelsManager.UnregisterSideChannel(m_Channel);
+            SideChannelManager.UnregisterSideChannel(m_Channel);
         }
     }
 }

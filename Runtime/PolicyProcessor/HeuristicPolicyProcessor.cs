@@ -16,17 +16,23 @@ namespace Unity.AI.MLAgents
         /// <param name="policy"> The Policy to register</param>
         /// <param name="policyId"> The name of the Policy. This is useful for identification
         /// and for training.</param>
-        /// <param name="heuristic"> The Heuristic used to generate the actions.
+        /// <param name="continuousHeuristic"> The Heuristic used to generate the continuous actions.
         /// Note that all agents in the Policy will receive the same action.</param>
-        /// <typeparam name="TH"> The type of the Action struct. It must match the Action
-        /// Size and Action Type of the Policy.</typeparam>
-        public static void RegisterPolicyWithHeuristic<TH>(
+        /// <param name="discreteHeuristic"> The Heuristic used to generate the discrete actions.
+        /// Note that all agents in the Policy will receive the same action.</param>
+        /// <typeparam name="TC"> The type of the continuous Action struct. It must match the Action
+        /// Size of the continuous action. If there are no continuous actions, set to an empty struct.</typeparam>
+        /// <typeparam name="TD"> The type of the discrete Action struct. It must match the Action
+        /// Size of the discrete action. If there are no discrete actions, set to an empty struct.</typeparam>
+        public static void RegisterPolicyWithHeuristic<TC, TD>(
             this Policy policy,
             string policyId,
-            Func<TH> heuristic
-        ) where TH : struct
+            Func<TC> continuousHeuristic = null,
+            Func<TD> discreteHeuristic = null
+        ) where TC : struct
+            where TD : struct
         {
-            var policyProcessor = new HeuristicPolicyProcessor<TH>(policy, heuristic);
+            var policyProcessor = new HeuristicPolicyProcessor<TC, TD>(policy, continuousHeuristic, discreteHeuristic);
             Academy.Instance.RegisterPolicy(policyId, policy, policyProcessor, true);
         }
 
@@ -39,57 +45,77 @@ namespace Unity.AI.MLAgents
         /// <param name="policy"> The Policy to register</param>
         /// <param name="policyId"> The name of the Policy. This is useful for identification
         /// and for training.</param>
-        /// <param name="heuristic"> The Heuristic used to generate the actions.
+        /// <param name="continuousHeuristic"> The Heuristic used to generate the continuous actions.
         /// Note that all agents in the Policy will receive the same action.</param>
-        /// <typeparam name="TH"> The type of the Action struct. It must match the Action
-        /// Size and Action Type of the Policy.</typeparam>
-        public static void RegisterPolicyWithHeuristicForceNoCommunication<TH>(
+        /// <param name="discreteHeuristic"> The Heuristic used to generate the discrete actions.
+        /// Note that all agents in the Policy will receive the same action.</param>
+        /// <typeparam name="TC"> The type of the continuous Action struct. It must match the Action
+        /// Size of the continuous action. If there are no continuous actions, set to an empty struct.</typeparam>
+        /// <typeparam name="TD"> The type of the discrete Action struct. It must match the Action
+        /// Size of the discrete action. If there are no discrete actions, set to an empty struct.</typeparam>
+        public static void RegisterPolicyWithHeuristicForceNoCommunication<TC, TD>(
             this Policy policy,
             string policyId,
-            Func<TH> heuristic
-        ) where TH : struct
+            Func<TC> continuousHeuristic = null,
+            Func<TD> discreteHeuristic = null
+        ) where TC : struct
+            where TD : struct
         {
-            var policyProcessor = new HeuristicPolicyProcessor<TH>(policy, heuristic);
+            var policyProcessor = new HeuristicPolicyProcessor<TC, TD>(policy, continuousHeuristic, discreteHeuristic);
             Academy.Instance.RegisterPolicy(policyId, policy, policyProcessor, false);
         }
     }
 
-    internal class HeuristicPolicyProcessor<T> : IPolicyProcessor where T : struct
+    internal class HeuristicPolicyProcessor<TC, TD> : IPolicyProcessor where TC : struct
+        where TD : struct
     {
-        private Func<T> m_Heuristic;
+        private Func<TC> m_ContinuousHeuristic;
+        private Func<TD> m_DiscreteHeuristic;
         private Policy m_Policy;
 
         public bool IsConnected {get {return false;}}
 
-        internal HeuristicPolicyProcessor(Policy policy, Func<T> heuristic)
+        internal HeuristicPolicyProcessor(Policy policy, Func<TC> continuousHeuristic = null, Func<TD> discreteHeuristic = null)
         {
             this.m_Policy = policy;
-            this.m_Heuristic = heuristic;
-            var structSize = UnsafeUtility.SizeOf<T>() / sizeof(float);
-            if (structSize != policy.ActionSize)
+            this.m_ContinuousHeuristic = continuousHeuristic;
+            this.m_DiscreteHeuristic = discreteHeuristic;
+            if (m_ContinuousHeuristic != null)
             {
-                throw new MLAgentsException(
-                    $"The heuristic provided does not match the action size. Expected {policy.ActionSize} but received {structSize} from heuristic");
+                var structSize = UnsafeUtility.SizeOf<TC>() / sizeof(float);
+                if (structSize != policy.ContinuousActionSize)
+                {
+                    throw new MLAgentsException(
+                        $"The continuous heuristic provided does not match the continuous action size. Expected {policy.ContinuousActionSize} but received {structSize} from heuristic");
+                }
+            }
+            if (m_DiscreteHeuristic != null)
+            {
+                var structSize = UnsafeUtility.SizeOf<TD>() / sizeof(int);
+                if (structSize != policy.DiscreteActionBranches.Length)
+                {
+                    throw new MLAgentsException(
+                        $"The discrete heuristic provided does not match the discrete action size. Expected {policy.DiscreteActionBranches.Length} but received {structSize} from heuristic");
+                }
             }
         }
 
         public void Process()
         {
-            T action = m_Heuristic.Invoke();
             var totalCount = m_Policy.DecisionCounter.Count;
-
-            // TODO : This can be parallelized
-            if (m_Policy.ActionType == ActionType.CONTINUOUS)
+            if (m_ContinuousHeuristic != null)
             {
-                var s = m_Policy.ContinuousActuators.Slice(0, totalCount * m_Policy.ActionSize).SliceConvert<T>();
+                TC action = m_ContinuousHeuristic.Invoke();
+                var s = m_Policy.ContinuousActuators.Slice(0, totalCount * m_Policy.ContinuousActionSize).SliceConvert<TC>();
                 for (int i = 0; i < totalCount; i++)
                 {
                     s[i] = action;
                 }
             }
-            else
+            if (m_DiscreteHeuristic != null)
             {
-                var s = m_Policy.DiscreteActuators.Slice(0, totalCount * m_Policy.ActionSize).SliceConvert<T>();
+                TD action = m_DiscreteHeuristic.Invoke();
+                var s = m_Policy.DiscreteActuators.Slice(0, totalCount * m_Policy.DiscreteActionBranches.Length).SliceConvert<TD>();
                 for (int i = 0; i < totalCount; i++)
                 {
                     s[i] = action;

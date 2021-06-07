@@ -13,50 +13,65 @@ namespace Unity.AI.MLAgents
     public struct ActuatorEvent
     {
         /// <summary>
-        /// The size of the action vector.
+        /// The size of the continuous action vector.
         /// </summary>
-        [ReadOnly] public int ActionSize;
+        [ReadOnly] public int ContinuousActionSize;
+
+        /// <summary>
+        /// The size of the discrete action vector.
+        /// </summary>
+        [ReadOnly] public int DiscreteActionSize;
 
         /// <summary>
         /// The Entity the vector action is for.
         /// </summary>
         [ReadOnly] public Entity Entity;
 
-        /// <summary>
-        /// The type of action : can be DISCRETE or CONTINUOUS.
-        /// </summary>
-        [ReadOnly] public ActionType ActionType;
 
         [ReadOnly] internal NativeSlice<float> ContinuousActionSlice;
         [ReadOnly] internal NativeSlice<int> DiscreteActionSlice;
 
         /// <summary>
-        /// Retrieve the action that was decided for the Entity.
+        /// Retrieve the continuous action that was decided for the Entity.
         /// This method uses a generic type, as such you must provide a
-        /// type that is compatible with the Action Type and Action Size
+        /// type that is compatible with the Continuous Action Size
         /// for this Policy.
         /// </summary>
         /// <typeparam name="T"> The type of action struct.</typeparam>
-        /// <returns> The action struct for the Entity.</returns>
-        public T GetAction<T>() where T : struct
+        /// <returns> The continuous action struct for the Entity.</returns>
+        public T GetContinuousAction<T>() where T : struct
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            if (ActionSize != UnsafeUtility.SizeOf<T>() / 4)
+            if (ContinuousActionSize != UnsafeUtility.SizeOf<T>() / 4)
             {
                 var receivedSize = UnsafeUtility.SizeOf<T>() / 4;
-                throw new MLAgentsException($"Action space size does not match for action. Expected {ActionSize} but received {receivedSize}");
+                throw new MLAgentsException($"Action space size does not match for action. Expected {ContinuousActionSize} but received {receivedSize}");
             }
 #endif
-            if (ActionType == ActionType.DISCRETE)
+            return ContinuousActionSlice.SliceConvert<T>()[0];
+        }
+
+        /// <summary>
+        /// Retrieve the discrete action that was decided for the Entity.
+        /// This method uses a generic type, as such you must provide a
+        /// type that is compatible with the Discrete Action Size
+        /// for this Policy.
+        /// </summary>
+        /// <typeparam name="T"> The type of action struct.</typeparam>
+        /// <returns> The discrete action struct for the Entity.</returns>
+        public T GetDiscreteAction<T>() where T : struct
+        {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (DiscreteActionSize != UnsafeUtility.SizeOf<T>() / 4)
             {
-                return DiscreteActionSlice.SliceConvert<T>()[0];
+                var receivedSize = UnsafeUtility.SizeOf<T>() / 4;
+                throw new MLAgentsException($"Action space size does not match for action. Expected {DiscreteActionSize} but received {receivedSize}");
             }
-            else
-            {
-                return ContinuousActionSlice.SliceConvert<T>()[0];
-            }
+#endif
+            return DiscreteActionSlice.SliceConvert<T>()[0];
         }
     }
+
 
     /// <summary>
     /// The signature of the Job used to retrieve actuators values from a Policy
@@ -132,37 +147,23 @@ namespace Unity.AI.MLAgents
             /// Calls the user implemented Execute method with ActuatorEvent struct
             public static unsafe void Execute(ref ActionEventJobData<T> jobData, IntPtr listDataPtr, IntPtr unusedPtr, ref JobRanges ranges, int jobIndex)
             {
-                int size = jobData.Policy.ActionSize;
+                int contSize = jobData.Policy.ContinuousActionSize;
+                int discSize = jobData.Policy.DiscreteActionBranches.Length;
                 int actionCount = jobData.Policy.ActionCounter.Count;
 
-                // Continuous case
-                if (jobData.Policy.ActionType == ActionType.CONTINUOUS)
+
+                for (int i = 0; i < actionCount; i++)
                 {
-                    for (int i = 0; i < actionCount; i++)
+                    jobData.UserJobData.Execute(new ActuatorEvent
                     {
-                        jobData.UserJobData.Execute(new ActuatorEvent
-                        {
-                            ActionSize = size,
-                            ActionType = ActionType.CONTINUOUS,
-                            Entity = jobData.Policy.ActionAgentEntityIds[i],
-                            ContinuousActionSlice = jobData.Policy.ContinuousActuators.Slice(i * size, size)
-                        });
-                    }
+                        ContinuousActionSize = contSize,
+                        DiscreteActionSize = discSize,
+                        Entity = jobData.Policy.ActionAgentEntityIds[i],
+                        ContinuousActionSlice = jobData.Policy.ContinuousActuators.Slice(i * contSize, contSize),
+                        DiscreteActionSlice = jobData.Policy.DiscreteActuators.Slice(i * discSize, discSize)
+                    });
                 }
-                // Discrete Case
-                else
-                {
-                    for (int i = 0; i < actionCount; i++)
-                    {
-                        jobData.UserJobData.Execute(new ActuatorEvent
-                        {
-                            ActionSize = size,
-                            ActionType = ActionType.DISCRETE,
-                            Entity = jobData.Policy.ActionAgentEntityIds[i],
-                            DiscreteActionSlice = jobData.Policy.DiscreteActuators.Slice(i * size, size)
-                        });
-                    }
-                }
+
                 jobData.Policy.ResetActionsCounter();
             }
         }

@@ -5,9 +5,8 @@
         "Unity.Jobs",
         "Unity.Mathematics",
         "Unity.Collections",
-        "Barracuda"
+        "Unity.Barracuda"
     ],
-    "optionalUnityReferences": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": true,
@@ -15,5 +14,6 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": []
+    "versionDefines": [],
+    "noEngineReferences": false
 }

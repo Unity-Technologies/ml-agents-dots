@@ -1,12 +1,12 @@
 using Unity.Mathematics;
 using Unity.Entities;
-using Barracuda;
+using Unity.Barracuda;
 using System;
 using UnityEngine;
 
 namespace Unity.AI.MLAgents
 {
-    internal enum PolicyProcessorType
+    public enum PolicyProcessorType
     {
         Default,
         InferenceOnly,
@@ -21,20 +21,128 @@ namespace Unity.AI.MLAgents
     [Serializable]
     public struct PolicySpecs
     {
-        [SerializeField] internal string Name;
+        #pragma warning disable CS0649
+        // TODO : Give public accessors with setters that raise error if policy created
+        [SerializeField] private string m_Name;
 
-        [SerializeField] internal PolicyProcessorType PolicyProcessorType;
+        [SerializeField] private PolicyProcessorType m_PolicyProcessorType;
 
-        [SerializeField] internal int NumberAgents;
-        [SerializeField] internal ActionType ActionType;
-        [SerializeField] internal int3[] ObservationShapes;
-        [SerializeField] internal int ActionSize;
-        [SerializeField] internal int[] DiscreteActionBranches;
+        [SerializeField] private int m_NumberAgents;
+        [SerializeField] private int3[] m_ObservationShapes;
+        [SerializeField] private int m_ContinuousActionSize;
+        [SerializeField] private int m_DiscreteActionSize;
+        [SerializeField] private int[] m_DiscreteActionBranches;
 
-        [SerializeField] internal NNModel Model;
-        [SerializeField] internal InferenceDevice InferenceDevice;
+        [SerializeField] private NNModel m_Model;
+        [SerializeField] private InferenceDevice m_InferenceDevice;
+#pragma warning restore CS0649
+
+        public string Name
+        {
+            get { return m_Name; }
+            set
+            {
+                AssertSpecIsEditable("Name");
+                m_Name = value;
+            }
+        }
+        public PolicyProcessorType PolicyProcessorType
+        {
+            get { return m_PolicyProcessorType; }
+            set
+            {
+                AssertSpecIsEditable("PolicyProcessorType");
+                m_PolicyProcessorType = value;
+            }
+        }
+
+
+        public int NumberAgents
+        {
+            get { return m_NumberAgents; }
+            set
+            {
+                AssertSpecIsEditable("NumberAgents");
+                m_NumberAgents = value;
+            }
+        }
+
+
+        public int3[] ObservationShapes
+        {
+            get { return m_ObservationShapes; }
+            set
+            {
+                AssertSpecIsEditable("ObservationShapes");
+                m_ObservationShapes = value;
+            }
+        }
+
+
+        public int ContinuousActionSize
+        {
+            get { return m_ContinuousActionSize; }
+            set
+            {
+                AssertSpecIsEditable("ContinuousActionSize");
+                m_ContinuousActionSize = value;
+            }
+        }
+
+
+        public int DiscreteActionSize
+        {
+            get { return m_DiscreteActionSize; }
+            set
+            {
+                AssertSpecIsEditable("DiscreteActionSize");
+                m_DiscreteActionSize = value;
+            }
+        }
+
+
+        public int[] DiscreteActionBranches
+        {
+            get { return m_DiscreteActionBranches; }
+            set
+            {
+                AssertSpecIsEditable("DiscreteActionBranches");
+                m_DiscreteActionBranches = value;
+            }
+        }
+
+
+        public NNModel Model
+        {
+            get { return m_Model; }
+            set
+            {
+                AssertSpecIsEditable("Model");
+                m_Model = value;
+            }
+        }
+
+
+        public InferenceDevice InferenceDevice
+        {
+            get { return m_InferenceDevice; }
+            set
+            {
+                AssertSpecIsEditable("InferenceDevice");
+                m_InferenceDevice = value;
+            }
+        }
+
 
         private Policy m_Policy;
+
+        private void AssertSpecIsEditable(string specName)
+        {
+            if (m_Policy.IsCreated)
+            {
+                throw new MLAgentsException($"Cannot edit PolicySpec {specName} after the policy is created. ");
+            }
+        }
 
         /// <summary>
         /// Generates a Policy using the specified specs and registers its
@@ -51,8 +159,7 @@ namespace Unity.AI.MLAgents
             m_Policy = new Policy(
                 NumberAgents,
                 ObservationShapes,
-                ActionType,
-                ActionSize,
+                ContinuousActionSize,
                 DiscreteActionBranches
             );
             switch (PolicyProcessorType)

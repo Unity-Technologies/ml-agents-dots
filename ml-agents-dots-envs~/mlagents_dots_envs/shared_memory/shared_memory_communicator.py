@@ -1,4 +1,3 @@
-import numpy as np
 import os
 import time
 import uuid
@@ -8,7 +7,12 @@ from mlagents_dots_envs.shared_memory.shared_memory_header import SharedMemoryHe
 from mlagents_dots_envs.shared_memory.shared_memory_body import SharedMemoryBody
 
 from mlagents_envs.exception import UnityCommunicationException
-from mlagents_envs.base_env import DecisionSteps, TerminalSteps, BehaviorSpec
+from mlagents_envs.base_env import (
+    DecisionSteps,
+    TerminalSteps,
+    BehaviorSpec,
+    ActionTuple,
+)
 
 
 class SharedMemoryCommunicator:
@@ -112,7 +116,7 @@ class SharedMemoryCommunicator:
     def get_n_decisions_requested(self, key: str) -> int:
         return self._data_mem.get_n_decisions_requested(key)
 
-    def set_actions(self, key: str, data: np.ndarray) -> None:
+    def set_actions(self, key: str, data: ActionTuple) -> None:
         self._data_mem.set_actions(key, data)
 
     @property

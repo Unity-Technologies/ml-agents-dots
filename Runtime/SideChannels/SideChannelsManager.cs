@@ -9,7 +9,7 @@ namespace Unity.AI.MLAgents.SideChannels
     /// Collection of static utilities for managing the registering/unregistering of
     /// <see cref="SideChannels"/> and the sending/receiving of messages for all the channels.
     /// </summary>
-    public static class SideChannelsManager
+    public static class SideChannelManager
     {
         private static Dictionary<Guid, SideChannel> RegisteredChannels = new Dictionary<Guid, SideChannel>();
 

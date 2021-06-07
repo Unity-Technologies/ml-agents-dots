@@ -26,7 +26,8 @@ namespace Unity.AI.MLAgents
         public int TerminationStatusOffset;
 
         // Actions
-        public int ActionOffset;
+        public int ContinuousActionOffset;
+        public int DiscreteActionOffset;
 
         // End of file
         public int EndOfDataOffset;
@@ -36,16 +37,7 @@ namespace Unity.AI.MLAgents
             var startOffset = offset;
             name = sharedMemory.GetString(ref offset);
             int maxAgents = sharedMemory.GetInt(ref offset);
-            bool isContinuous = sharedMemory.GetBool(ref offset);
-            int actionSize = sharedMemory.GetInt(ref offset);
-            int totalNumberMasks = 0;
-            if (!isContinuous)
-            {
-                for (int i = 0; i < actionSize; i++)
-                {
-                    totalNumberMasks += sharedMemory.GetInt(ref offset);
-                }
-            }
+
             int NObs = sharedMemory.GetInt(ref offset);
             int totalObsLength = 0; // The number of floats contained in an Agent's observations
             for (int i = 0; i < NObs; i++)
@@ -55,41 +47,47 @@ namespace Unity.AI.MLAgents
                 prod *= math.max(1,  sharedMemory.GetInt(ref offset));
                 prod *= math.max(1,  sharedMemory.GetInt(ref offset));
                 totalObsLength += prod;
+                offset += 16; // 4bytes * (3dim prop + 1 type)
             }
+            int continuousActionSize = sharedMemory.GetInt(ref offset);
+            int numDiscreteBranches = sharedMemory.GetInt(ref offset);
+            int numDiscreteActions = 0;
+            for (int i = 0; i < numDiscreteBranches; i++)
+            {
+                numDiscreteActions += sharedMemory.GetInt(ref offset);
+            }
+
 
             return ComputeOffsets(
                 name,
                 maxAgents,
-                isContinuous,
-                actionSize,
+                continuousActionSize,
+                numDiscreteBranches,
+                numDiscreteActions,
                 NObs,
                 totalObsLength,
-                totalNumberMasks,
                 startOffset);
         }
 
         public static RLDataOffsets FromPolicy(Policy policy, string name, int offset)
         {
-            bool isContinuous = policy.ActionType == ActionType.CONTINUOUS;
             int totalFloatObsPerAgent = 0;
             foreach (int3 shape in policy.SensorShapes)
             {
                 totalFloatObsPerAgent += shape.GetTotalTensorSize();
             }
-            int totalNumberOfMasks = 0;
-            if (!isContinuous)
-            {
-                totalNumberOfMasks = policy.DiscreteActionBranches.Sum();
-            }
+            int numDiscreteActions = numDiscreteActions = policy.DiscreteActionBranches.Sum();;
+            int numDiscreteBranches = policy.DiscreteActionBranches.Length;
+            int numContinuousActions = policy.ContinuousActionSize;
 
             return ComputeOffsets(
                 name,
                 policy.DecisionAgentIds.Length,
-                isContinuous,
-                policy.ActionSize,
+                numContinuousActions,
+                numDiscreteBranches,
+                numDiscreteActions,
                 policy.SensorShapes.Length,
                 totalFloatObsPerAgent,
-                totalNumberOfMasks,
                 offset
             );
         }
@@ -97,11 +95,11 @@ namespace Unity.AI.MLAgents
         private static RLDataOffsets ComputeOffsets(
             string name,
             int maxAgents,
-            bool isContinuous,
-            int actionSize,
+            int numContinuousActions,
+            int numDiscreteBranches,
+            int numDiscreteActions,
             int nbObs,
             int totalFloatObsPerAgent,
-            int totalNumberOfMasks,
             int offset)
         {
             var dataOffsets = new RLDataOffsets();
@@ -109,14 +107,11 @@ namespace Unity.AI.MLAgents
             offset += 1 + ASCIIEncoding.ASCII.GetByteCount(name);
             dataOffsets.MaxAgents = maxAgents;
             offset += 4; // Max Agent
-            offset += 1; //Action Type
-            offset += 4; //Action Size
-            if (!isContinuous)
-            {
-                offset += 4 * actionSize; // discrete action branches
-            }
             offset += 4; //Num Obs
-            offset += nbObs * 4 * 3;
+            offset += nbObs * 28; // 4 * (3 + 3 + 1); // 4 bytes, 3 shapes, 3 dim prop, 1 type
+            offset += 4; // Continuous action size
+            offset += 4; // Discrete action size
+            offset += 4 * numDiscreteBranches; // Each branch size
 
             // Decision Steps Offsets
             dataOffsets.DecisionNumberAgentsOffset = offset;
@@ -127,11 +122,8 @@ namespace Unity.AI.MLAgents
             offset += 4 * maxAgents;
             dataOffsets.DecisionAgentIdOffset = offset;
             offset += 4 * maxAgents;
-            if (!isContinuous)
-            {
-                dataOffsets.DecisionActionMasksOffset = offset;
-                offset += maxAgents * totalNumberOfMasks;
-            }
+            dataOffsets.DecisionActionMasksOffset = offset;
+            offset += maxAgents * numDiscreteActions;
 
             // Termination Steps Offsets
             dataOffsets.TerminationNumberAgentsOffset = offset;
@@ -146,8 +138,10 @@ namespace Unity.AI.MLAgents
             offset += 4 * maxAgents;
 
             // Actions offsets
-            dataOffsets.ActionOffset = offset;
-            offset += 4 * maxAgents * actionSize;
+            dataOffsets.ContinuousActionOffset = offset;
+            offset += 4 * maxAgents * numContinuousActions;
+            dataOffsets.DiscreteActionOffset = offset;
+            offset += 4 * maxAgents * numDiscreteBranches;
 
             // Offset of the start of the next section
             dataOffsets.EndOfDataOffset = offset;

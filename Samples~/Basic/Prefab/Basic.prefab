@@ -187,20 +187,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   BasicSpecs:
-    Name: Basic_DOTS
-    WorldProcessorType: 0
-    NumberAgents: 1
-    ActionType: 0
-    ObservationShapes:
+    m_Name: Basic
+    m_PolicyProcessorType: 1
+    m_NumberAgents: 1
+    m_ObservationShapes:
     - x: 20
       y: 0
       z: 0
-    ActionSize: 1
-    DiscreteActionBranches: 03000000
-    Model: {fileID: 0}
-    InferenceDevice: 0
+    m_ContinuousActionSize: 0
+    m_DiscreteActionSize: 1
+    m_DiscreteActionBranches: 03000000
+    m_Model: {fileID: 5022602860645237092, guid: 01fce3502cfd844588e26966f46bd378,
+      type: 3}
+    m_InferenceDevice: 0
   timeBetweenDecisionsAtInference: 10
-  m_Position: 0
+  m_Position: 10
   largeGoal: {fileID: 3152518816728073632}
   smallGoal: {fileID: 3152518817139163536}
 --- !u!1 &3152518817139163536

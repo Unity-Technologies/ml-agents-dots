@@ -28,7 +28,7 @@ public class BallSystem : JobComponentSystem
         public ComponentDataFromEntity<Actuator> ComponentDataFromEntity;
         public void Execute(ActuatorEvent ev)
         {
-            var a = ev.GetAction<Actuator>();
+            var a = ev.GetContinuousAction<Actuator>();
             ComponentDataFromEntity[ev.Entity] = a;
         }
     }
@@ -88,6 +88,7 @@ public class BallSystem : JobComponentSystem
             }
             else if (interruption)
             {
+                UnityEngine.Debug.Log("Interruption");
                 policy.InterruptEpisode(entity)
                     .SetObservation(0, rot.Value)
                     .SetObservation(1, ballPos - agentData.BallResetPosition)

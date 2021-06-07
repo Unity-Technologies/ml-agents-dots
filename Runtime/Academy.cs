@@ -133,7 +133,7 @@ namespace Unity.AI.MLAgents
                 m_PolicyToProcessor = new Dictionary<Policy, IPolicyProcessor>();
 
                 TryInitializeCommunicator();
-                SideChannelsManager.RegisterSideChannel(new EngineConfigurationChannel());
+                SideChannelManager.RegisterSideChannel(new EngineConfigurationChannel());
                 m_EnvironmentParameters = new EnvironmentParameters();
                 m_StatsRecorder = new StatsRecorder();
                 m_Initialized = true;
@@ -198,18 +198,18 @@ namespace Unity.AI.MLAgents
                     // We do this only if there is already something to send
                     // We could ignore the first command
                     m_Communicator.WaitForPython();
-                    SideChannelsManager.ProcessSideChannelData(m_Communicator.ReadAndClearSideChannelData());
+                    SideChannelManager.ProcessSideChannelData(m_Communicator.ReadAndClearSideChannelData());
                     m_FirstMessageReceived = true;
                     reset = m_Communicator.ReadAndClearResetCommand();
                 }
                 if (!reset) // TODO : Comment out if we do not want to reset on first env.reset()
                 {
-                    m_Communicator.WriteSideChannelData(SideChannelsManager.GetSideChannelMessage());
+                    m_Communicator.WriteSideChannelData(SideChannelManager.GetSideChannelMessage());
                     processor.Process();
                     reset = m_Communicator.ReadAndClearResetCommand();
                     policy.SetActionReady();
                     policy.ResetDecisionsAndTerminationCounters();
-                    SideChannelsManager.ProcessSideChannelData(m_Communicator.ReadAndClearSideChannelData());
+                    SideChannelManager.ProcessSideChannelData(m_Communicator.ReadAndClearSideChannelData());
                 }
                 if (reset)
                 {
@@ -232,7 +232,7 @@ namespace Unity.AI.MLAgents
             }
             if (m_Communicator == null)
             {
-                SideChannelsManager.GetSideChannelMessage();
+                SideChannelManager.GetSideChannelMessage();
             }
         }
 
@@ -263,7 +263,7 @@ namespace Unity.AI.MLAgents
         {
             m_Communicator?.Dispose();
             m_Communicator = null;
-            SideChannelsManager.UnregisterAllSideChannels();
+            SideChannelManager.UnregisterAllSideChannels();
             m_Initialized = false;
 
             // Reset the Lazy instance // No reset because Academy.Instance is called after dispose...

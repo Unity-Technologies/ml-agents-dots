@@ -250,11 +250,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MyPolicySpecs:
-    Name: 3DBall
-    PolicyProcessorType: 0
-    NumberAgents: 1000
-    ActionType: 1
-    ObservationShapes:
+    m_Name: 3DBall
+    m_PolicyProcessorType: 0
+    m_NumberAgents: 1000
+    m_ObservationShapes:
     - x: 4
       y: 0
       z: 0
@@ -267,10 +266,12 @@ MonoBehaviour:
     - x: 3
       y: 0
       z: 0
-    ActionSize: 2
-    DiscreteActionBranches: 0000000000000000
-    Model: {fileID: 5022602860645237092, guid: 10312addcce7c4e508c30d95eaf1a2ff, type: 3}
-    InferenceDevice: 0
+    m_ContinuousActionSize: 2
+    m_DiscreteActionSize: 0
+    m_DiscreteActionBranches: 
+    m_Model: {fileID: 5022602860645237092, guid: 6c8a4864432694d5abde4f7e947aafe9,
+      type: 3}
+    m_InferenceDevice: 0
   NumberBalls: 1000
   prefabPlatform: {fileID: 3981253095504673273, guid: 8c9aecd39f81f4a2d91dfebe7c29b81f,
     type: 3}

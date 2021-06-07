@@ -9,7 +9,7 @@ namespace Unity.AI.MLAgents
 {
     internal unsafe class SharedMemoryCommunicator : IDisposable
     {
-        private const float k_TimeOutInSeconds = 15;
+        private const float k_TimeOutInSeconds = 15000;
 
 
         private string m_BaseFileName;
@@ -75,7 +75,7 @@ namespace Unity.AI.MLAgents
         }
 
         /// <summary>
-        /// Writes the data of a worPolicyld into the shared memory file.
+        /// Writes the data of a Policy into the shared memory file.
         /// </summary>
         public void WritePolicy(string policyName, Policy policy)
         {
@@ -113,7 +113,8 @@ namespace Unity.AI.MLAgents
                 {
                     m_ShareMemoryBody.RlData = rlData;
                 }
-                // TODO Need to write the offsets
+
+
                 m_ShareMemoryBody.WritePolicySpecs(policyName, policy);
                 m_ShareMemoryBody.WritePolicy(policyName, policy);
             }

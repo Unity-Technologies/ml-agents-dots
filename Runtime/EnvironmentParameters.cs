@@ -25,7 +25,7 @@ namespace Unity.AI.MLAgents
         internal EnvironmentParameters()
         {
             m_Channel = new EnvironmentParametersChannel();
-            SideChannelsManager.RegisterSideChannel(m_Channel);
+            SideChannelManager.RegisterSideChannel(m_Channel);
         }
 
         /// <summary>
@@ -64,7 +64,7 @@ namespace Unity.AI.MLAgents
 
         internal void Dispose()
         {
-            SideChannelsManager.UnregisterSideChannel(m_Channel);
+            SideChannelManager.UnregisterSideChannel(m_Channel);
         }
     }
 }

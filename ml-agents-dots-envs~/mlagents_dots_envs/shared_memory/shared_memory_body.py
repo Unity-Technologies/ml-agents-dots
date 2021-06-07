@@ -6,7 +6,7 @@ from mlagents_envs.base_env import (
     DecisionSteps,
     TerminalSteps,
     BehaviorSpec,
-    ActionType,
+    ActionTuple,
 )
 
 
@@ -88,10 +88,10 @@ class SharedMemoryBody(BaseSharedMemory):
         offsets = self._offset_dict[key]
         n_agents, _ = self.get_int(offsets.decision_n_agents_offset)
         obs: List[np.ndarray] = []
-        for obs_offset, obs_shape in zip(
-            offsets.decision_obs_offset, offsets.obs_shapes
+        for obs_offset, obs_spec in zip(
+            offsets.decision_obs_offset, offsets.behavior_spec.observation_specs
         ):
-            obs_shape = (n_agents,) + obs_shape
+            obs_shape = (n_agents,) + obs_spec.shape
             arr = self.get_ndarray(obs_offset, obs_shape, np.float32)
             obs.append(arr)
         return DecisionSteps(
@@ -103,6 +103,9 @@ class SharedMemoryBody(BaseSharedMemory):
                 offsets.decision_agent_id_offset, (n_agents), np.int32
             ),
             action_mask=self._generate_action_masks(offsets, n_agents),
+            # TODO: Communicate these values
+            group_id=np.zeros((n_agents), dtype=np.int32),
+            group_reward=np.zeros((n_agents), dtype=np.float32),
         )
 
     def get_terminal_steps(self, key: str) -> TerminalSteps:
@@ -110,10 +113,10 @@ class SharedMemoryBody(BaseSharedMemory):
         offsets = self._offset_dict[key]
         n_agents, _ = self.get_int(offsets.termination_n_agents_offset)
         obs: List[np.ndarray] = []
-        for obs_offset, obs_shape in zip(
-            offsets.termination_obs_offset, offsets.obs_shapes
+        for obs_offset, obs_spec in zip(
+            offsets.termination_obs_offset, offsets.behavior_spec.observation_specs
         ):
-            obs_shape = (n_agents,) + obs_shape
+            obs_shape = (n_agents,) + obs_spec.shape
             arr = self.get_ndarray(obs_offset, obs_shape, np.float32)
             obs.append(arr)
         return TerminalSteps(
@@ -127,12 +130,18 @@ class SharedMemoryBody(BaseSharedMemory):
             interrupted=self.get_ndarray(
                 offsets.termination_status_offset, (n_agents), np.bool
             ),
+            # TODO: Communicate these values
+            group_id=np.zeros((n_agents), dtype=np.int32),
+            group_reward=np.zeros((n_agents), dtype=np.float32),
         )
 
-    def set_actions(self, key: str, data: np.ndarray) -> None:
+    def set_actions(self, key: str, data: ActionTuple) -> None:
         assert key in self._offset_dict
         offsets = self._offset_dict[key]
-        self.set_ndarray(offsets.action_offset, data)
+        if data.continuous is not None:
+            self.set_ndarray(offsets.continuous_action_offset, data.continuous)
+        if data.discrete is not None:
+            self.set_ndarray(offsets.discrete_action_offset, data.discrete)
 
     def get_n_decisions_requested(self, key: str) -> int:
         assert key in self._offset_dict
@@ -148,25 +157,16 @@ class SharedMemoryBody(BaseSharedMemory):
         result: Dict[str, BehaviorSpec] = {}
         for key in self._offset_dict:
             offsets = self._offset_dict[key]
-            observation_shape = offsets.obs_shapes
-            action_type = (
-                ActionType.CONTINUOUS
-                if offsets.is_action_continuous
-                else ActionType.DISCRETE
-            )
-            action_shape = offsets.action_size
-            if action_type == ActionType.DISCRETE:
-                action_shape = offsets.discrete_branches
-            result[key] = BehaviorSpec(observation_shape, action_type, action_shape)
+            result[key] = offsets.behavior_spec
         return result
 
     def _generate_action_masks(
         self, offsets: RLDataOffsets, n_agents: int
     ) -> np.ndarray:
-        if offsets.is_action_continuous:
-            return None
-        branches = offsets.discrete_branches
         start = offsets.masks_offset
+        if start is None:
+            return None
+        branches = offsets.behavior_spec.action_spec.discrete_branches
         result: List[np.ndarray] = []
         for branch_size in branches:
             result += [self.get_ndarray(start, (n_agents, branch_size), np.bool)]

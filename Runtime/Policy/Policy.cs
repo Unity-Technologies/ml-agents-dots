@@ -23,8 +23,7 @@ namespace Unity.AI.MLAgents
         }
 
         [ReadOnly] internal NativeArray<int3> SensorShapes;
-        [ReadOnly] internal int ActionSize;
-        [ReadOnly] internal ActionType ActionType;
+        [ReadOnly] internal int ContinuousActionSize;
         [ReadOnly] internal NativeArray<int> DiscreteActionBranches;
 
         [ReadOnly] internal NativeArray<int> ObservationOffsets;
@@ -38,6 +37,7 @@ namespace Unity.AI.MLAgents
         [NativeDisableParallelForRestriction][WriteOnly] internal NativeArray<float> TerminationObs;
         [NativeDisableParallelForRestriction][WriteOnly] internal NativeArray<float> TerminationRewards;
         [NativeDisableParallelForRestriction] internal NativeArray<int> TerminationAgentIds;
+        [NativeDisableParallelForRestriction] internal NativeArray<Entity> TerminationAgentEntityIds;
         [NativeDisableParallelForRestriction][WriteOnly] internal NativeArray<bool> TerminationStatus;
 
         //https://forum.unity.com/threads/is-it-okay-to-read-a-nativecounter-concurrents-value-in-a-parallel-job.533037/
@@ -60,35 +60,18 @@ namespace Unity.AI.MLAgents
         /// </summary>
         /// <param name="maximumNumberAgents"> The maximum number of decisions that can be requested between each MLAgentsSystem update </param>
         /// <param name="obsShapes"> An array of int3 corresponding to the shape of the expected observations (one int3 per observation) </param>
-        /// <param name="actionType"> An ActionType enum (DISCRETE / CONTINUOUS) specifying the type of actions the Policy will produce </param>
-        /// <param name="actionSize"> The number of actions the Policy is expected to generate for each decision.
-        ///  - If CONTINUOUS ActionType : The number of floats the action contains
-        ///  - If DISCRETE ActionType : The number of branches (integer actions) the action contains </param>
-        /// <param name="discreteActionBranches"> For DISCRETE ActionType only : an array of int specifying the number of possible int values each
+        /// <param name="continuousActionSize"> The number of continuous actions the Policy is expected to generate for each decision. </param>
+        /// <param name="discreteActionBranches"> An array of int specifying the number of possible int values each discrete
         /// action branch has. (Must be of the same length as actionSize </param>
         public Policy(
             int maximumNumberAgents,
             int3[] obsShapes,
-            ActionType actionType,
-            int actionSize,
+            int continuousActionSize = 0,
             int[] discreteActionBranches = null)
         {
             SensorShapes = new NativeArray<int3>(obsShapes, Allocator.Persistent);
-            ActionSize = actionSize;
-            ActionType = actionType;
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            if (ActionType == ActionType.DISCRETE)
-            {
-                if (discreteActionBranches == null)
-                {
-                    throw new MLAgentsException("For Discrete control, the number of possible actions for each branch must be specified.");
-                }
-                if (discreteActionBranches.Length != actionSize)
-                {
-                    throw new MLAgentsException("For Discrete control, the number of branches must be equal to the action size.");
-                }
-            }
-#endif
+            ContinuousActionSize = continuousActionSize;
+
             if (discreteActionBranches == null)
             {
                 discreteActionBranches = new int[0];
@@ -109,35 +92,21 @@ namespace Unity.AI.MLAgents
             DecisionAgentEntityIds = new NativeArray<Entity>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             DecisionAgentIds = new NativeArray<int>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
 
-            int nMasks = 0;
-            if (ActionType == ActionType.DISCRETE)
-            {
-                nMasks = DiscreteActionBranches.Sum();
-            }
+            int nMasks = DiscreteActionBranches.Sum();
             DecisionActionMasks = new NativeArray<bool>(maximumNumberAgents * nMasks, Allocator.Persistent);
             DecisionCounter = new Counter(Allocator.Persistent);
 
             TerminationObs = new NativeArray<float>(currentOffset, Allocator.Persistent, NativeArrayOptions.ClearMemory);
             TerminationRewards = new NativeArray<float>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.ClearMemory);
             TerminationAgentIds = new NativeArray<int>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            TerminationAgentEntityIds = new NativeArray<Entity>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             TerminationStatus = new NativeArray<bool>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.ClearMemory);
             TerminationCounter = new Counter(Allocator.Persistent);
 
-            int daSize = 0;
-            int caSize = 0;
-            if (ActionType == ActionType.DISCRETE)
-            {
-                daSize = ActionSize;
-            }
-            else
-            {
-                caSize = ActionSize;
-            }
-
             ActionCounter = new Counter(Allocator.Persistent);
 
-            ContinuousActuators = new NativeArray<float>(maximumNumberAgents * caSize, Allocator.Persistent, NativeArrayOptions.ClearMemory);
-            DiscreteActuators = new NativeArray<int>(maximumNumberAgents * daSize, Allocator.Persistent, NativeArrayOptions.ClearMemory);
+            ContinuousActuators = new NativeArray<float>(maximumNumberAgents * ContinuousActionSize, Allocator.Persistent, NativeArrayOptions.ClearMemory);
+            DiscreteActuators = new NativeArray<int>(maximumNumberAgents * DiscreteActionBranches.Length, Allocator.Persistent, NativeArrayOptions.ClearMemory);
             ActionAgentEntityIds = new NativeArray<Entity>(maximumNumberAgents, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -189,6 +158,7 @@ namespace Unity.AI.MLAgents
             TerminationObs.Dispose();
             TerminationRewards.Dispose();
             TerminationAgentIds.Dispose();
+            TerminationAgentEntityIds.Dispose();
             TerminationStatus.Dispose();
             TerminationCounter.Dispose();
 
@@ -250,6 +220,7 @@ namespace Unity.AI.MLAgents
             }
 #endif
             TerminationAgentIds[index] = entity.Index;
+            TerminationAgentEntityIds[index] = entity;
             TerminationStatus[index] = false;
             return new EpisodeTermination(index, this);
         }
@@ -278,6 +249,7 @@ namespace Unity.AI.MLAgents
             }
 #endif
             TerminationAgentIds[index] = entity.Index;
+            TerminationAgentEntityIds[index] = entity;
             TerminationStatus[index] = true;
             return new EpisodeTermination(index, this);
         }
