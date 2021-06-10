@@ -114,7 +114,7 @@ The ActuatorEvent data contains a key (here an entity) to identify the Agent and
 
 Another way to retrieve actions that is more OOTS friendly is to use the `ActionHashMapUtils` as follows :
 
-```
+```csharp
 // Create hash map from entities to actions (here for discrete actions)
 m_DiscreteAction = new NativeHashMap<Entity, ActionStruct>(1, Allocator.Persistent);
 // Update the hash map with the actions (This will remove the actions from the policy)
