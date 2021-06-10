@@ -121,7 +121,7 @@ m_DiscreteAction = new NativeHashMap<Entity, ActionStruct>(1, Allocator.Persiste
 m_Policy.GenerateDiscreteActionHashMap<ActionStruct>(m_DiscreteAction);
 
 // You can then query the actions :
-ActionStruct action = ActionStruct();
+ActionStruct action = new ActionStruct();
 m_DiscreteAction.TryGetValue(m_Entity, out action);
 ```
 
