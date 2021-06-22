@@ -4,7 +4,7 @@ Please note that this package is available as a preview, so it is not ready for 
 ## Installation
 
 ### Install C# code
- * Create a new Project on Unity 2019.3.0f5
+ * Create a new Project on Unity 2020.2.0b14
  * Navigate to the new created project folder and add the following entries into `Package/manifest.json` under "Dependencies":
  ```json
  "com.unity.ai.mlagents": "https://github.com/Unity-Technologies/ml-agents-dots.git",
