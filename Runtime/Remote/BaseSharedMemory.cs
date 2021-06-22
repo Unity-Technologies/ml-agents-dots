@@ -129,7 +129,8 @@ namespace Unity.AI.MLAgents
         /// </summary>
         public void GetArray<T>(ref int offset, NativeArray<T> array, int length) where T : struct
         {
-            if (length <= 0){
+            if (length <= 0)
+            {
                 return;
             }
             IntPtr src = IntPtr.Add(m_AccessorPointer, offset);

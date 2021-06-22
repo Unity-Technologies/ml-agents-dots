@@ -8,11 +8,11 @@ Please note that this package is available as a preview, so it is not ready for 
  * Navigate to the new created project folder and add the following entries into `Package/manifest.json` under "Dependencies":
  ```json
  "com.unity.ai.mlagents": "https://github.com/Unity-Technologies/ml-agents-dots.git",
- "com.unity.physics": "0.2.4-preview",
- "com.unity.rendering.hybrid": "0.3.3-preview.11",
+ "com.unity.physics": "0.6.0-preview.3",
+ "com.unity.rendering.hybrid": "0.11.0-preview.44",
  "com.unity.burst":"1.3.0-preview.2",
  "com.unity.test-framework.performance": "1.3.3-preview",
- "com.unity.coding": "0.1.0-preview.13"
+ "com.unity.coding": "0.1.0-preview.20"
  ```
  * In your Unity project, you should see the Package Manager resolving the new packages (this may take several minutes).
  * Go to Window -> Package Manager. Select DOTS ML-Agents and import all the samples.

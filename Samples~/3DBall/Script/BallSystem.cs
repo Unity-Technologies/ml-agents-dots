@@ -21,7 +21,7 @@ public struct Actuator : IComponentData
 
 public class BallSystem : JobComponentSystem
 {
-    private const int maxStep = 5000;
+    private const int maxStep = 1000;
 
     private struct RotateJob : IActuatorJob
     {
@@ -112,7 +112,7 @@ public class BallSystem : JobComponentSystem
         };
         inputDeps = reactiveJob.Schedule(policy, inputDeps);
 
-        inputDeps = Entities.ForEach((Actuator act, ref Rotation rotation) =>
+        inputDeps = Entities.ForEach((ref Actuator act, ref Rotation rotation) =>
         {
             var rot = math.mul(rotation.Value, quaternion.Euler(0.05f * new float3(act.Value.x, 0, act.Value.y)));
             rotation.Value = rot;

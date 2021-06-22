@@ -26,9 +26,15 @@
     },
     {
       "displayName":"String Side Channel",
-      "description": "An example on how to create and register side channels for communication with Python",
+      "description": "An example of how to create and register side channels for communication with Python",
       "createSeparatePackage": false,
       "path":"Samples~/StringSideChannel"
+    },
+    {
+      "displayName":"Push The Block",
+      "description": "An example of an Agent learning to push a block in a goal zone",
+      "createSeparatePackage": false,
+      "path":"Samples~/PushBlock"
     }
   ]
 }

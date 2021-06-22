@@ -116,7 +116,7 @@ namespace Unity.AI.MLAgents
             };
 
             // Scheduling a Job out of thin air by using a pointer called jobReflectionData in the ActuatorSystemJobStruct
-            var parameters = new JobsUtility.JobScheduleParameters(UnsafeUtility.AddressOf(ref data), ActuatorDataJobProcess<T>.Initialize(), inputDeps, ScheduleMode.Batched);
+            var parameters = new JobsUtility.JobScheduleParameters(UnsafeUtility.AddressOf(ref data), ActuatorDataJobProcess<T>.Initialize(), inputDeps, ScheduleMode.Parallel);
             return JobsUtility.Schedule(ref parameters);
         }
 
@@ -135,7 +135,7 @@ namespace Unity.AI.MLAgents
             public static IntPtr Initialize()
             {
                 if (jobReflectionData == IntPtr.Zero)
-                    jobReflectionData = JobsUtility.CreateJobReflectionData(typeof(ActionEventJobData<T>), typeof(T), JobType.Single, (ExecuteJobFunction)Execute);
+                { jobReflectionData = JobsUtility.CreateJobReflectionData(typeof(ActionEventJobData<T>), typeof(T), (ExecuteJobFunction)Execute); }
                 return jobReflectionData;
             }
 
