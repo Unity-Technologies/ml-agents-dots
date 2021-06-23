@@ -72,7 +72,7 @@ namespace Unity.AI.MLAgents.SideChannels
             var simGroup = World.DefaultGameObjectInjectionWorld.GetOrCreateSystem<SimulationSystemGroup>();
             if (Time.captureDeltaTime > 0)
             {
-                TimeUtils.EnableFixedRateWithRepeat(simGroup, 1 / Time.captureDeltaTime, (int)Time.timeScale + 1);
+                TimeUtils.EnableFixedRateWithRepeat(simGroup, Time.captureDeltaTime, (int)Time.timeScale + 1);
             }
         }
     }

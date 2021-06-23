@@ -15,7 +15,7 @@ namespace Unity.AI.MLAgents
         public static void EnableFixedRateWithRepeat(ComponentSystemGroup group, float timeStep, int numberOfRepeat)
         {
             var manager = new FixedRateRepeatManager(timeStep, numberOfRepeat);
-            group.UpdateCallback = manager.UpdateCallback;
+            group.FixedRateManager = manager;
         }
 
         /// <summary>
@@ -24,11 +24,11 @@ namespace Unity.AI.MLAgents
         /// <param name="group">The group whose UpdateCallback to set to null.</param>
         public static void DisableFixedRate(ComponentSystemGroup group)
         {
-            group.UpdateCallback = null;
+            group.FixedRateManager = null;
         }
     }
 
-    internal class FixedRateRepeatManager
+    internal class FixedRateRepeatManager : IFixedRateManager
     {
         protected int m_NumberOfRepeat;
         protected int m_CurrentRepeat;
@@ -44,7 +44,13 @@ namespace Unity.AI.MLAgents
             m_CurrentRepeat = 0;
         }
 
-        internal bool UpdateCallback(ComponentSystemGroup group)
+        public float Timestep
+        {
+            get { return m_FixedTimeStep; }
+            set { m_FixedTimeStep = value; }
+        }
+
+        public bool ShouldGroupUpdate(ComponentSystemGroup group)
         {
             // if this is true, means we're being called a second or later time in a loop
             if (m_DidPushTime)

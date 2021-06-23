@@ -27,6 +27,10 @@
 *.eggs*
 *.gitignore.swp
 
+# Output Artifacts
+/results
+/results.meta
+
 # precommit
 .mypy_cache
 .pre-commit-config.yaml
