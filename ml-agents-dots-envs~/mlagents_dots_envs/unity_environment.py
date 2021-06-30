@@ -69,6 +69,8 @@ class UnityEnvironment(BaseEnv):
         executable_name = file_name
 
         editor_connect = executable_name is None
+        if no_graphics is not None and no_graphics and not editor_connect:
+            args += ["-nographics", "-batchmode"]
 
         if editor_connect:
             assert args == []

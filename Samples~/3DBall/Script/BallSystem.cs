@@ -22,6 +22,8 @@ public struct Actuator : IComponentData
 public class BallSystem : JobComponentSystem
 {
     private const int maxStep = 1000;
+    private const int decisionPeriod = 5;
+    private int stepIndex = 0;
 
     private struct RotateJob : IActuatorJob
     {
@@ -43,6 +45,12 @@ public class BallSystem : JobComponentSystem
         if (!BallPolicy.IsCreated){
             return inputDeps;
         }
+        stepIndex++;
+        if (stepIndex % decisionPeriod == 0)
+        {
+            return inputDeps;
+        }
+
         var policy = BallPolicy;
 
         ComponentDataFromEntity<Translation> TranslationFromEntity = GetComponentDataFromEntity<Translation>(isReadOnly: false);
@@ -88,7 +96,6 @@ public class BallSystem : JobComponentSystem
             }
             else if (interruption)
             {
-                UnityEngine.Debug.Log("Interruption");
                 policy.InterruptEpisode(entity)
                     .SetObservation(0, rot.Value)
                     .SetObservation(1, ballPos - agentData.BallResetPosition)
