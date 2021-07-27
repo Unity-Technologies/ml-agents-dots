@@ -1,6 +1,7 @@
 using System;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.AI.MLAgents.SideChannels;
 
 
 namespace Unity.AI.MLAgents
@@ -22,14 +23,27 @@ namespace Unity.AI.MLAgents
 
         public void Process()
         {
+            // TODO : These should be 2 methods : Schedule Process and Complete Process
             m_Communicator.WritePolicy(m_PolicyId, m_Policy);
             m_Communicator.SetUnityReady();
             m_Communicator.WaitForPython();
+            AnswerQuery();
             m_Communicator.LoadPolicy(m_PolicyId, m_Policy);
         }
 
         public void Dispose()
         {
+        }
+
+        private void AnswerQuery()
+        {
+            while (m_Communicator.ReadAndClearQueryCommand())
+            {
+                SideChannelManager.ProcessSideChannelData(m_Communicator.ReadAndClearSideChannelData());
+                m_Communicator.WriteSideChannelData(SideChannelManager.GetSideChannelMessage());
+                m_Communicator.SetUnityReady();
+                m_Communicator.WaitForPython();
+            }
         }
     }
 }

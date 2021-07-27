@@ -73,8 +73,10 @@ class SharedMemoryCommunicator:
         self._data_mem.side_channel_data = bytearray()
         return result
 
-    def give_unity_control(self, reset: bool = False) -> None:
+    def give_unity_control(self, reset: bool = False, query: bool = False) -> None:
         self._master_mem.mark_python_blocked()
+        if query:
+            self._master_mem.mark_query()
         if reset:
             self._master_mem.mark_reset()
         self._master_mem.unblock_unity()

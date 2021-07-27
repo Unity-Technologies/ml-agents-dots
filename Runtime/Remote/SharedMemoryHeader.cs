@@ -7,9 +7,7 @@ namespace Unity.AI.MLAgents
     {
         private const int k_MajorVersion = 0;
         private const int k_MinorVersion = 3;
-        private const int k_BugVersion = 1;
-
-        private const int k_Size = 16;
+        private const int k_BugVersion = 2;
 
         public SharedMemoryHeader(string fileName) : base(fileName, false) {}
 
@@ -63,6 +61,17 @@ namespace Unity.AI.MLAgents
             }
             var result = GetBool(14);
             SetBool(14, false);
+            return result;
+        }
+
+        public bool ReadAndClearQueryCommand()
+        {
+            if (!CanEdit)
+            {
+                return false;
+            }
+            var result = GetBool(28);
+            SetBool(28, false);
             return result;
         }
 

@@ -174,6 +174,11 @@ namespace Unity.AI.MLAgents
             return m_SharedMemoryHeader.ReadAndClearResetCommand();
         }
 
+        public bool ReadAndClearQueryCommand()
+        {
+            return m_SharedMemoryHeader.ReadAndClearQueryCommand();
+        }
+
         public void SetUnityReady()
         {
             m_SharedMemoryHeader.MarkUnityBlocked();

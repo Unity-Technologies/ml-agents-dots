@@ -103,6 +103,17 @@ class UnityEnvironment(BaseEnv):
     def step(self) -> None:
         self._step(reset=False)
 
+    def query(self) -> None:
+        """
+        This will only send side channel data and get a response if any
+        """
+        channel_data = self._side_channels_manager.generate_side_channel_messages()
+        self._communicator.write_side_channel_data(channel_data)
+        self._communicator.give_unity_control(query=True)
+        self._side_channels_manager.process_side_channel_message(
+            self._communicator.read_and_clear_side_channel_data()
+        )
+
     def _step(self, reset: bool = False) -> None:
         if not self._communicator.active:
             raise UnityCommunicationException("Communicator has stopped.")

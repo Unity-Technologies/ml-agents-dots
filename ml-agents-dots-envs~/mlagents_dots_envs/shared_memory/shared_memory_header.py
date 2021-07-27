@@ -17,8 +17,8 @@ class SharedMemoryHeader(BaseSharedMemory):
      - int  : Communication file "RL section" size in bytes
     """
 
-    SIZE = 28
-    VERSION = (0, 3, 1)
+    SIZE = 29
+    VERSION = (0, 3, 2)
 
     def __init__(
         self, file_name: str, side_channel_size: int = 0, rl_data_size: int = 0
@@ -41,6 +41,7 @@ class SharedMemoryHeader(BaseSharedMemory):
         offset = self.set_int(offset, 1)
         offset = self.set_int(offset, side_channel_size)
         offset = self.set_int(offset, rl_data_size)
+        offset = self.set_bool(offset, False)
 
     @property
     def active(self) -> bool:
@@ -81,6 +82,10 @@ class SharedMemoryHeader(BaseSharedMemory):
 
     def mark_reset(self):
         offset = 14
+        self.set_bool(offset, True)
+
+    def mark_query(self):
+        offset = 28
         self.set_bool(offset, True)
 
     @property
