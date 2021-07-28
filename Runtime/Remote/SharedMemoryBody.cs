@@ -176,6 +176,10 @@ namespace Unity.AI.MLAgents
             }
             set
             {
+                if (value == null)
+                {
+                    return;
+                }
                 SetBytes(m_SideChannelBufferSize, value);
                 RefreshOffsets();
             }

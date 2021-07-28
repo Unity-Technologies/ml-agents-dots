@@ -198,6 +198,7 @@ namespace Unity.AI.MLAgents
                     // We do this only if there is already something to send
                     // We could ignore the first command
                     m_Communicator.WaitForPython();
+                    AnswerQuery();
                     SideChannelManager.ProcessSideChannelData(m_Communicator.ReadAndClearSideChannelData());
                     m_FirstMessageReceived = true;
                     reset = m_Communicator.ReadAndClearResetCommand();
@@ -233,6 +234,18 @@ namespace Unity.AI.MLAgents
             if (m_Communicator == null)
             {
                 SideChannelManager.GetSideChannelMessage();
+            }
+        }
+
+        private void AnswerQuery()
+        {
+            while (m_Communicator.ReadAndClearQueryCommand())
+            {
+                var data = m_Communicator.ReadAndClearSideChannelData();
+                SideChannelManager.ProcessSideChannelData(data);
+                m_Communicator.WriteSideChannelData(SideChannelManager.GetSideChannelMessage());
+                m_Communicator.SetUnityReady();
+                m_Communicator.WaitForPython();
             }
         }
 

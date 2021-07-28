@@ -110,6 +110,7 @@ class UnityEnvironment(BaseEnv):
         channel_data = self._side_channels_manager.generate_side_channel_messages()
         self._communicator.write_side_channel_data(channel_data)
         self._communicator.give_unity_control(query=True)
+        self._communicator.wait_for_unity()
         self._side_channels_manager.process_side_channel_message(
             self._communicator.read_and_clear_side_channel_data()
         )
