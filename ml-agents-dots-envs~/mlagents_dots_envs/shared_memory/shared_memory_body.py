@@ -59,7 +59,7 @@ class SharedMemoryBody(BaseSharedMemory):
     @side_channel_data.setter
     def side_channel_data(self, data: bytearray) -> None:
         if len(data) > self._side_channel_buffer_size - 4:
-            raise Exception("TODO")
+            raise Exception("The shared memory file is corrupted")
         offset = 0
         offset = self.set_int(offset, len(data))
         self.accessor[offset : offset + len(data)] = data
@@ -77,7 +77,7 @@ class SharedMemoryBody(BaseSharedMemory):
     @rl_data.setter
     def rl_data(self, data: bytearray) -> None:
         if len(data) > self._rl_data_buffer_size:
-            raise Exception("TODO")
+            raise Exception("The shared memory file is corrupted")
         offset = self.rl_data_offset
         size = self._rl_data_buffer_size
         self.accessor[offset : offset + size] = data

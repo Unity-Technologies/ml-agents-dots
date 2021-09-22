@@ -2,8 +2,8 @@ using Unity.Entities;
 using System;
 using Unity.AI.MLAgents.SideChannels;
 
-using System.Collections.Generic; // TODO : REMOVE
-using UnityEngine; // TODO : REMOVE
+using System.Collections.Generic;
+using UnityEngine;
 
 
 namespace Unity.AI.MLAgents
@@ -51,7 +51,6 @@ namespace Unity.AI.MLAgents
         private SharedMemoryCommunicator m_Communicator;
 
         internal Dictionary<Policy, IPolicyProcessor> m_PolicyToProcessor;
-        // TODO : Maybe we can put the processor in the policy with an unsafe unmanaged memory pointer ?
 
         private EnvironmentParameters m_EnvironmentParameters;
         private StatsRecorder m_StatsRecorder;
@@ -177,7 +176,7 @@ namespace Unity.AI.MLAgents
             if (policy.ActionCounter.Count != 0)
             {
                 // This means something in the execution went wrong, this error should never appear
-                throw new MLAgentsException("TODO : ActionCount is not 0");
+                throw new MLAgentsException("An error ocurred, ActionCount is not 0 at start of policy update");
             }
 
             var processor = m_PolicyToProcessor[policy];
@@ -203,7 +202,7 @@ namespace Unity.AI.MLAgents
                     m_FirstMessageReceived = true;
                     reset = m_Communicator.ReadAndClearResetCommand();
                 }
-                if (!reset) // TODO : Comment out if we do not want to reset on first env.reset()
+                if (!reset)
                 {
                     m_Communicator.WriteSideChannelData(SideChannelManager.GetSideChannelMessage());
                     processor.Process();
@@ -223,7 +222,6 @@ namespace Unity.AI.MLAgents
                 processor.Process();
                 policy.SetActionReady();
                 policy.ResetDecisionsAndTerminationCounters();
-                // TODO com.ReadAndClearSideChannelData(); // Remove side channel data
             }
             else
             {

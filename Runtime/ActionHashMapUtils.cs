@@ -4,8 +4,6 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace Unity.AI.MLAgents
 {
-    // TODO : A potential API to retrieve the actions on the main thread for projects allergic to jobs ?
-    // TODO : Make faster and parallel
     public static class ActionHashMapUtils
     {
         /// <summary>
@@ -24,7 +22,6 @@ namespace Unity.AI.MLAgents
             where TC : struct
             where TD : struct
         {
-            // TODO : Make this a call to the discrete and continuous methods
             int contSize = policy.ContinuousActionSize;
             int discSize = policy.DiscreteActionBranches.Length;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS

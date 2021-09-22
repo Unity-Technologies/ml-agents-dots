@@ -126,18 +126,12 @@ namespace Unity.AI.MLAgents
 
         public void Process()
         {
-            // TODO : Cover all cases
-            // FOR VECTOR OBS ONLY
-            // No LSTM
-
             var input = new System.Collections.Generic.Dictionary<string, Tensor>();
 
             var sensorOffset = 0;
             for (int sensorIndex = 0; sensorIndex < m_Policy.SensorShapes.Length; sensorIndex++)
             {
                 var shape = m_Policy.SensorShapes[sensorIndex];
-                // for (int i = 0; i < m_Policy.DecisionCounter.Count; i++)
-                // {
                 fixed(void* arrPtr = obsArrays[sensorIndex])
                 {
                     UnsafeUtility.MemCpy(
@@ -146,12 +140,10 @@ namespace Unity.AI.MLAgents
                         shape.GetTotalTensorSize() * 4 * m_Policy.DecisionCounter.Count
                     );
                 }
-                // }
-                // Array.Copy(sensorData, sensorOffset + i * shape.GetTotalTensorSize(), vectorObsArr, i * obsSize + vecObsOffset, shape.GetTotalTensorSize());
                 sensorOffset += m_Policy.DecisionAgentIds.Length * shape.GetTotalTensorSize();
 
                 if (shape.GetDimensions() == 1)
-                {// TODO : Support other obs
+                {
                     input[$"obs_{sensorIndex}"] = new Tensor(
                         new TensorShape(m_Policy.DecisionCounter.Count, shape.x),
                         obsArrays[sensorIndex],
@@ -168,14 +160,6 @@ namespace Unity.AI.MLAgents
 
             if (m_Policy.DiscreteActionBranches.Length > 0)
             {
-                // fixed(void* arrPtr = maskArrays)
-                // {
-                //     UnsafeUtility.MemCpy(
-                //         (byte*)arrPtr,
-                //         (byte*)m_Policy.DecisionActionMasks.GetUnsafePtr() ,
-                //         m_Policy.DiscreteActionBranches.Sum() * 4 * m_Policy.DecisionCounter.Count
-                //     );
-                // }
                 for (int i = 0; i < m_Policy.DiscreteActionBranches.Sum() * m_Policy.DecisionCounter.Count; i++)
                 {
                     maskArrays[i] = m_Policy.DecisionActionMasks[i] ? 0f : 1f; // masks are inverted
@@ -189,7 +173,6 @@ namespace Unity.AI.MLAgents
 
 
             m_Engine.Execute(input);
-            // m_Engine.ExecuteAndWaitForCompletion(input);
 
             // Continuous case
             if (m_Policy.ContinuousActionSize > 0)
@@ -216,17 +199,6 @@ namespace Unity.AI.MLAgents
                 int count = m_Policy.DecisionCounter.Count * m_Policy.DiscreteActionBranches.Length;
                 var shapeTD = new TensorShape(m_Policy.DecisionCounter.Count, m_Policy.DiscreteActionBranches.Length);
                 var wholeData = actuatorTD.data.Download(shapeTD);
-
-                // fixed(void* arrPtr = wholeData)
-                // {
-                //     UnsafeUtility.MemCpy(
-                //         m_Policy.DiscreteActuators.GetUnsafePtr(),
-                //         arrPtr,
-                //         count * 4
-                //     );
-                // }
-
-                // Very hack : Since the output tensors are not the right type, we must convert them to int manually :(
 
                 for (int i = 0; i < count; i++)
                 {

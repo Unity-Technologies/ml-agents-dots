@@ -22,7 +22,6 @@ namespace Unity.AI.MLAgents
     public struct PolicySpecs
     {
         #pragma warning disable CS0649
-        // TODO : Give public accessors with setters that raise error if policy created
         [SerializeField] private string m_Name;
 
         [SerializeField] private PolicyProcessorType m_PolicyProcessorType;

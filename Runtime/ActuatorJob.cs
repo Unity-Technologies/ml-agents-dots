@@ -95,7 +95,7 @@ namespace Unity.AI.MLAgents
         public static unsafe JobHandle Schedule<T>(this T jobData, Policy policy, JobHandle inputDeps)
             where T : struct, IActuatorJob
         {
-            inputDeps.Complete(); // TODO : FIND A BETTER WAY TO MAKE SURE ALL THE DATA IS IN THE POLICY
+            inputDeps.Complete();
             Academy.Instance.UpdatePolicy(policy);
             if (policy.ActionCounter.Count == 0)
             {
@@ -104,15 +104,13 @@ namespace Unity.AI.MLAgents
             return ScheduleImpl(jobData, policy, inputDeps);
         }
 
-        // Passing this along
         internal static unsafe JobHandle ScheduleImpl<T>(this T jobData, Policy policy, JobHandle inputDeps)
             where T : struct, IActuatorJob
         {
-            // Creating a data struct that contains the data the user passed into the job (This is what T is here)
             var data = new ActionEventJobData<T>
             {
                 UserJobData = jobData,
-                Policy = policy // Need to create this before hand with the actuator data
+                Policy = policy
             };
 
             // Scheduling a Job out of thin air by using a pointer called jobReflectionData in the ActuatorSystemJobStruct

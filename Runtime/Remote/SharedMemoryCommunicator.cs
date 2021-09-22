@@ -1,8 +1,8 @@
 using System;
 #if UNITY_EDITOR
-using UnityEditor; // TODO : Delete
+using UnityEditor;
 #endif
-using UnityEngine;// TODO : Delete
+using UnityEngine;
 
 
 namespace Unity.AI.MLAgents

@@ -48,7 +48,7 @@ namespace Unity.AI.MLAgents.Editor
             var nbLines = 0;
             nbLines += GetHeightObservationShape(property);
             nbLines += GetHeightDiscreteAction(property);
-            nbLines += 8; // TODO : COMPUTE
+            nbLines += 8;
             m_TotalHeight = k_LineHeight * nbLines + k_WarningLineHeight * GetHeightWarnings(property);
 
             return m_TotalHeight + 6f;
@@ -96,13 +96,13 @@ namespace Unity.AI.MLAgents.Editor
             // Draw Continuous Action Size
             EditorGUI.PropertyField(position,
                 property.FindPropertyRelative(SpecsPropertyNames.k_ContinuousActionSize),
-                new GUIContent("Continuous Action Size", "TODO"));
+                new GUIContent("Continuous Action Size", "The number of continuous actions"));
             position.y += k_LineHeight;
 
             // Draw Discrete Action Size
             EditorGUI.PropertyField(position,
                 property.FindPropertyRelative(SpecsPropertyNames.k_DiscreteActionSize),
-                new GUIContent("Discrete Action Size", "TODO"));
+                new GUIContent("Discrete Action Size", "The number of discrete actions"));
             position.y += k_LineHeight;
 
             // Draw discrete Action Branches
@@ -116,7 +116,7 @@ namespace Unity.AI.MLAgents.Editor
             position.y += k_LineHeight;
             EditorGUI.PropertyField(position,
                 property.FindPropertyRelative(SpecsPropertyNames.k_InferenceDevice),
-                new GUIContent("Inference Device", "TODO"));
+                new GUIContent("Inference Device", "Can be CPU or GPU"));
             position.y += k_LineHeight;
 
             EditorGUI.EndDisabledGroup();

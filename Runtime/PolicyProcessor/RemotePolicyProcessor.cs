@@ -23,7 +23,6 @@ namespace Unity.AI.MLAgents
 
         public void Process()
         {
-            // TODO : These should be 2 methods : Schedule Process and Complete Process
             m_Communicator.WritePolicy(m_PolicyId, m_Policy);
             m_Communicator.SetUnityReady();
             m_Communicator.WaitForPython();

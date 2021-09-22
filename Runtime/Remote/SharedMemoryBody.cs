@@ -65,7 +65,7 @@ namespace Unity.AI.MLAgents
             }
             if (!m_OffsetDict.ContainsKey(name))
             {
-                throw new MLAgentsException("TODO");
+                throw new MLAgentsException("Unknown Policy tried to communicate");
             }
             var dataOffsets = m_OffsetDict[name];
             int totalFloatObsPerAgent = 0;
@@ -104,7 +104,7 @@ namespace Unity.AI.MLAgents
                 offset = SetInt(offset, shape.x);
                 offset = SetInt(offset, shape.y);
                 offset = SetInt(offset, shape.z);
-                offset = SetInt(offset, 0); // TODO : implement dimension properties
+                offset = SetInt(offset, 0);
                 offset = SetInt(offset, 0);
                 offset = SetInt(offset, 0);
                 offset = SetInt(offset, 0);

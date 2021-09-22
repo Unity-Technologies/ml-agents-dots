@@ -12,7 +12,6 @@ public class BasicAgent : MonoBehaviour
 
     public float timeBetweenDecisionsAtInference;
     float m_TimeSinceDecision;
-    //[HideInInspector]
     public int m_Position;
     const int k_SmallGoalPosition = 7;
     const int k_LargeGoalPosition = 17;

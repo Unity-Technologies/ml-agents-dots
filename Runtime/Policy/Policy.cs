@@ -40,7 +40,6 @@ namespace Unity.AI.MLAgents
         [NativeDisableParallelForRestriction] internal NativeArray<Entity> TerminationAgentEntityIds;
         [NativeDisableParallelForRestriction][WriteOnly] internal NativeArray<bool> TerminationStatus;
 
-        //https://forum.unity.com/threads/is-it-okay-to-read-a-nativecounter-concurrents-value-in-a-parallel-job.533037/
         [NativeDisableParallelForRestriction] internal Counter DecisionCounter;
         [NativeDisableParallelForRestriction] internal Counter TerminationCounter;
         [NativeDisableParallelForRestriction] internal Counter ActionCounter;
