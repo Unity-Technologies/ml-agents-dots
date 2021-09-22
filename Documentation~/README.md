@@ -89,7 +89,7 @@ protected override JobHandle OnUpdate(JobHandle inputDeps)
 }
 ```
 
-Note that this API can also be called outside of a job and used in the main thread to be compatible with OOTS. There is no reliance at all on IComponentData and ECS which means that we do not have to feed the data with blitable structs and could use NativeArrays as well. Here is an example on how to feed sensor data from a NativeSlice:
+Note that this API can also be called outside of a job and used in the main thread. There is no reliance at all on IComponentData and ECS which means that we do not have to feed the data with blitable structs and could use NativeArrays as well. Here is an example on how to feed sensor data from a NativeSlice:
 
 ```csharp
 var visObs = VisualObservationUtility.GetVisObs(camera, 84, 84, Allocator.TempJob);
@@ -110,9 +110,9 @@ public struct UserCreatedActionEventJob : IActuatorJob
         }
     }
 ```
-The ActuatorEvent data contains a key (here an entity) to identify the Agent and a `GetContinuousAction` and `GetDiscreteAction` methods to retrieve the data in the event. This is very similar to how collisions are currently handled in the Physics package.
+The ActuatorEvent data contains a key (here an entity) to identify the Agent and a `GetContinuousAction` and `GetDiscreteAction` methods to retrieve the data in the event.
 
-Another way to retrieve actions that is more OOTS friendly is to use the `ActionHashMapUtils` as follows :
+Another way to retrieve actions is to use the `ActionHashMapUtils` as follows :
 
 ```csharp
 // Create hash map from entities to actions (here for discrete actions)
@@ -125,6 +125,8 @@ ActionStruct action = new ActionStruct();
 m_DiscreteAction.TryGetValue(m_Entity, out action);
 ```
 
+Where `ActionStruct` is a user defined struct. This struct must contain only floats or float structs in the continuous case and only integers (or enums derived from integers) in the discrete case.
+
 ## UI to create a Policy
 
 We currently offer a `PolicySpecs` struct that has a custom inspector drawer (you can add it to a MonoBehaviour to edit the properties of your Policy and even add a neural network for its behavior).
@@ -133,4 +135,4 @@ To generate the Policy with the given settings call `PolicySpecs.GetPolicy()`.
 ## Communication Between C# and Python
 In order to exchange data with Python, we use shared memory. Python will create a small file that contains information required for starting the communication. The path to the file will be randomly generated and passed by Python to the Unity Executable as command line argument. For in editor training, a default file will be used. Using shared memory allows for faster data exchange and will remove the need to serialize the data to an intermediate format.
 
-__Note__ : The python code for communication is located in [ml-agents-dots-envs~](./ml-agents-dots-envs~).
+__Note__ : The python code for communication is located in [ml-agents-dots-envs~](./../ml-agents-dots-envs~).
