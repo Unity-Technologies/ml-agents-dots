@@ -41,7 +41,7 @@ namespace Unity.AI.MLAgents
                 m_SharedMemoryHeader.SideChannelBufferSize,
                 m_SharedMemoryHeader.RLDataBufferSize);
 
-            m_SharedMemoryHeader.UnblockPython();
+            SetUnityReady();
             Active = true;
         }
 

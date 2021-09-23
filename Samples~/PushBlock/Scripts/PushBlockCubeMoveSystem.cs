@@ -10,6 +10,7 @@ using Unity.Collections;
 using Unity.AI.MLAgents;
 
 
+
 [UpdateBefore(typeof(BlockCollisionSystem))]
 public class PushBlockCubeMoveSystem : JobComponentSystem
 {
@@ -46,7 +47,7 @@ public class PushBlockCubeMoveSystem : JobComponentSystem
         int NumOfRayCasts = 9;
 
         counter ++;
-        if (counter % 5 == 0)
+        if (counter % 8 == 0)
         inputDeps = Entities.WithReadOnly(collisionWorld).WithNativeDisableContainerSafetyRestriction(positionData).ForEach((Entity entity, ref PushBlockCube cube, ref Rotation rot) => {
 
             var pos = positionData[entity];
@@ -60,12 +61,12 @@ public class PushBlockCubeMoveSystem : JobComponentSystem
             var Rinputs = new NativeArray<Unity.Physics.RaycastInput>(NumOfRayCasts, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
             var hit = new NativeList<Unity.Physics.RaycastHit>(8, Allocator.Temp);
             var allRayData = new NativeArray<float>(NumOfRayCasts * 2 * 4, Allocator.Temp, NativeArrayOptions.ClearMemory);
-            
+
 
             // Collide with all level 0
             var collisionFilter = new CollisionFilter
             {
-                BelongsTo = ~0u, // all 1s, so all layers, collide with everything 
+                BelongsTo = ~0u, // all 1s, so all layers, collide with everything
                 CollidesWith = ~0u,
                 GroupIndex = 0
             };
@@ -92,7 +93,7 @@ public class PushBlockCubeMoveSystem : JobComponentSystem
             // Collide with all level 1
              collisionFilter = new CollisionFilter
             {
-                BelongsTo = ~0u, // all 1s, so all layers, collide with everything 
+                BelongsTo = ~0u, // all 1s, so all layers, collide with everything
                 CollidesWith = ~0u,
                 GroupIndex = 0
             };
@@ -147,7 +148,7 @@ public class PushBlockCubeMoveSystem : JobComponentSystem
             // Collide with block level 1
              collisionFilter = new CollisionFilter
             {
-                BelongsTo = ~0u, 
+                BelongsTo = ~0u,
                 CollidesWith = 1u << 1,
                 GroupIndex = 0
             };
@@ -174,7 +175,7 @@ public class PushBlockCubeMoveSystem : JobComponentSystem
             // Collide with goal level 0
              collisionFilter = new CollisionFilter
             {
-                BelongsTo = ~0u, 
+                BelongsTo = ~0u,
                 CollidesWith = 1u << 2,
                 GroupIndex = 0
             };
@@ -201,7 +202,7 @@ public class PushBlockCubeMoveSystem : JobComponentSystem
             // Collide with goal level 1
              collisionFilter = new CollisionFilter
             {
-                BelongsTo = ~0u, 
+                BelongsTo = ~0u,
                 CollidesWith = 1u << 2,
                 GroupIndex = 0
             };
@@ -238,8 +239,8 @@ public class PushBlockCubeMoveSystem : JobComponentSystem
                 cube.status = PushBlockStatus.Ongoing;
             }
 
-            if (cube.status == PushBlockStatus.Ongoing && cube.stepCount < 1000){
-                policy.RequestDecision(entity).SetObservationFromSlice(0, allRayData.Slice(0,72)).SetReward(-0.001f);
+            if (cube.status == PushBlockStatus.Ongoing && cube.stepCount < 200){
+                policy.RequestDecision(entity).SetObservationFromSlice(0, allRayData.Slice(0,72)).SetReward(-0.005f);
             }
             else if (cube.status == PushBlockStatus.Success){
                 policy.EndEpisode(entity).SetObservationFromSlice(0, allRayData.Slice(0,72)).SetReward(1f);
@@ -247,32 +248,35 @@ public class PushBlockCubeMoveSystem : JobComponentSystem
                 pos.Value = cube.resetPosition;
                 positionData[entity] = pos;
                 cube.stepCount = 0;
+                rot.Value = quaternion.AxisAngle(new float3(0,1,0), 3.14f);
                 var blockPosition = new Translation();
-                blockPosition.Value = cube.resetPosition + new float3(3,0,3);
+                blockPosition.Value = cube.resetPosition + new float3(6,0,-3);
                 positionData[cube.block] = blockPosition;
             }
-            else if (cube.status == PushBlockStatus.Ongoing && cube.stepCount >= 1000)
+            else if (cube.status == PushBlockStatus.Ongoing && cube.stepCount >= 200)
             {
                 policy.InterruptEpisode(entity).SetObservationFromSlice(0, allRayData.Slice(0,72));
                 cube.status = PushBlockStatus.Ongoing;
                 pos.Value = cube.resetPosition;
                 positionData[entity] = pos;
                 cube.stepCount = 0;
+                rot.Value = quaternion.AxisAngle(new float3(0,1,0), 3.14f);
                 var blockPosition = new Translation();
-                blockPosition.Value = cube.resetPosition+ new float3(3,0,3);
+                blockPosition.Value = cube.resetPosition + new float3(6,0,-3);
                 positionData[cube.block] = blockPosition;
             }
             cube.stepCount += 1;
+            allRayData.Dispose();
         }).Schedule(inputDeps);
 
-        var updateActionJob = new UpdatePushBlockAction     
+        var updateActionJob = new UpdatePushBlockAction
         {
             ComponentDataFromEntity = GetComponentDataFromEntity<PushBlockAction>(isReadOnly: false)
         };
         inputDeps = updateActionJob.Schedule(policy, inputDeps);
 
         inputDeps = Entities.WithAll<PushBlockCube>().ForEach((ref Translation pos, ref PhysicsVelocity vel, ref PushBlockAction action, ref Rotation rot) => {
-            
+
             vel.Angular = 3 * new float3(0, action.Rotate - 1,0); // action (0,1,2) -> ( -1, 0, 1)
             float3 forward = math.forward(rot.Value);
             vel.Linear = 3 * forward * (action.Forward - 1);
